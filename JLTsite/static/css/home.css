@@ -1,0 +1,232 @@
+/* Sticky navbar styles */
+.navbar {
+    transition: top 0.3s;
+    
+}
+
+.image-container {
+    position: relative; /* Enables absolute positioning for inner images */
+    overflow: hidden; /* Ensures that images do not overflow their container */
+    height: 350px; /* Fixed height for the image container */
+}
+
+.image-container img {
+    width: 100%; /* Make images responsive */
+    height: 100%; /* Ensure images fill the container height */
+    object-fit: cover; /* Maintain aspect ratio without distortion */
+    transition: opacity 0.3s ease; /* Smooth transition for opacity */
+}
+
+.image-container img.hover-img {
+    position: absolute; /* Overlaying the first image */
+    top: 0; /* Align to the top */
+    left: 0; /* Align to the left */
+    opacity: 0; /* Start with second image invisible */
+}
+
+/* Show the second image and hide the first on hover */
+.image-container:hover img:first-child {
+    opacity: 0; /* Hide first image on hover */
+}
+
+.image-container:hover img.hover-img {
+    opacity: 1; /* Show second image on hover */
+}
+
+/* Ensure the card image titles are styled well */
+.card-title {
+    color: #FDC000; /* Example title color */
+}
+
+
+.sticky {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000; /* Ensure it appears above other content */
+    background-size: cover; /* Couvre l'ensemble de l'écran */
+    background: 
+    linear-gradient(135deg, rgba(21, 20, 20, 0.8), rgba(50, 50, 50, 0.8)),
+        url("http://127.0.0.1:8000/static/images/slate-texture.jpg");
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Optional shadow */
+    color: white; /* Couleur du texte */
+}
+
+body {
+    margin-top: 70px; /* Adjust margin to avoid content being hidden under the sticky navbar */
+    background: 
+    linear-gradient(135deg, rgba(21, 20, 20, 0.8), rgba(50, 50, 50, 0.8)),
+        url("http://127.0.0.1:8000/static/images/slate-texture.jpg");
+    background-size: cover; /* Couvre l'ensemble de l'écran */
+    background-attachment: fixed; /* Fixe la texture pour un effet de parallaxe */
+    color: white; /* Couleur du texte */
+    min-height: 100vh; /* S'assure que le corps couvre toute la hauteur de la vue */
+    font-family: 'comfortaa', cursive !important;
+}
+
+/* Styling for category items */
+.category-item {
+    margin: 5px; /* Space between items */
+    cursor: pointer; /* Change cursor to pointer */
+    padding: 10px; /* Add padding to items */
+
+}
+
+.category-item:hover {
+    background-color: rgba(255, 255, 255, 0.1); /* Change background on hover for contrast */
+    text-decoration: underline; /* Underline on hover */
+}
+
+
+.card {
+    background: transparent !important;
+    width: 100%; /* Allow the card to take full width of parent */
+    margin: 10px; /* Margin around each card */
+    border: none; /* Remove border from the card */
+    border-radius: 0; /* Optional: Remove rounded corners */
+    box-shadow: none; /* Remove any box shadow for a flat look */
+}
+
+.card .card-img-top {
+    width: 100%; /* Ensure images take full width of the card */
+    height: 350px; /* Set a fixed height for the images */
+    object-fit: cover; /* Ensure images fill the space without distortion */
+    border-radius: 40px
+}
+
+.image-container {
+    position: relative;
+    height: 350px; /* Match with image height */
+    border-radius: 40px
+}
+
+.boite-item {
+    margin-bottom: 20px; /* Space below each card */
+}
+
+.card-title {
+    color: white !important;
+    
+}
+
+.card-price {
+    color: white !important;
+}
+
+
+.card-body a {
+    color: #FDC000;
+    text-decoration: none; /* Remove underline from the text */
+    cursor: pointer; /* Change cursor to pointer on hover */
+}
+
+.card-body a:hover {
+    text-decoration: none; /* Optionally add underline on hover */
+    color: #FDC000; /* Change color on hover, if desired */
+}
+
+.dancing-script-custom {
+    font-family: "Dancing Script", serif;
+    font-weight: 400; /* You can set this to a value from 400 to 700 */
+    font-style: normal;
+  }
+  
+
+.background-image {
+    position: relative;
+    overflow: hidden; /* Prevents content from overflowing */
+}
+
+.background-image img {
+    width: 100%; /* Full width */
+    height: auto; /* Maintain aspect ratio */
+    opacity: 0.7; /* Adjust for visual effect */
+}
+
+.background-image h1 {
+    z-index: 2; /* Ensure the text appears above the image */
+    position: relative; /* Position relative to control stacking */
+    font-size: 3em; /* Adjust size of title */
+}
+
+.navbar a {
+    text-decoration: none; /* Remove underline from links */
+    color: white; /* Default color for links */
+}
+
+.navbar a:hover {
+    text-decoration: underline !important;
+    color: #FDC000 !important; /* Change color on hover, for example */
+}
+
+.card-details:hover {
+    text-decoration: underline !important;
+}
+
+.selected {
+    text-decoration: underline;
+    font-weight: bold; /* Optional: make the selected text bolder */
+    color: #FDC000 !important;
+
+}
+
+html {
+    scroll-behavior: smooth !important;
+}
+
+
+
+#content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    perspective: 1000px; /* Create a 3D space for the page turn effect */
+}
+
+.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+/*
+#pageTurnEffect {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6) url('https://julien-leblanc.com/wp-content/uploads/2022/06/hero-a-propos.jpg') center/cover no-repeat;
+    transform: rotateY(90deg);
+    transition: transform 1s ease-in-out, opacity 0.5s ease-in-out;
+    opacity: 0;
+    visibility: hidden;
+    z-index: 9999;
+}
+*/
+
+#pageTurnEffect {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+    linear-gradient(135deg, rgba(21, 20, 20, 0.8), rgba(50, 50, 50, 0.8)),
+        url("http://127.0.0.1:8000/static/images/slate-texture.jpg");
+    transform-origin: left; /* Makes it turn like a real page */
+    transform: perspective(1200px) rotateY(90deg);
+    transition: transform 1s ease-in-out, opacity 0.5s ease-in-out;
+    opacity: 0;
+    visibility: hidden;
+    z-index: 9999;
+}
+
+.show {
+    opacity: 1;
+    visibility: visible;
+    transform: rotateY(0);
+    transition: transform 1s ease, opacity 1s ease;
+}
+
+

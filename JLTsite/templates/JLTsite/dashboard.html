@@ -1,0 +1,27 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+
+
+{% block title %}Dashboard Admin{% endblock %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<h1>Dashboard</h1>
+<a href="{% url 'create_boite' %}">Create New BoiteALunch</a>
+<form method="post" action="{% url 'logout' %}" style="display:inline;">
+    {% csrf_token %}
+    <button type="submit">Logout</button>
+</form>
+
+<h2>Existing Boites</h2>
+<ul>
+    {% for boite in boites %}
+        <li>
+            {{ boite.nom }} 
+            <a href="{% url 'edit_boite' boite.pk %}">Edit</a>
+        </li>
+    {% endfor %}
+</ul>
+{% endblock %}

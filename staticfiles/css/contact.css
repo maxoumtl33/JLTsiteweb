@@ -1,0 +1,146 @@
+body {
+    margin-top: 70px; /* Adjust margin to avoid content being hidden under the sticky navbar */
+    background: 
+    linear-gradient(135deg, rgba(21, 20, 20, 0.8), rgba(50, 50, 50, 0.8)),
+        url("http://127.0.0.1:8000/static/images/slate-texture.jpg");
+    background-size: cover; /* Couvre l'ensemble de l'écran */
+    background-attachment: fixed; /* Fixe la texture pour un effet de parallaxe */
+    color: white; /* Couleur du texte */
+    min-height: 100vh; /* S'assure que le corps couvre toute la hauteur de la vue */
+    font-family: 'comfortaa', cursive !important;
+}
+
+
+
+.contact-container {
+    background: transparent;
+    max-width: 600px;
+    margin: auto;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.contact-container h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: white;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    display: block;
+    color: #FDC000;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+.btn-submit {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    background-color: #007bff;
+    color: white;
+    font-size: 18px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn-submit:hover {
+    background-color: #0056b3;
+}
+
+.navbar a {
+    text-decoration: none; /* Remove underline from links */
+    color: white; /* Default color for links */
+}
+
+.navbar a:hover {
+    text-decoration: underline !important;
+    color: #FDC000 !important; /* Change color on hover, for example */
+}
+
+/* contact.css */
+.contact-info {
+    background: transparent;
+    border-radius: 10px;        /* Rounded corners */
+    padding: 20px;              /* Padding for spacing */
+    margin-bottom: 20px;        /* Spacing between sections */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);  /* Subtle shadow effect */
+}
+
+.contact-info h2 {
+    color: #333;                        /* Dark color for text */
+    font-size: 24px;                    /* Font size */
+    margin-bottom: 10px;                /* Space below the heading */
+}
+
+.contact-info p {
+    color: #555;                        /* Lighter color for paragraph text */
+    font-size: 18px;                    /* Font size */
+}
+
+.insta, .facebook, .linkedin {
+    text-decoration: none; /* Remove underline on links */
+    font-size: 18px;      /* Increase font size for better visibility */
+    font-weight: bold;    /* Make the font bold */
+    padding: 10px 15px;   /* Add padding for a larger click area */
+    border-radius: 5px;   /* Slightly rounded corners */
+    transition: background-color 0.3s, color 0.3s; /* Smooth transition for hover effects */
+    display: inline-block; /* Makes the link act like a button */
+    margin-right: 10px;    /* Space between links */
+}
+
+.insta {
+    background-color: wheat; /* Background color */
+    color: #FC158B;          /* Text color */
+}
+
+.insta:hover {
+    background-color: #FFC107; /* Darker shade for the hover effect */
+    color: white;              /* Change text color on hover */
+}
+
+.facebook {
+    background-color: #C3D8F6; /* Light background color */
+    color: #02294E;            /* Text color */
+}
+
+.facebook:hover {
+    background-color: #0056b3; /* Change background color on hover */
+    color: white;              /* Change text color on hover */
+}
+
+.linkedin {
+    background-color: #e8f1ff; /* Light background color */
+    color: #02294E;            /* Text color */
+}
+
+.linkedin:hover {
+    background-color: #0077B5; /* Darker shade for the hover effect */
+    color: white;              /* Change text color on hover */
+}
+
+
+.phone-number {
+    font-weight: bold;                  /* Bold phone number */
+    color: #007bff;                    /* Blue color for emphasis */
+}

@@ -1,0 +1,54 @@
+{% load static %}
+
+<!-- base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Julien Leblanc Traiteur{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&family=Dancing+Script:wght@400..700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    
+  
+    {% block extra_css %}
+    {% endblock %}
+    <script src="{% static 'js/script.js' %}"></script>
+    {% block extra_js %}
+    {% endblock %}
+    <script src="https://kit.fontawesome.com/779d014a69.js" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <header>
+        
+        <nav>
+            <!-- Add navigation links here -->
+        </nav>
+    </header>
+
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer style="text-align: center; margin-top: 50px; color: white;">
+        <p>2025 © All rights reserved | Julien-Leblanc Traiteur</p>
+        <p>
+            <a href="https://www.instagram.com/julienleblanctraiteur/?hl=en" target="_blank">
+                <i class="fab fa-instagram"></i> Instagram
+            </a> |
+            <a href="tel:+1234567890">
+                <i class="fas fa-phone-alt"></i> Téléphone: +15149370698
+            </a> |
+            <a href="https://www.google.com/maps/place/Julien-Leblanc+traiteur/@45.4946342,-73.5856569,651m/data=!3m2!1e3!4b1!4m6!3m5!1s0x4cc91a6b49675e23:0xc3833e27a346b078!8m2!3d45.4946342!4d-73.583082!16s%2Fg%2F1tfk417b?entry=ttu&g_ep=EgoyMDI1MDIwNS4xIKXMDSoASAFQAw%3D%3D" target="_blank">
+                <i class="fas fa-map-marker-alt"></i> Adresse: 2295 Rue St Marc, Montréal, QC H3H 1E4
+            </a>
+        </p>
+    </footer>
+</body>
+</html>

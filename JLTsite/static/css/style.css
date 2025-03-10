@@ -1,0 +1,38 @@
+/* style.css */
+
+/* Reset some default styles */
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%; /* Ensure the body takes full height */
+}
+
+/* Flexbox for full height layout */
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Main content area */
+main {
+    flex: 1; /* Ensure the main content area expands to fill the available space */
+}
+
+/* Footer styling */
+footer p {
+    margin: 5px 0; /* Add some margin around each paragraph */
+}
+
+footer a {
+    text-decoration: none; /* Remove underline from links */ /* Bootstrap primary color */
+    margin-right: 10px; /* Add space between links */
+}
+
+footer a:hover {
+    text-decoration: underline; /* Add an underline on hover */
+}
+
+footer i {
+    margin-right: 5px; /* Space between icon and text */
+    font-size: 1.2em; /* Increase icon size */
+}

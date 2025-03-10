@@ -1,0 +1,52 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+
+
+{% block title %}Présentation JLT{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/home_events.css' %}">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+<script src="{% static 'js/home_events.js' %}"></script>
+{% endblock %}
+
+
+
+
+{% block content %}
+
+<nav class="navbar navbar-expand-lg" id="navbar" style="width: 100%;
+top: 0;
+left: 0;
+right: 0;">
+    <div class="container d-flex justify-content-between align-items-center">
+        <a class="navbar-brand" href="{% url 'home' %}">
+            <img src="http://127.0.0.1:8000/static/images/logo2.jpeg" alt="Logo" style="width: 150px; height: 150px;border-radius: 50%;">
+        </a>
+        <a id="turnPageBtn" data-target-url="{% url 'home' %}" class="nav-link" style="color: white; text-decoration: none; margin-right: 20px; 
+        font-weight: bold; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7); cursor: pointer;" >Nos repas</a>
+        <div class="d-flex align-items-center">
+            <a href="{% url 'contact' %}" class="nav-link" 
+               style="color: white; text-decoration: none; margin-right: 20px; 
+                      font-weight: bold; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);">
+               Demandez une soumission
+            </a>
+            <p style="color: #FDC000; margin: 0; font-weight: bold; 
+                      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);">
+               514 937-0698
+            </p>
+            
+    
+        </div>
+    </div>
+</nav>
+<div id="pageTurnEffect" class="hidden"></div>
+
+
+
+{% endblock %}

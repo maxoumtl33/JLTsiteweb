@@ -1,0 +1,74 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+{% load form_tags %}
+
+{% block title %}Contactez nous{% endblock %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/contact.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<nav class="navbar navbar-expand-lg" id="navbar" style="width: 100%;
+top: 0;
+left: 0;
+right: 0;">
+    <div class="container d-flex justify-content-between align-items-center" style="margin-left: 150px;">
+        <a class="navbar-brand" href="{% url 'home' %}">
+            <img src="http://127.0.0.1:8000/static/images/logo2.jpeg" alt="Logo" style="width: 150px; height: 150px;border-radius: 50%;">
+        </a>
+        <div class="d-flex align-items-center">
+           
+           
+        </div>
+    </div>
+</nav>
+
+<div class="contact-container">
+    <div class="contact-info" style="margin-bottom: 70px;">
+        <h2 style="color: white !important;">Vous préférez parler à un conseiller ?</h2>
+        <p class="phone-number" style="color: white !important;">Contactez-nous au <strong style="color: #FDC000;">514 937-0698</strong>.</p>
+    </div>
+    <div class="contact-info">
+        <h2 style="color: white !important;">Nos réseaux sociaux</h2>
+        <a href="https://www.instagram.com/julienleblanctraiteur/?hl=en" target="_blank" class="insta">
+            <i class="fab fa-instagram" ></i> Instagram
+        </a>
+        <a href="    https://www.facebook.com/JulienLeblancTraiteur
+        " target="_blank" class="facebook">
+            <i class="fab fa-facebook"></i> Facebook
+        </a>
+        <a href="   https://www.linkedin.com/company/julien-leblanc-traiteur/
+        " target="_blank" class="linkedin">
+            <i class="fab fa-linkedin"></i> Linkedin
+    </a>
+    </div>
+    <div class="contact-info">
+        <h2 style="color: white !important;">Vous préférez par courriel ?</h2>
+        <p style="color: white !important;">Contactez-nous via ce formulaire</p>
+    </div>
+
+    
+    
+    <form method="post" class="contact-form">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="id_name">Nom</label>
+            {{ form.name|add_class:"form-control" }}
+        </div>
+        
+        <div class="form-group">
+            <label for="id_email">Courriel</label>
+            {{ form.email|add_class:"form-control" }}
+        </div>
+        
+        <div class="form-group">
+            <label for="id_message">Message</label>
+            {{ form.message|add_class:"form-control" }}
+        </div>
+        
+        <button type="submit">envoyer</button>
+    </form>
+</div>
+{% endblock %}

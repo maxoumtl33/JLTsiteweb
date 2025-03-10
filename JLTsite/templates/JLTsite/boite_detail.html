@@ -1,0 +1,69 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+
+{% block title %}Details of {{ boite.nom }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/detailboite.css' %}">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+{% endblock %}
+
+{% block content %}
+
+<nav class="navbar navbar-expand-lg" id="navbar" style="width: 100%;
+top: 0;
+left: 0;
+right: 0;">
+    <div class="container d-flex justify-content-between align-items-center">
+        <a class="navbar-brand" href="{% url 'home' %}">
+            <img src="http://127.0.0.1:8000/static/images/logo2.jpeg" alt="Logo" style="width: 150px; height: 150px;border-radius: 50%;">
+        </a>
+        <div class="d-flex align-items-center">
+            <a href="{% url 'contact' %}" class="nav-link" 
+               style="color: white; text-decoration: none; margin-right: 20px; 
+                      font-weight: bold; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);">
+               Demandez une soumission
+            </a>
+            <p style="color: #FDC000; margin: 0; font-weight: bold; 
+                      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);">
+               514 937-0698
+            </p>
+        </div>
+    </div>
+</nav>
+<div class="container">
+    <h1 style="color: white; margin-top: 40px; margin-bottom: 10px;">{{ boite.nom }}</h1>
+    <div class="card mb-3" style="background: transparent; color: white;">
+        <div class="row no-gutters">
+            <div class="col-md-4 position-relative">
+                <div class="image-container">
+                    <img src="{{ boite.photo1.url }}" class="card-img" alt="{{ boite.nom }} Photo 1" />
+                    <img src="{{ boite.photo2.url }}" class="card-img" alt="{{ boite.nom }} Photo 2" />
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="card-body">
+                    <h5 class="card-title" style="color: #FDC000;">Description</h5>
+                    <p class="card-text">{{ boite.description }}</p>
+                    <br><br>
+                    <h5 class="card-title" style="color: #FDC000;">Prix</h5>
+                    <p class="card-text">{{ boite.prix }} $</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <a href="{% url 'home' %}" style="color: white; margin-right: 20px;" class="lienretour">Retour</a>
+    <a href="{% url 'contact' %}" style="color: white;" class="lienretour">Nous contacter</a>
+</div>
+
+<!-- CSS for hover effect -->
+<style>
+.image-container:hover img:first-child {
+    opacity: 0; /* Hide photo1 on hover */
+}
+.image-container:hover img:last-child {
+    opacity: 1; /* Show photo2 on hover */
+}
+</style>
+
+{% endblock %}
