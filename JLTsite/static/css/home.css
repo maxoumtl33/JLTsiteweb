@@ -1,20 +1,21 @@
 /* Sticky navbar styles */
 .navbar {
     transition: top 0.3s;
-    
+    padding: 10px 20px;
 }
 
+
+
+/* Responsive Image Container */
 .image-container {
-    position: relative; /* Enables absolute positioning for inner images */
-    overflow: hidden; /* Ensures that images do not overflow their container */
-    height: 350px; /* Fixed height for the image container */
+    height: auto;
+    max-height: 350px;
 }
 
 .image-container img {
-    width: 100%; /* Make images responsive */
-    height: 100%; /* Ensure images fill the container height */
-    object-fit: cover; /* Maintain aspect ratio without distortion */
-    transition: opacity 0.3s ease; /* Smooth transition for opacity */
+    width: 100%;
+    height: auto;
+    object-fit: cover;
 }
 
 .image-container img.hover-img {
@@ -32,6 +33,8 @@
 .image-container:hover img.hover-img {
     opacity: 1; /* Show second image on hover */
 }
+
+
 
 /* Ensure the card image titles are styled well */
 .card-title {
@@ -82,6 +85,7 @@ body {
 .card {
     background: transparent !important;
     width: 100%; /* Allow the card to take full width of parent */
+    max-width: 350px;
     margin: 10px; /* Margin around each card */
     border: none; /* Remove border from the card */
     border-radius: 0; /* Optional: Remove rounded corners */
@@ -102,7 +106,18 @@ body {
 }
 
 .boite-item {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    max-width: 400px; /* Limits card width for large screens */
     margin-bottom: 20px; /* Space below each card */
+}
+
+#boites-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center; /* Center the cards */
+    gap: 20px; /* Adds spacing between cards */
 }
 
 .card-title {
@@ -229,4 +244,66 @@ html {
     transition: transform 1s ease, opacity 1s ease;
 }
 
+/* Responsive Cards */
+@media (max-width: 992px) {
+    .boite-item {
+        max-width: 45%;
+    }
+}
 
+@media (max-width: 576px) {
+    .boite-item {
+        width: 100%;
+    }
+    .card {
+        width: 100%;
+    }
+    .card-title {
+        font-size: 1.2em;
+    }
+}
+
+
+@media (max-width: 768px) {
+    .background-image h1 {
+        font-size: 1.5em;
+    }
+    .background-image p {
+        font-size: 1em;
+    }
+}
+
+/* Responsive Category Items */
+@media (max-width: 576px) {
+    .category-item {
+        font-size: 14px;
+        padding: 5px;
+    }
+}
+
+/* Responsive Search Input */
+@media (max-width: 768px) {
+    #search-input {
+        width: 100%;
+        margin-top: 10px;
+    }
+}
+
+/* Responsive Navbar */
+@media (max-width: 768px) {
+    .navbar .container {
+        flex-direction: column;
+        text-align: center;
+    }
+    .navbar-brand img {
+        width: 100px;
+        height: 100px;
+    }
+    .navbar a {
+        margin-top: 10px;
+        font-size: 14px;
+    }
+    .boite-item {
+        max-width: 100%;
+    }
+}
