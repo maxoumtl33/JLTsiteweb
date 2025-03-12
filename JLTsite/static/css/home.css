@@ -148,15 +148,26 @@ body {
   }
   
 
-.background-image {
+  .background-image {
     position: relative;
-    overflow: hidden; /* Prevents content from overflowing */
+    width: 100%;
+    height: 60vh; /* Adjusts height based on the viewport */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white;
+    overflow: hidden;
 }
 
 .background-image img {
-    width: 100%; /* Full width */
-    height: auto; /* Maintain aspect ratio */
-    opacity: 0.7; /* Adjust for visual effect */
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Ensures the image fills the space properly */
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0.7;
 }
 
 .background-image h1 {
@@ -164,7 +175,14 @@ body {
     position: relative; /* Position relative to control stacking */
     font-size: 3em; /* Adjust size of title */
 }
-
+.background-image div {
+    position: relative;
+    z-index: 2;
+    max-width: 80%;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 20px;
+    border-radius: 10px;
+}
 .navbar a {
     text-decoration: none; /* Remove underline from links */
     color: white; /* Default color for links */
@@ -261,36 +279,33 @@ html {
     .card-title {
         font-size: 1.2em;
     }
-}
-
-
-@media (max-width: 768px) {
-    .background-image h1 {
-        font-size: 1.5em;
-    }
-    .background-image p {
-        font-size: 1em;
-    }
-}
-
-/* Responsive Category Items */
-@media (max-width: 576px) {
     .category-item {
         font-size: 14px;
         padding: 5px;
     }
 }
 
-/* Responsive Search Input */
+
 @media (max-width: 768px) {
+    .background-image {
+        height: 40vh; /* Reduce height on smaller screens */
+    }
+
+    .background-image div {
+        max-width: 90%;
+        padding: 10px;
+    }
+
+    .background-image h1 {
+        font-size: 1.8em;
+    }
+    .background-image p {
+        font-size: 1em;
+    }
     #search-input {
         width: 100%;
         margin-top: 10px;
     }
-}
-
-/* Responsive Navbar */
-@media (max-width: 768px) {
     .navbar .container {
         flex-direction: column;
         text-align: center;
@@ -307,3 +322,5 @@ html {
         max-width: 100%;
     }
 }
+
+
