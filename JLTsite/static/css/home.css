@@ -60,7 +60,7 @@ body {
     margin-top: 70px; /* Adjust margin to avoid content being hidden under the sticky navbar */
     background: 
     linear-gradient(135deg, rgba(21, 20, 20, 0.8), rgba(50, 50, 50, 0.8)),
-        url("http://127.0.0.1:8000/static/images/slate-texture.jpg");
+        url("{% static 'images/slate-texture.jpg %}");
     background-size: cover; /* Couvre l'ensemble de l'écran */
     background-attachment: fixed; /* Fixe la texture pour un effet de parallaxe */
     color: white; /* Couleur du texte */

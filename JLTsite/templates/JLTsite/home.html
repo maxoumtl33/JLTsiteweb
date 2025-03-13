@@ -24,7 +24,7 @@ left: 0;
 right: 0;">
     <div class="container d-flex justify-content-between align-items-center">
         <a class="navbar-brand" href="#">
-            <img src="http://127.0.0.1:8000/static/images/logo2.jpeg" alt="Logo" style="width: 150px; height: 150px;border-radius: 50%;">
+            <img src="{% static 'images/logo2.jpeg %}" alt="Logo" style="width: 150px; height: 150px;border-radius: 50%;">
         </a>
         <a id="turnPageBtn" data-target-url="{% url 'home_events' %}" class="nav-link" style="color: white; text-decoration: none; margin-right: 20px; 
         font-weight: bold; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7); cursor: pointer;" >Événements</a>
@@ -48,7 +48,7 @@ right: 0;">
 <div id="pageTurnEffect" class="hidden"></div>
 
 <div class="background-image" style="position: relative; text-align: center; color: white;">
-    <img src="http://127.0.0.1:8000/static/images/Salades-repas.jpg" alt="Background Image" style="width: 100%; height: auto; opacity: 0.7;"> <!-- Adjust opacity as needed -->
+    <img src="{% static 'images/Salades-repas.jpg' %}" alt="Background Image" style="width: 100%; height: auto; opacity: 0.7;"> <!-- Adjust opacity as needed -->
     <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 20px; background: rgba(0, 0, 0, 0.5); border-radius: 10px;">
         <h1 style="font-size: 2.5em; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);">SERVICE DE TRAITEUR POUR REPAS D'AFFAIRES</h1>
         <p style="font-size: 1.2em; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);">Le bonheur est dans l’assiette... même au bureau !</p>
