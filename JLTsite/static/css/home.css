@@ -232,6 +232,66 @@ html {
     visibility: hidden;
 }
 
+/* Basic styling for the button */
+/* Basic styling for the button */
+#toggle-button {
+    background-color: transparent;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    width: 30px;
+    height: 25px;
+    outline: none;
+    z-index: 9999; /* Ensure the button is above other elements */
+}
+
+/* Styling for each line */
+#toggle-button .line {
+    width: 100%;
+    height: 4px;
+    background-color: #fdc000;  /* Yellow color for the lines */
+    border-radius: 4px;  /* Optional: for rounded edges */
+    transition: all 0.3s ease; /* Smooth transition for any transformations */
+}
+
+/* Space between the lines */
+#toggle-button .line-1, #toggle-button .line-2, #toggle-button .line-3 {
+    margin: 3px 0; /* Add some spacing between lines */
+}
+
+/* Active state for the toggle button (when clicked) */
+#toggle-button.active .line-1 {
+    transform: translateY(10px) rotate(45deg); /* Move and rotate the first line to form part of an 'X' */
+}
+
+#toggle-button.active .line-2 {
+    opacity: 0; /* Hide the middle line */
+}
+
+#toggle-button.active .line-3 {
+    transform: translateY(-10px) rotate(-45deg); /* Move and rotate the third line to form part of an 'X' */
+}
+
+/* Optional: Hover effect for the button */
+#toggle-button:hover .line {
+    background-color: #f2b600; /* Change color on hover */
+}
+
+/* Ensure the button is visible within the navbar */
+.navbar-toggler {
+    display: block !important; /* Ensure the button is not hidden */
+    justify-content: center;
+    align-items: center;
+    z-index: 10000; /* Ensure it's above all other content */
+}
+
+
+
+
 /*
 #pageTurnEffect {
     position: fixed;

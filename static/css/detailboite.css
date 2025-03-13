@@ -1,0 +1,56 @@
+body {
+    margin-top: 70px; /* Adjust margin to avoid content being hidden under the sticky navbar */
+    background: 
+    linear-gradient(135deg, rgba(21, 20, 20, 0.8), rgba(50, 50, 50, 0.8)),
+        url("http://127.0.0.1:8000/static/images/slate-texture.jpg");
+    background-size: cover; /* Couvre l'ensemble de l'écran */
+    background-attachment: fixed; /* Fixe la texture pour un effet de parallaxe */
+    color: white; /* Couleur du texte */
+    min-height: 100vh; /* S'assure que le corps couvre toute la hauteur de la vue */
+    font-family: 'comfortaa', cursive !important;
+}
+
+.lienretour:hover {
+    text-decoration: underline;
+    color: #FDC000 !important;
+}
+
+.navbar a {
+    text-decoration: none; /* Remove underline from links */
+    color: white; /* Default color for links */
+}
+
+.navbar a:hover {
+    text-decoration: underline !important;
+    color: #FDC000 !important; /* Change color on hover, for example */
+}
+
+.image-container {
+    position: relative; /* Enables absolute positioning for inner images */
+    overflow: hidden; /* Ensures that images do not overflow their container */
+}
+
+.image-container img {
+    width: 100%; /* Make images responsive */
+    transition: opacity 0.3s ease; /* Smooth transition for opacity */
+}
+
+.image-container img:first-child {
+    display: block; /* Ensure photo1 is displayed */
+}
+
+.image-container img:last-child {
+    position: absolute; /* Cover photo1 */
+    top: 0; /* Align to the top */
+    left: 0; /* Align to the left */
+    width: 100%; /* Ensure it matches the width */
+    opacity: 0; /* Start with photo2 invisible */
+}
+
+.image-container:hover img:first-child {
+    opacity: 0; /* Hide photo1 */
+}
+
+.image-container:hover img:last-child {
+    opacity: 1; /* Show photo2 */
+}

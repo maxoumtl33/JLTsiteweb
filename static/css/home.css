@@ -1,0 +1,403 @@
+/* Sticky navbar styles */
+.navbar {
+    transition: top 0.3s;
+    padding: 10px 20px;
+}
+
+.inside-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    max-width: 90%; /* Limit width */
+    box-sizing: border-box; /* Ensure padding is included in width calculation */
+}
+
+/* Responsive Image Container */
+.image-container {
+    height: auto;
+    max-height: 350px;
+}
+
+.image-container img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+}
+
+.image-container img.hover-img {
+    position: absolute; /* Overlaying the first image */
+    top: 0; /* Align to the top */
+    left: 0; /* Align to the left */
+    opacity: 0; /* Start with second image invisible */
+}
+
+/* Show the second image and hide the first on hover */
+.image-container:hover img:first-child {
+    opacity: 0; /* Hide first image on hover */
+}
+
+.image-container:hover img.hover-img {
+    opacity: 1; /* Show second image on hover */
+}
+
+
+
+/* Ensure the card image titles are styled well */
+.card-title {
+    color: #FDC000; /* Example title color */
+}
+
+
+.sticky {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000; /* Ensure it appears above other content */
+    background-size: cover; /* Couvre l'ensemble de l'écran */
+    background: 
+    linear-gradient(135deg, rgba(21, 20, 20, 0.8), rgba(50, 50, 50, 0.8)),
+        url("../images/slate-texture.jpg");
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Optional shadow */
+    color: white; /* Couleur du texte */
+}
+
+body {
+    margin-top: 70px; /* Adjust margin to avoid content being hidden under the sticky navbar */
+    background: 
+    linear-gradient(135deg, rgba(21, 20, 20, 0.8), rgba(50, 50, 50, 0.8)),
+        url("../images/slate-texture.jpg");
+    background-size: cover; /* Couvre l'ensemble de l'écran */
+    background-attachment: fixed; /* Fixe la texture pour un effet de parallaxe */
+    color: white; /* Couleur du texte */
+    min-height: 100vh; /* S'assure que le corps couvre toute la hauteur de la vue */
+    font-family: 'comfortaa', cursive !important;
+}
+
+/* Styling for category items */
+.category-item {
+    margin: 5px; /* Space between items */
+    cursor: pointer; /* Change cursor to pointer */
+    padding: 10px; /* Add padding to items */
+
+}
+
+.category-item:hover {
+    background-color: rgba(255, 255, 255, 0.1); /* Change background on hover for contrast */
+    text-decoration: underline; /* Underline on hover */
+}
+
+
+.card {
+    background: transparent !important;
+    width: 100%; /* Allow the card to take full width of parent */
+    max-width: 350px;
+    margin: 10px; /* Margin around each card */
+    border: none; /* Remove border from the card */
+    border-radius: 0; /* Optional: Remove rounded corners */
+    box-shadow: none; /* Remove any box shadow for a flat look */
+}
+
+.card .card-img-top {
+    width: 100%; /* Ensure images take full width of the card */
+    height: 350px; /* Set a fixed height for the images */
+    object-fit: cover; /* Ensure images fill the space without distortion */
+    border-radius: 40px
+}
+
+.image-container {
+    position: relative;
+    height: 350px; /* Match with image height */
+    border-radius: 40px
+}
+
+.boite-item {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    max-width: 400px; /* Limits card width for large screens */
+    margin-bottom: 20px; /* Space below each card */
+}
+
+#boites-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center; /* Center the cards */
+    gap: 20px; /* Adds spacing between cards */
+}
+
+.card-title {
+    color: white !important;
+    
+}
+
+.card-price {
+    color: white !important;
+}
+
+
+.card-body a {
+    color: #FDC000;
+    text-decoration: none; /* Remove underline from the text */
+    cursor: pointer; /* Change cursor to pointer on hover */
+}
+
+.card-body a:hover {
+    text-decoration: none; /* Optionally add underline on hover */
+    color: #FDC000; /* Change color on hover, if desired */
+}
+
+.dancing-script-custom {
+    font-family: "Dancing Script", serif;
+    font-weight: 400; /* You can set this to a value from 400 to 700 */
+    font-style: normal;
+  }
+  
+
+  .background-image {
+    position: relative;
+    width: 100%;
+    height: 60vh; /* Adjusts height based on the viewport */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white;
+    overflow: hidden;
+}
+
+.background-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Ensures the image fills the space properly */
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0.7;
+}
+
+.background-image h1 {
+    z-index: 2; /* Ensure the text appears above the image */
+    position: relative; /* Position relative to control stacking */
+    font-size: 3em; /* Adjust size of title */
+}
+.background-image div {
+    position: relative;
+    z-index: 2;
+    max-width: 80%;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 20px;
+    border-radius: 10px;
+}
+.navbar a {
+    text-decoration: none; /* Remove underline from links */
+    color: white; /* Default color for links */
+}
+
+.navbar a:hover {
+    text-decoration: underline !important;
+    color: #FDC000 !important; /* Change color on hover, for example */
+}
+
+.card-details:hover {
+    text-decoration: underline !important;
+}
+
+.selected {
+    text-decoration: underline;
+    font-weight: bold; /* Optional: make the selected text bolder */
+    color: #FDC000 !important;
+
+}
+
+html {
+    scroll-behavior: smooth !important;
+}
+
+
+
+#content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    perspective: 1000px; /* Create a 3D space for the page turn effect */
+}
+
+.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+/* Basic styling for the button */
+/* Basic styling for the button */
+#toggle-button {
+    background-color: transparent;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    width: 30px;
+    height: 25px;
+    outline: none;
+    z-index: 9999; /* Ensure the button is above other elements */
+}
+
+/* Styling for each line */
+#toggle-button .line {
+    width: 100%;
+    height: 4px;
+    background-color: #fdc000;  /* Yellow color for the lines */
+    border-radius: 4px;  /* Optional: for rounded edges */
+    transition: all 0.3s ease; /* Smooth transition for any transformations */
+}
+
+/* Space between the lines */
+#toggle-button .line-1, #toggle-button .line-2, #toggle-button .line-3 {
+    margin: 3px 0; /* Add some spacing between lines */
+}
+
+/* Active state for the toggle button (when clicked) */
+#toggle-button.active .line-1 {
+    transform: translateY(10px) rotate(45deg); /* Move and rotate the first line to form part of an 'X' */
+}
+
+#toggle-button.active .line-2 {
+    opacity: 0; /* Hide the middle line */
+}
+
+#toggle-button.active .line-3 {
+    transform: translateY(-10px) rotate(-45deg); /* Move and rotate the third line to form part of an 'X' */
+}
+
+/* Optional: Hover effect for the button */
+#toggle-button:hover .line {
+    background-color: #f2b600; /* Change color on hover */
+}
+
+/* Ensure the button is visible within the navbar */
+.navbar-toggler {
+    display: flex !important; /* Ensure the button is not hidden */
+    justify-content: center;
+    align-items: center;
+    z-index: 10000; /* Ensure it's above all other content */
+}
+
+
+
+
+/*
+#pageTurnEffect {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6) url('https://julien-leblanc.com/wp-content/uploads/2022/06/hero-a-propos.jpg') center/cover no-repeat;
+    transform: rotateY(90deg);
+    transition: transform 1s ease-in-out, opacity 0.5s ease-in-out;
+    opacity: 0;
+    visibility: hidden;
+    z-index: 9999;
+}
+*/
+
+#pageTurnEffect {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+    linear-gradient(135deg, rgba(21, 20, 20, 0.8), rgba(50, 50, 50, 0.8)),
+        url("../images/slate-texture.jpg");
+    transform-origin: left; /* Makes it turn like a real page */
+    transform: perspective(1200px) rotateY(90deg);
+    transition: transform 1s ease-in-out, opacity 0.5s ease-in-out;
+    opacity: 0;
+    visibility: hidden;
+    z-index: 9999;
+}
+
+.show {
+    opacity: 1;
+    visibility: visible;
+    transform: rotateY(0);
+    transition: transform 1s ease, opacity 1s ease;
+}
+
+/* Responsive Cards */
+@media (max-width: 992px) {
+    .boite-item {
+        max-width: 45%;
+    }
+}
+
+@media (max-width: 576px) {
+    .boite-item {
+        width: 100%;
+    }
+    .card {
+        width: 100%;
+    }
+    .card-title {
+        font-size: 1.2em;
+    }
+    .category-item {
+        font-size: 14px;
+        padding: 5px;
+    }
+}
+
+
+@media (max-width: 768px) {
+    .background-image {
+        height: 40vh; /* Reduce height on smaller screens */
+    }
+
+    .background-image div {
+        max-width: 90%;
+        padding: 10px;
+    }
+
+    .background-image h1 {
+        font-size: 1.8em; /* Adjust heading font size for smaller screens */
+    }
+
+    .background-image p {
+        font-size: 1em; /* Adjust paragraph font size */
+    }
+
+    .inside-text {
+        max-width: 90%;
+        padding: 10px;
+    }
+
+    #search-input {
+        width: 100%;
+        margin-top: 10px;
+    }
+    .navbar .container {
+        flex-direction: column;
+        text-align: center;
+    }
+    .navbar-brand img {
+        width: 100px;
+        height: 100px;
+    }
+    .navbar a {
+        margin-top: 10px;
+        font-size: 14px;
+    }
+    .boite-item {
+        max-width: 100%;
+    }
+}
+
+
