@@ -7,49 +7,74 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/home.css' %}">
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
 {% endblock %}
 
 
 {% block content %}
     
-<nav class="navbar navbar-expand-lg" id="navbar" style="width: 100%;
-top: 0;
-left: 0;
-right: 0;">
+{% load static %}
+
+<nav class="navbar navbar-expand-lg" id="navbar" style="width: 100%; top: 0; left: 0; right: 0;">
     <div class="container d-flex justify-content-between align-items-center">
-        <a class="navbar-brand" href="#">
-            <img src="{% static 'images/logo2.jpeg' %}" alt="Logo" style="width: 150px; height: 150px;border-radius: 50%;">
-        </a>
-        <a id="turnPageBtn" data-target-url="{% url 'home_events' %}" class="nav-link" style="color: white; text-decoration: none; margin-right: 20px; 
-        font-weight: bold; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7); cursor: pointer;" >Événements</a>
-        <div class="d-flex align-items-center">
-            <a href="{% url 'contact' %}" class="nav-link" 
-               style="color: white; text-decoration: none; margin-right: 20px; 
-                      font-weight: bold; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);">
-               Demandez une soumission
+        
+        <!-- Centered Logo -->
+        <div class="mx-auto">
+            <a class="navbar-brand d-flex justify-content-center" href="#">
+                <img src="{% static 'images/logo2.jpeg' %}" alt="Logo" 
+                     style="width: 100px; height: 100px; border-radius: 50%;">
             </a>
-            <p style="color: #FDC000; margin: 0; font-weight: bold; 
-                      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);">
-               514 937-0698
-            </p>
-            
-    
         </div>
+
+        <!-- Toggler Button (All the way to the right) -->
+        <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" 
+                data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" 
+                aria-label="Toggle navigation">
+                <i class="fa-solid fa-bars" style="color: white; font-size: 36px;"></i>
+        </button>
+
+        <!-- Navbar Items -->
+        <div class="collapse navbar-collapse text-lg-start text-center" id="navbarNav">
+            <ul class="navbar-nav mx-auto">  <!-- Center items when collapsed -->
+                <li class="nav-item">
+                    <a id="turnPageBtn" data-target-url="{% url 'home_events' %}" class="nav-link text-white fw-bold" 
+                    style="text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7); cursor: pointer;">Événements</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'contact' %}" class="nav-link text-white fw-bold" 
+                    style="text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);">
+                    Demandez une soumission</a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Phone Number (Always Right) -->
+        <p class="d-none d-lg-block fw-bold text-warning mb-0" 
+           style="text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);">
+           514 937-0698
+        </p>
     </div>
 </nav>
+
+
+
+<br>
+<br>
+
 
 
 <div id="pageTurnEffect" class="hidden"></div>
 
 <div class="background-image" style="position: relative; text-align: center; color: white;">
     <img src="{% static 'images/Salades-repas.jpg' %}" alt="Background Image" style="width: 100%; height: auto; opacity: 0.7;"> <!-- Adjust opacity as needed -->
-    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 20px; background: rgba(0, 0, 0, 0.5); border-radius: 10px;">
+    <div class="inside-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 20px; background: rgba(0, 0, 0, 0.5); border-radius: 10px;">
         <h1 style="font-size: 2.5em; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);">SERVICE DE TRAITEUR POUR REPAS D'AFFAIRES</h1>
         <p style="font-size: 1.2em; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);">Le bonheur est dans l’assiette... même au bureau !</p>
         <p style="font-size: 2.5em; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);">
@@ -61,7 +86,8 @@ right: 0;">
     </div>
 </div>
 
-
+<br>
+<br>
 <div id="categories" style="display: flex; justify-content: center; color: white;">
     {% for category in categories %}
         <div class="category-item nav-item" data-category-id="{{ category.id }}">
@@ -76,9 +102,10 @@ right: 0;">
         <h2 id="category-title" style="text-align: center;color: white;">Toutes nos boîtes-repas</h2>
     </div>
 </div>
-<div class="row">
-    <div class="col-md-4 offset-md-8"> <!-- This will offset the search input to the right -->
-        <input type="text" id="search-input" placeholder="Recherchez un aliment ou le nom d'une boîte ..." class="form-control" style="margin-top: 10px;">
+<div class="row justify-content-center">
+    <div class="col-md-4 col-sm-6"> <!-- Adjust width for different screens -->
+        <input type="text" id="search-input" placeholder="Recherchez un aliment ou le nom d'une boîte ..." 
+               class="form-control" style="margin-top: 10px; width: 90%; max-width: 400px;">
     </div>
 </div>
 <br>
