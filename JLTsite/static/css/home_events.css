@@ -12,7 +12,7 @@ body {
     margin-top: 70px; /* Adjust margin to avoid content being hidden under the sticky navbar */
     background: 
     linear-gradient(135deg, rgba(21, 20, 20, 0.8), rgba(50, 50, 50, 0.8)),
-        url("{% static 'images/slate-texture.jpg' %}");
+        url("../images/slate-texture.jpg");
     background-size: cover; /* Couvre l'ensemble de l'écran */
     background-attachment: fixed; /* Fixe la texture pour un effet de parallaxe */
     color: white; /* Couleur du texte */
@@ -33,7 +33,7 @@ body {
     height: 100%;
     background: 
     linear-gradient(135deg, rgba(21, 20, 20, 0.8), rgba(50, 50, 50, 0.8)),
-        url("{% static 'images/slate-texture.jpg' %}");
+        url("../images/slate-texture.jpg");
     transform-origin: left; /* Makes it turn like a real page */
     transform: perspective(1200px) rotateY(90deg);
     transition: transform 1s ease-in-out, opacity 0.5s ease-in-out;
