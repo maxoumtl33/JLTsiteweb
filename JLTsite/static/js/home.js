@@ -135,12 +135,18 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+document.addEventListener("DOMContentLoaded", function () {
+    const toggleButton = document.getElementById("toggle-button");
+    const menuIcon = document.getElementById("menu-icon");
 
-
-// JavaScript to toggle the active state
-document.querySelector('#toggle-button').addEventListener('click', function() {
-    this.classList.toggle('active');
+    toggleButton.addEventListener("click", function () {
+        if (menuIcon.classList.contains("fa-bars")) {
+            menuIcon.classList.remove("fa-bars");
+            menuIcon.classList.add("fa-times", "rotate"); // Change to cross with rotation
+        } else {
+            menuIcon.classList.remove("fa-times", "rotate");
+            menuIcon.classList.add("fa-bars"); // Change back to bars
+        }
+    });
 });
-
-
 

@@ -4,17 +4,6 @@
     padding: 10px 20px;
 }
 
-.inside-text {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    padding: 20px;
-    background: rgba(0, 0, 0, 0.5);
-    border-radius: 10px;
-    max-width: 90%; /* Limit width */
-    box-sizing: border-box; /* Ensure padding is included in width calculation */
-}
 
 /* Responsive Image Container */
 .image-container {
@@ -159,25 +148,22 @@ body {
   
 
   .background-image {
-    position: relative;
+    position: relative; /* Allows absolute positioning for inside-text */
     width: 100%;
-    height: 60vh; /* Adjusts height based on the viewport */
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    height: 100vh; /* Full height on large screens */
     text-align: center;
     color: white;
-    overflow: hidden;
+}
+
+.icon-active {
+    color: #FDC000 !important;
 }
 
 .background-image img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Ensures the image fills the space properly */
-    position: absolute;
-    top: 0;
-    left: 0;
-    opacity: 0.7;
+    object-fit: cover; /* Ensures the image covers the entire background */
+    opacity: 0.7; /* Adjust transparency */
 }
 
 .background-image h1 {
@@ -232,64 +218,42 @@ html {
     visibility: hidden;
 }
 
-/* Basic styling for the button */
-/* Basic styling for the button */
-#toggle-button {
-    background-color: transparent;
-    border: none;
-    padding: 10px;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
-    width: 30px;
-    height: 25px;
-    outline: none;
-    z-index: 9999; /* Ensure the button is above other elements */
+
+
+
+
+
+/* Inside-text should be centered and on top of the background image */
+.inside-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%; /* Adjust width for responsiveness */
+    max-width: 600px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    padding: 2vw;
+    text-align: center;
 }
 
-/* Styling for each line */
-#toggle-button .line {
-    width: 100%;
-    height: 4px;
-    background-color: #fdc000;  /* Yellow color for the lines */
-    border-radius: 4px;  /* Optional: for rounded edges */
-    transition: all 0.3s ease; /* Smooth transition for any transformations */
+/* Adjust font sizes for different screen sizes */
+.inside-text h1 {
+    font-size: 2.5vw;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    margin-bottom: 10px;
 }
 
-/* Space between the lines */
-#toggle-button .line-1, #toggle-button .line-2, #toggle-button .line-3 {
-    margin: 3px 0; /* Add some spacing between lines */
+.inside-text p {
+    font-size: 1.5vw;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    margin-bottom: 10px;
 }
 
-/* Active state for the toggle button (when clicked) */
-#toggle-button.active .line-1 {
-    transform: translateY(10px) rotate(45deg); /* Move and rotate the first line to form part of an 'X' */
+.inside-text a i {
+    color: #fdc000;
+    font-size: 2vw;
 }
-
-#toggle-button.active .line-2 {
-    opacity: 0; /* Hide the middle line */
-}
-
-#toggle-button.active .line-3 {
-    transform: translateY(-10px) rotate(-45deg); /* Move and rotate the third line to form part of an 'X' */
-}
-
-/* Optional: Hover effect for the button */
-#toggle-button:hover .line {
-    background-color: #f2b600; /* Change color on hover */
-}
-
-/* Ensure the button is visible within the navbar */
-.navbar-toggler {
-    display: block !important; /* Ensure the button is not hidden */
-    justify-content: center;
-    align-items: center;
-    z-index: 10000; /* Ensure it's above all other content */
-}
-
-
 
 
 /*
@@ -331,7 +295,15 @@ html {
     transform: rotateY(0);
     transition: transform 1s ease, opacity 1s ease;
 }
+#menu-icon {
+    color: white;
+    font-size: 36px;
+    transition: transform 0.3s ease-in-out; /* Smooth rotation effect */
+}
 
+.rotate {
+    transform: rotate(180deg); /* Rotates icon when toggled */
+}
 /* Responsive Cards */
 @media (max-width: 992px) {
     .boite-item {
@@ -358,30 +330,45 @@ html {
 
 @media (max-width: 768px) {
     .background-image {
-        height: 40vh; /* Reduce height on smaller screens */
+        height: 23vh !important;  /* Reduce height on smaller screens */
     }
 
     .background-image div {
-        max-width: 90%;
-        padding: 10px;
+        max-width: 90% !important;
+        padding: 10px !important;
     }
 
     .background-image h1 {
-        font-size: 1.8em; /* Adjust heading font size for smaller screens */
+        font-size: 1.8em !important; /* Adjust heading font size for smaller screens */
     }
 
     .background-image p {
-        font-size: 1em; /* Adjust paragraph font size */
+        font-size: 1em !important; /* Adjust paragraph font size */
     }
 
     .inside-text {
-        max-width: 90%;
-        padding: 10px;
+        width: 90% !important;
+        max-width: 90% !important;
+        min-height: 100px !important; /* Reduce height on mobile */
+        max-height: 200px !important;
+        padding: 15px !important;
+    }
+
+    .inside-text h1 {
+        font-size: 5vw !important;
+    }
+
+    .inside-text p {
+        font-size: 4vw !important;
+    }
+
+    .inside-text a i {
+        font-size: 5vw !important;
     }
 
     #search-input {
-        width: 100%;
-        margin-top: 10px;
+        width: 100% !important;
+        margin-top: 10px !important;
     }
     .navbar .container {
         flex-direction: column;

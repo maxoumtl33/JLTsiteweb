@@ -137,10 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-// JavaScript to toggle the active state
-document.querySelector('#toggle-button').addEventListener('click', function() {
-    this.classList.toggle('active');
-});
+
 
 
 
