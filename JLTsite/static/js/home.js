@@ -4,84 +4,99 @@ $(document).ready(function() {
 
         // Remove 'selected' class from all category items
         $('.category-item').removeClass('selected');
-
-        // Add 'selected' class to the clicked category
         $(this).addClass('selected');
 
-        // Clear the previous BoiteALunch items
-        $('#boites-container').empty();
+        // Fade out previous Boîte à Lunch items and then empty the container
+        $('#boitess-container').fadeOut(200, function() {
+            $(this).empty(); // Clear the container after fade out
 
-        // Construct the URL for the AJAX request
-        const url = `/get_boites/${categoryId}/`;
+            // Construct the URL for the AJAX request
+            const url = `/get_boites/${categoryId}/`;
 
-        // Send AJAX request to get BoiteALunch items for the selected category
-        $.ajax({
-            url: url,
-            method: 'GET',
-            success: function(data) {
-                // Check if there are results
-                if (data.length > 0) {
-                    const categoryName = data[0].categorie.nom;
-                    $('#category-title').text(`${categoryName}`); // Update title
+            // Send AJAX request
+            $.ajax({
+                url: url,
+                method: 'GET',
+                success: function(data) {
+                    console.log(data); // Log received data for debugging
+                    if (data.length > 0) {
+                        // Use the first item's name as the category title
+                        const categoryName = data[0].categorie.nom; 
+                        $('#category-title').fadeOut(200, function() {
+                            $(this).text(categoryName).fadeIn(200);
+                        });
 
-                    data.forEach(function(boite) {
-                        $('#boites-container').append(`
-                        <div class="col-md-4 boite-item">
-                            <div class="card" style="width: 25rem; margin: 10px; border: none; background: transparent;">
-                                <div class="image-container">
-                                    <img src="${boite.photo1}" 
-                                         alt="${boite.nom} Photo 1" 
-                                         class="card-img-top" 
-                                         style="cursor: pointer;">
-                                    <img src="${boite.photo2}" 
-                                         alt="${boite.nom} Photo 2" 
-                                         class="card-img-top hover-img">
-                                </div>
-                                <div class="card-body" style="display: flex; justify-content: space-between; align-items: center;">
-                                    <div>
-                                        <h2 class="card-title" style="color: #FDC000;">${boite.nom}</h2>
-                                        <a href="${boite.detail_url}" class="card-details">Détail de la boîte</a>
-                                        <p class="card-text" style="display: none;">${boite.description}</p>
+                        // Create new content for each Boîte
+                        const newContent = data.map(boite => `
+                            <div class="col-md-4 boite-item" style="display: none;">
+                                <div class="card" style="width: 25rem; margin: 10px; border: none; background: transparent;">
+                                    <div class="image-container">
+                                        <img src="${boite.photo1}" 
+                                             alt="${boite.nom} Photo 1" 
+                                             class="card-img-top" 
+                                             style="cursor: pointer;">
+                                        <img src="${boite.photo2}" 
+                                             alt="${boite.nom} Photo 2" 
+                                             class="card-img-top hover-img">
                                     </div>
-                                    <p class="card-price" style="margin-left: auto;">${boite.prix} $</p>
+                                    <div class="card-body" style="display: flex; justify-content: space-between; align-items: center;">
+                                        <div>
+                                            <h2 class="card-title" style="color: #FDC000;">${boite.nom}</h2>
+                                            <a href="#" class="card-details">Détail de la boîte</a>
+                                            <p class="card-text" style="display: none;">${boite.description}</p>
+                                        </div>
+                                        <p class="card-price" style="margin-left: auto;">${boite.prix || "N/A"} $</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        `);
-                    });
+                        `).join('');
 
-                    // Add hover effect for images
-                    $('.image-container').hover(
-                        function() {
-                            $(this).find('img:first').css('opacity', 0);  // Hide first image
-                            $(this).find('img:last').css('opacity', 1);   // Show second image
-                        }, 
-                        function() {
-                            $(this).find('img:first').css('opacity', 1);   // Show first image
-                            $(this).find('img:last').css('opacity', 0);    // Hide second image
-                        }
-                    );
-                } else {
-                    $('#boites-container').append('<p>No Boites à Lunch found for this category.</p>');
+                        // Append new content to the container and fade in new items
+                        $('#boitess-container').append(newContent).fadeIn(300, function() {
+                            $('.boite-item').each(function(index) {
+                                $(this).delay(index * 100).fadeIn(300); // Animate each item with a slight delay
+                            });
+                        });
+
+                        // Smooth hover effect for image transition
+                        $('.image-container img:last-child').css('opacity', 0);
+                        $('.image-container').hover(
+                            function() {
+                                $(this).find('img:first').stop().fadeTo(200, 0);
+                                $(this).find('img:last').stop().fadeTo(200, 1);
+                            },
+                            function() {
+                                $(this).find('img:first').stop().fadeTo(200, 1);
+                                $(this).find('img:last').stop().fadeTo(200, 0);
+                            }
+                        );
+                    } else {
+                        $('#boites-container').append('<p style="text-align:center; font-size:1.2rem;">No Boites à Lunch found for this category.</p>').fadeIn(300);
+                    }
+                },
+                error: function() {
+                    $('#boites-container').append('<p style="text-align:center; font-size:1.2rem; color:red;">An error occurred while fetching data.</p>').fadeIn(300);
                 }
-            },
-            error: function() {
-                $('#boites-container').append('<p>An error occurred while fetching data.</p>');
-            }
+            });
         });
     });
 
-   // Search functionality for name and description
-   $('#search-input').on('keyup', function() {
-    const value = $(this).val().toLowerCase(); // Get the search input value
-    $('.boite-item').filter(function() {
-        const titre = $(this).find('.card-title').text().toLowerCase(); // Get the title
-        const description = $(this).find('.card-text').text().toLowerCase(); // Get the description
-        // Show the item if the search term matches the title or the description
-        $(this).toggle(titre.indexOf(value) > -1 || description.indexOf(value) > -1);
+    // Smooth search filtering
+    $('#search-input').on('keyup', function() {
+        const value = $(this).val().toLowerCase();
+        $('.boite-item').each(function() {
+            const titre = $(this).find('.card-title').text().toLowerCase();
+            const description = $(this).find('.card-text').text().toLowerCase();
+            if (titre.indexOf(value) > -1 || description.indexOf(value) > -1) {
+                $(this).stop().fadeIn(200);
+            } else {
+                $(this).stop().fadeOut(200);
+            }
+        });
     });
 });
-});
+
+
 
 
 

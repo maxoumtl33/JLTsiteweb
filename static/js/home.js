@@ -2,30 +2,31 @@ $(document).ready(function() {
     $('.category-item').on('click', function() {
         const categoryId = $(this).data('category-id');
 
-        // Remove 'selected' class from all category items
+        // Remove 'selected' class from all category items with a smooth transition
         $('.category-item').removeClass('selected');
-
-        // Add 'selected' class to the clicked category
         $(this).addClass('selected');
 
-        // Clear the previous BoiteALunch items
-        $('#boites-container').empty();
+        // Fade out and clear previous BoiteALunch items
+        $('#boites-container').fadeOut(200, function() {
+            $(this).empty(); // Clear the container after fade out
+        });
 
         // Construct the URL for the AJAX request
         const url = `/get_boites/${categoryId}/`;
 
-        // Send AJAX request to get BoiteALunch items for the selected category
+        // Send AJAX request
         $.ajax({
             url: url,
             method: 'GET',
             success: function(data) {
-                // Check if there are results
                 if (data.length > 0) {
                     const categoryName = data[0].categorie.nom;
-                    $('#category-title').text(`${categoryName}`); // Update title
+                    $('#category-title').fadeOut(200, function() {
+                        $(this).text(categoryName).fadeIn(200); // Smoothly update title
+                    });
 
-                    data.forEach(function(boite) {
-                        $('#boites-container').append(`
+                    // Append new items with fade-in effect
+                    const newContent = data.map(boite => `
                         <div class="col-md-4 boite-item">
                             <div class="card" style="width: 25rem; margin: 10px; border: none; background: transparent;">
                                 <div class="image-container">
@@ -47,41 +48,50 @@ $(document).ready(function() {
                                 </div>
                             </div>
                         </div>
-                        `);
-                    });
+                    `).join('');
 
-                    // Add hover effect for images
+                    $('#boites-container').append(newContent);
+
+                    // Fade in new items
+                    $('.boite-item').fadeIn(300);
+
+                    // Smooth hover effect for image transition
+                    $('.image-container img:last-child').css('opacity', 0);
                     $('.image-container').hover(
                         function() {
-                            $(this).find('img:first').css('opacity', 0);  // Hide first image
-                            $(this).find('img:last').css('opacity', 1);   // Show second image
-                        }, 
+                            $(this).find('img:first').stop().fadeTo(200, 0);
+                            $(this).find('img:last').stop().fadeTo(200, 1);
+                        },
                         function() {
-                            $(this).find('img:first').css('opacity', 1);   // Show first image
-                            $(this).find('img:last').css('opacity', 0);    // Hide second image
+                            $(this).find('img:first').stop().fadeTo(200, 1);
+                            $(this).find('img:last').stop().fadeTo(200, 0);
                         }
                     );
                 } else {
-                    $('#boites-container').append('<p>No Boites à Lunch found for this category.</p>');
+                    $('#boites-container').append('<p style="text-align:center; font-size:1.2rem;">No Boites à Lunch found for this category.</p>').fadeIn(300);
                 }
             },
             error: function() {
-                $('#boites-container').append('<p>An error occurred while fetching data.</p>');
+                $('#boites-container').append('<p style="text-align:center; font-size:1.2rem; color:red;">An error occurred while fetching data.</p>').fadeIn(300);
             }
         });
     });
 
-   // Search functionality for name and description
-   $('#search-input').on('keyup', function() {
-    const value = $(this).val().toLowerCase(); // Get the search input value
-    $('.boite-item').filter(function() {
-        const titre = $(this).find('.card-title').text().toLowerCase(); // Get the title
-        const description = $(this).find('.card-text').text().toLowerCase(); // Get the description
-        // Show the item if the search term matches the title or the description
-        $(this).toggle(titre.indexOf(value) > -1 || description.indexOf(value) > -1);
+    // Smooth search filtering
+    $('#search-input').on('keyup', function() {
+        const value = $(this).val().toLowerCase();
+        $('.boite-item').each(function() {
+            const titre = $(this).find('.card-title').text().toLowerCase();
+            const description = $(this).find('.card-text').text().toLowerCase();
+            if (titre.indexOf(value) > -1 || description.indexOf(value) > -1) {
+                $(this).stop().fadeIn(200);
+            } else {
+                $(this).stop().fadeOut(200);
+            }
+        });
     });
 });
-});
+
 
 
 
@@ -135,9 +145,18 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+document.addEventListener("DOMContentLoaded", function () {
+    const toggleButton = document.getElementById("toggle-button");
+    const menuIcon = document.getElementById("menu-icon");
 
-
-
-
-
+    toggleButton.addEventListener("click", function () {
+        if (menuIcon.classList.contains("fa-bars")) {
+            menuIcon.classList.remove("fa-bars");
+            menuIcon.classList.add("fa-times", "rotate"); // Change to cross with rotation
+        } else {
+            menuIcon.classList.remove("fa-times", "rotate");
+            menuIcon.classList.add("fa-bars"); // Change back to bars
+        }
+    });
+});
 

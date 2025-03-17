@@ -115,7 +115,7 @@
 
 <div class="row" id="boites-container" style="margin: 20px 0;"> <!-- Container for dynamically loaded BoiteALunch cards -->
     <!-- Cards will be added here using JavaScript -->
-    <div class="row">
+    <div class="row" id="boitess-container">
         {% for boite in boites %}
             <div class="col-md-4 boite-item">
                 <div class="card" style="width: 25rem; margin: 10px; border: none; background: transparent;">
@@ -134,7 +134,6 @@
                             <p class="card-text" style="display: none;">{{ boite.description }}</p>
                         </div>
                         <p class="card-price">{{ boite.prix }} $</p>
-                        <p class="test">TEST</p>
                     </div>
                 </div>
             </div>

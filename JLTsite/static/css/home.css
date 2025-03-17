@@ -288,7 +288,17 @@ html {
     visibility: hidden;
     z-index: 9999;
 }
+#toggle-button {
+    border: none;         /* Removes border */
+    outline: none;        /* Removes outline */
+    box-shadow: none;     /* Prevents shadow on focus */
+}
 
+#toggle-button:focus, 
+#toggle-button:active {
+    outline: none;
+    box-shadow: none;
+}
 .show {
     opacity: 1;
     visibility: visible;
@@ -384,6 +394,18 @@ html {
     }
     .boite-item {
         max-width: 100%;
+    }
+    #categories {
+        flex-direction: row; /* Stack items vertically */
+        height: auto; /* Adjust dynamically */
+        padding: 20px;
+    }
+
+    .category-item {
+        font-size: 1rem; /* Even larger text for mobile */
+        padding: 15px;
+        width: 90%; /* Make it span most of the screen */
+        text-align: center;
     }
 }
 
