@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact - Julien-Leblanc Traiteur</title>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family:Playfair+Display:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Georgia, serif;
+            background-color: #F7F3EA;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* Barre décorative du haut */
+        
+        
+        /* Header */
+        header {
+            background-color: #F7F3EA;
+            padding: 20px 60px;
+            position: relative;
+            z-index: 100;
+            height: 150px;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        /* Menu burger */
+        .menu-burger {
+            width: 35px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+            z-index: 1001;
+            position: relative;
+        }
+        
+        .menu-burger span {
+            width: 100%;
+            height: 2px;
+            background-color: #000;
+            transition: all 0.3s ease;
+            display: block;
+        }
+        
+        .menu-burger.active span:nth-child(1) {
+            transform: rotate(45deg) translate(8px, 8px);
+        }
+        
+        .menu-burger.active span:nth-child(2) {
+            opacity: 0;
+        }
+        
+        .menu-burger.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(8px, -8px);
+        }
+        
+        /* Logo */
+        .logo {
+            text-align: center;
+            text-decoration: none;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .logo-icon {
+            font-family: 'Playfair Display', serif;
+            font-size: 36px;
+            color: #F4C843;
+            font-style: italic;
+            margin-bottom: -10px;
+        }
+        
+        .logo-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            color: #000;
+            letter-spacing: 1px;
+        }
+        
+        .logo-subtitle {
+            font-size: 11px;
+            color: #000;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+        
+        /* Actions header */
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .search-box {
+            position: relative;
+        }
+        
+        .search-box input {
+            padding: 8px 35px 8px 15px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            width: 200px;
+            font-family: Georgia, serif;
+            background-color: white;
+        }
+        
+        .search-box button {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+        }
+        
+        .header-actions .cart-icon {
+            position: relative;
+            cursor: pointer;
+            font-size: 24px;
+        }
+        
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #F4C843;
+            color: #000;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        
+        .language-selector {
+            display: flex;
+            gap: 10px;
+            font-size: 14px;
+        }
+        
+        .language-selector span {
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .language-selector span.active {
+            color: #000;
+            font-weight: bold;
+        }
+        
+        /* Hero Section */
+        .hero-section {
+            background-color: #444E36;
+            padding: 80px 60px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: repeating-linear-gradient(
+                90deg,
+                #F4C843 0px,
+                #F4C843 20px,
+                transparent 20px,
+                transparent 40px
+            );
+        }
+        
+        .hero-section h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 56px;
+            color: #F4C843;
+            margin-bottom: 20px;
+            font-weight: normal;
+            letter-spacing: 2px;
+        }
+        
+        .hero-section p {
+            color: #fff;
+            font-size: 18px;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+        
+        /* Contact Container */
+        .contact-container {
+            max-width: 1400px;
+            margin: -50px auto 80px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            padding: 0 60px;
+            position: relative;
+            z-index: 10;
+        }
+        
+        /* Contact Form Section */
+        .contact-form-section {
+            background: white;
+            padding: 60px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .contact-form-section h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 32px;
+            color: #000;
+            margin-bottom: 10px;
+            font-weight: normal;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 40px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 8px;
+            font-weight: normal;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            font-family: Georgia, serif;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background-color: #fff;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #F4C843;
+            box-shadow: 0 0 0 2px rgba(244, 200, 67, 0.1);
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin-right: 10px;
+        }
+        
+        .checkbox-group label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 0;
+        }
+        
+        .btn-submit {
+            background-color: #F4C843;
+            color: #000;
+            padding: 15px 40px;
+            border: none;
+            cursor: pointer;
+            font-family: Georgia, serif;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            width: 100%;
+        }
+        
+        .btn-submit:hover {
+            background-color: #e6b800;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(244, 200, 67, 0.4);
+        }
+        
+        /* Contact Info Section */
+        .contact-info-section {
+            background: white;
+            padding: 60px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .contact-info-section h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 32px;
+            color: #000;
+            margin-bottom: 40px;
+            font-weight: normal;
+        }
+        
+        .info-block {
+            margin-bottom: 40px;
+            padding-bottom: 40px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .info-block:last-child {
+            border-bottom: none;
+        }
+        
+        .info-block h3 {
+            color: #F4C843;
+            font-size: 20px;
+            margin-bottom: 15px;
+            font-weight: normal;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .info-block p {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.8;
+            margin-bottom: 10px;
+        }
+        
+        .info-block a {
+            color: #444E36;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .info-block a:hover {
+            color: #F4C843;
+        }
+        
+        /* Map Section */
+        .map-section {
+            margin: 80px 0;
+            position: relative;
+            height: 400px;
+            background-color: #ddd;
+        }
+        
+        .map-overlay {
+            position: absolute;
+            bottom: 40px;
+            left: 60px;
+            background: white;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            max-width: 350px;
+            z-index: 10;
+        }
+        
+        .map-overlay h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            color: #000;
+            margin-bottom: 15px;
+        }
+        
+        .map-overlay p {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .map-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #e0e0e0 25%, #f0f0f0 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 24px;
+        }
+        
+        /* Hours Section */
+        .hours-section {
+            background-color: #444E36;
+            padding: 80px 60px;
+            text-align: center;
+        }
+        
+        .hours-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .hours-content h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 42px;
+            color: #F4C843;
+            margin-bottom: 40px;
+            font-weight: normal;
+        }
+        
+        .hours-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            text-align: left;
+        }
+        
+        .hours-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(244, 200, 67, 0.2);
+        }
+        
+        .hours-item .day {
+            color: #F4C843;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .hours-item .time {
+            color: #fff;
+            font-size: 16px;
+        }
+        
+        /* FAQ Section */
+        .faq-section {
+            max-width: 1000px;
+            margin: 80px auto;
+            padding: 0 60px;
+        }
+        
+        .faq-section h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 42px;
+            text-align: center;
+            color: #000;
+            margin-bottom: 60px;
+            font-weight: normal;
+        }
+        
+        .faq-item {
+            background: white;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .faq-item:hover {
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .faq-question {
+            padding: 25px 30px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        
+        .faq-question:hover {
+            background-color: #fafafa;
+        }
+        
+        .faq-question h3 {
+            font-size: 18px;
+            color: #333;
+            font-weight: normal;
+        }
+        
+        .faq-toggle {
+            font-size: 24px;
+            color: #F4C843;
+            transition: transform 0.3s ease;
+        }
+        
+        .faq-item.active .faq-toggle {
+            transform: rotate(45deg);
+        }
+        
+        .faq-answer {
+            padding: 0 30px;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .faq-item.active .faq-answer {
+            padding: 0 30px 25px;
+            max-height: 300px;
+        }
+        
+        .faq-answer p {
+            color: #666;
+            line-height: 1.8;
+            font-size: 15px;
+        }
+        
+        /* Footer */
+        footer {
+            background-color: #444E36;
+            color: white;
+            padding: 60px;
+            margin-top: 0;
+        }
+        
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 40px;
+        }
+        
+        .footer-section h3 {
+            font-family: Georgia, serif;
+            font-size: 16px;
+            margin-bottom: 20px;
+            font-weight: normal;
+            color: #F4C843;
+        }
+        
+        .footer-section ul {
+            list-style: none;
+        }
+        
+        .footer-section ul li {
+            margin-bottom: 10px;
+        }
+        
+        .footer-section ul li a {
+            color: #ccc;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+        
+        .footer-section ul li a:hover {
+            color: #F4C843;
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 40px;
+            border-top: 1px solid #555;
+            color: #999;
+            font-size: 12px;
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .social-links a {
+            color: #ccc;
+            font-size: 20px;
+            transition: color 0.3s ease;
+        }
+        
+        .social-links a:hover {
+            color: #F4C843;
+        }
+        
+        /* Responsive */
+        @media screen and (max-width: 1024px) {
+            .contact-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .hours-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .footer-content {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media screen and (max-width: 768px) {
+            .header-content {
+                padding: 20px;
+            }
+            
+            .search-box {
+                display: none;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .contact-form-section,
+            .contact-info-section {
+                padding: 40px 30px;
+            }
+            
+            .hero-section h1 {
+                font-size: 36px;
+            }
+            
+            .footer-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Barre décorative -->
+    <div class="decorative-bar"></div>
+    
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <!-- Menu burger -->
+            <div class="menu-burger" id="menuBurger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            
+            <!-- Logo -->
+            <a href="/" class="logo">
+                <div class="logo-icon">JL</div>
+                <div class="logo-text">Julien-Leblanc</div>
+                <div class="logo-subtitle">TRAITEUR</div>
+            </a>
+            
+            <!-- Actions -->
+            <div class="header-actions">
+                <div class="search-box">
+                    <input type="text" placeholder="Rechercher...">
+                    <button>🔍</button>
+                </div>
+                <div class="cart-icon">
+                    🛒
+                    <span class="cart-count">0</span>
+                </div>
+                <div class="language-selector">
+                    <span class="active">Fr</span>
+                    <span>En</span>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <h1>Contactez-nous</h1>
+        <p>Notre équipe est à votre écoute pour créer des expériences culinaires uniques et mémorables pour vos événements d'entreprise et occasions spéciales.</p>
+    </section>
+    
+    <!-- Contact Container -->
+    <div class="contact-container">
+        <!-- Contact Form -->
+        <div class="contact-form-section">
+            <h2>Demande de soumission</h2>
+            <p class="subtitle">Remplissez le formulaire et nous vous contacterons dans les plus brefs délais.</p>
+            
+            <form id="contactForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstName">Prénom *</label>
+                        <input type="text" id="firstName" name="firstName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">Nom *</label>
+                        <input type="text" id="lastName" name="lastName" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="email">Courriel *</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Téléphone *</label>
+                        <input type="tel" id="phone" name="phone" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="company">Entreprise</label>
+                    <input type="text" id="company" name="company">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eventType">Type d'événement *</label>
+                        <select id="eventType" name="eventType" required>
+                            <option value="">Sélectionnez...</option>
+                            <option value="business">Repas d'affaires</option>
+                            <option value="corporate">Événement corporatif</option>
+                            <option value="cocktail">Cocktail / 5@7</option>
+                            <option value="wedding">Mariage</option>
+                            <option value="private">Événement privé</option>
+                            <option value="other">Autre</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="guestCount">Nombre d'invités *</label>
+                        <input type="number" id="guestCount" name="guestCount" min="1" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eventDate">Date de l'événement *</label>
+                        <input type="date" id="eventDate" name="eventDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="budget">Budget approximatif</label>
+                        <select id="budget" name="budget">
+                            <option value="">Sélectionnez...</option>
+                            <option value="<1000">Moins de 1 000$</option>
+                            <option value="1000-2500">1 000$ - 2 500$</option>
+                            <option value="2500-5000">2 500$ - 5 000$</option>
+                            <option value="5000-10000">5 000$ - 10 000$</option>
+                            <option value=">10000">Plus de 10 000$</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="message">Message / Détails de votre demande *</label>
+                    <textarea id="message" name="message" required></textarea>
+                </div>
+                
+                <div class="checkbox-group">
+                    <input type="checkbox" id="newsletter" name="newsletter">
+                    <label for="newsletter">J'aimerais recevoir les nouvelles et promotions de Julien-Leblanc Traiteur</label>
+                </div>
+                
+                <button type="submit" class="btn-submit">Envoyer la demande</button>
+            </form>
+        </div>
+        
+        <!-- Contact Info -->
+        <div class="contact-info-section">
+            <h2>Informations de contact</h2>
+            
+            <div class="info-block">
+                <h3>Téléphone</h3>
+                <p><strong>Bureau:</strong> <a href="tel:5148120498">514 812-0498</a></p>
+                <p><strong>Sans frais:</strong> <a href="tel:18885550498">1 888 555-0498</a></p>
+            </div>
+            
+            <div class="info-block">
+                <h3>Courriel</h3>
+                <p><a href="mailto:contact@julien-leblanc.com">contact@julien-leblanc.com</a></p>
+                <p><a href="mailto:evenements@julien-leblanc.com">evenements@julien-leblanc.com</a></p>
+            </div>
+            
+            <div class="info-block">
+                <h3>Adresse</h3>
+                <p>1234 Boulevard Saint-Laurent<br>
+                Montréal, QC H2X 2S6<br>
+                Canada</p>
+            </div>
+            
+            <div class="info-block">
+                <h3>Réseaux sociaux</h3>
+                <div class="social-links" style="margin-top: 15px;">
+                    <a href="#">📘 Facebook</a>
+                    <a href="#">📷 Instagram</a>
+                    <a href="#">💼 LinkedIn</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Map Section -->
+    <section class="map-section">
+        <div class="map-placeholder">
+            Carte Google Maps
+        </div>
+        <div class="map-overlay">
+            <h3>Notre cuisine</h3>
+            <p>Située au cœur de Montréal, notre cuisine est équipée des dernières technologies pour garantir la fraîcheur et la qualité de nos plats.</p>
+            <p style="margin-top: 15px;"><strong>Stationnement gratuit disponible</strong></p>
+        </div>
+    </section>
+    
+    <!-- Hours Section -->
+    <section class="hours-section">
+        <div class="hours-content">
+            <h2>Heures d'ouverture</h2>
+            <div class="hours-grid">
+                <div class="hours-item">
+                    <span class="day">Lundi</span>
+                    <span class="time">8h00 - 18h00</span>
+                </div>
+                <div class="hours-item">
+                    <span class="day">Mardi</span>
+                    <span class="time">8h00 - 18h00</span>
+                </div>
+                <div class="hours-item">
+                    <span class="day">Mercredi</span>
+                    <span class="time">8h00 - 18h00</span>
+                </div>
+                <div class="hours-item">
+                    <span class="day">Jeudi</span>
+                    <span class="time">8h00 - 20h00</span>
+                </div>
+                <div class="hours-item">
+                    <span class="day">Vendredi</span>
+                    <span class="time">8h00 - 20h00</span>
+                </div>
+                <div class="hours-item">
+                    <span class="day">Samedi</span>
+                    <span class="time">9h00 - 17h00</span>
+                </div>
+                <div class="hours-item">
+                    <span class="day">Dimanche</span>
+                    <span class="time">Sur rendez-vous</span>
+                </div>
+                <div class="hours-item">
+                    <span class="day">Service 24/7</span>
+                    <span class="time">Pour urgences</span>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- FAQ Section -->
+    <section class="faq-section">
+        <h2>Questions fréquentes</h2>
+        
+        <div class="faq-item">
+            <div class="faq-question">
+                <h3>Quel est le délai minimum pour passer une commande?</h3>
+                <span class="faq-toggle">+</span>
+            </div>
+            <div class="faq-answer">
+                <p>Pour les commandes régulières, nous demandons un préavis de 48 heures. Pour les événements de plus de 50 personnes, un délai de 7 jours est préférable. Pour les urgences, contactez-nous directement et nous ferons notre possible pour vous accommoder.</p>
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question">
+                <h3>Offrez-vous des options végétariennes et véganes?</h3>
+                <span class="faq-toggle">+</span>
+            </div>
+            <div class="faq-answer">
+                <p>Absolument! Nous proposons une large gamme d'options végétariennes, véganes et sans gluten. Notre chef se fera un plaisir de créer des menus personnalisés selon vos besoins alimentaires spécifiques.</p>
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question">
+                <h3>Livrez-vous en dehors de Montréal?</h3>
+                <span class="faq-toggle">+</span>
+            </div>
+            <div class="faq-answer">
+                <p>Oui, nous livrons dans tout le Grand Montréal et les environs. Des frais de livraison peuvent s'appliquer selon la distance. Pour les événements spéciaux, nous pouvons également nous déplacer plus loin.</p>
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question">
+                <h3>Proposez-vous un service de personnel pour les événements?</h3>
+                <span class="faq-toggle">+</span>
+            </div>
+            <div class="faq-answer">
+                <p>Oui, nous offrons un service complet incluant serveurs, barmans et maîtres d'hôtel professionnels. Notre équipe est formée pour assurer un service impeccable lors de vos événements.</p>
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question">
+                <h3>Comment fonctionne la dégustation avant l'événement?</h3>
+                <span class="faq-toggle">+</span>
+            </div>
+            <div class="faq-answer">
+                <p>Pour les événements de 50 personnes et plus, nous offrons une séance de dégustation gratuite. Vous pourrez goûter et approuver les plats sélectionnés avant le jour J. Des frais peuvent s'appliquer pour les plus petits groupes.</p>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Repas d'affaires</h3>
+                <ul>
+                    <li><a href="#">Déjeuners</a></li>
+                    <li><a href="#">Pauses & collations</a></li>
+                    <li><a href="#">Repas froids</a></li>
+                    <li><a href="#">Repas chauds</a></li>
+                    <li><a href="#">Cocktails & 5@7</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Boîtes repas</h3>
+                <ul>
+                    <li><a href="#">Prêt-à-manger</a></li>
+                    <li><a href="#">Prêt-à-emporter</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Événements</h3>
+                <ul>
+                    <li><a href="#">Stations culinaires</a></li>
+                    <li><a href="#">Banquets</a></li>
+                    <li><a href="#">Repas thématiques</a></li>
+                    <li><a href="#">Chef à domicile</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h3>À propos</h3>
+                <ul>
+                    <li><a href="#">Notre histoire</a></li>
+                    <li><a href="#">Achat local</a></li>
+                    <li><a href="#">Environnement</a></li>
+                    <li><a href="#">Réalisations</a></li>
+                    <li><a href="#">Carrières</a></li>
+                    <li><a href="#">FAQ</a></li>
+                </ul>
+                <div class="social-links">
+                    <a href="#">📘</a>
+                    <a href="#">📷</a>
+                    <a href="#">💼</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>514 812-0498 | contact@julien-leblanc.com</p>
+            <p>© 2024 Julien-Leblanc Traiteur - Tous droits réservés | Montréal QC, H4N 3G6</p>
+        </div>
+    </footer>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // FAQ Toggle
+            const faqItems = document.querySelectorAll('.faq-item');
+            
+            faqItems.forEach(item => {
+                const question = item.querySelector('.faq-question');
+                
+                question.addEventListener('click', () => {
+                    // Close other items
+                    faqItems.forEach(otherItem => {
+                        if (otherItem !== item && otherItem.classList.contains('active')) {
+                            otherItem.classList.remove('active');
+                        }
+                    });
+                    
+                    // Toggle current item
+                    item.classList.toggle('active');
+                });
+            });
+            
+            // Form submission
+            const contactForm = document.getElementById('contactForm');
+            
+            contactForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Collect form data
+                const formData = new FormData(contactForm);
+                const data = {};
+                
+                formData.forEach((value, key) => {
+                    data[key] = value;
+                });
+                
+                console.log('Form submitted with data:', data);
+                
+                // Show success message
+                alert('Merci pour votre demande! Nous vous contacterons dans les plus brefs délais.');
+                
+                // Reset form
+                contactForm.reset();
+            });
+            
+            // Language selector
+            const langButtons = document.querySelectorAll('.language-selector span');
+            langButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    langButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                });
+            });
+            
+            // Smooth animations on scroll
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '0';
+                        entry.target.style.transform = 'translateY(20px)';
+                        
+                        setTimeout(() => {
+                            entry.target.style.transition = 'all 0.6s ease';
+                            entry.target.style.opacity = '1';
+                            entry.target.style.transform = 'translateY(0)';
+                        }, 100);
+                        
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            
+            // Observe elements
+            document.querySelectorAll('.info-block, .faq-item').forEach(el => {
+                observer.observe(el);
+            });
+            
+            // Form field animations
+            const formInputs = document.querySelectorAll('input, select, textarea');
+            
+            formInputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    this.parentElement.style.transform = 'scale(1.02)';
+                    this.parentElement.style.transition = 'transform 0.3s ease';
+                });
+                
+                input.addEventListener('blur', function() {
+                    this.parentElement.style.transform = 'scale(1)';
+                });
+            });
+            
+            // Date picker - set minimum date to today
+            const eventDateInput = document.getElementById('eventDate');
+            const today = new Date().toISOString().split('T')[0];
+            eventDateInput.setAttribute('min', today);
+            
+            // Phone number formatting
+            const phoneInput = document.getElementById('phone');
+            phoneInput.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length > 0) {
+                    if (value.length <= 3) {
+                        value = value;
+                    } else if (value.length <= 6) {
+                        value = value.slice(0, 3) + '-' + value.slice(3);
+                    } else {
+                        value = value.slice(0, 3) + '-' + value.slice(3, 6) + '-' + value.slice(6, 10);
+                    }
+                }
+                e.target.value = value;
+            });
+            
+            // Menu burger (if needed)
+            const menuBurger = document.getElementById('menuBurger');
+            if (menuBurger) {
+                menuBurger.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                    console.log('Menu toggled');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
