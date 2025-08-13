@@ -1,600 +1,437 @@
-# models.py
+from django.db import models
+from django.utils import timezone
+from django.conf import settings
+
+class ContactSubmission(models.Model):
+    """Modèle pour stocker les soumissions de contact"""
+    
+    EVENT_TYPE_CHOICES = [
+        ('business', 'Repas d\'affaires'),
+        ('corporate', 'Événement corporatif'),
+        ('cocktail', 'Cocktail / 5@7'),
+        ('wedding', 'Mariage'),
+        ('private', 'Événement privé'),
+        ('other', 'Autre'),
+    ]
+    
+    BUDGET_CHOICES = [
+        ('<1000', 'Moins de 1 000$'),
+        ('1000-2500', '1 000$ - 2 500$'),
+        ('2500-5000', '2 500$ - 5 000$'),
+        ('5000-10000', '5 000$ - 10 000$'),
+        ('>10000', 'Plus de 10 000$'),
+    ]
+    
+    # Informations personnelles
+    first_name = models.CharField(max_length=100, verbose_name='Prénom')
+    last_name = models.CharField(max_length=100, verbose_name='Nom')
+    email = models.EmailField(verbose_name='Courriel')
+    phone = models.CharField(max_length=20, verbose_name='Téléphone')
+    company = models.CharField(max_length=200, blank=True, null=True, verbose_name='Entreprise')
+    
+    # Détails de l'événement
+    event_type = models.CharField(max_length=20, choices=EVENT_TYPE_CHOICES, verbose_name='Type d\'événement')
+    guest_count = models.IntegerField(verbose_name='Nombre d\'invités')
+    event_date = models.DateField(verbose_name='Date de l\'événement')
+    budget = models.CharField(max_length=20, choices=BUDGET_CHOICES, blank=True, null=True, verbose_name='Budget')
+    message = models.TextField(verbose_name='Message')
+    
+    # Autres
+    newsletter = models.BooleanField(default=False, verbose_name='Inscription newsletter')
+    created_at = models.DateTimeField(default=timezone.now, verbose_name='Date de soumission')
+    is_processed = models.BooleanField(default=False, verbose_name='Traité')
+    
+    class Meta:
+        verbose_name = 'Soumission de contact'
+        verbose_name_plural = 'Soumissions de contact'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.first_name} {self.last_name} - {self.event_date}"
+    
+
+    # ========================================
+# models.py - Modèles pour le système e-commerce
+# ========================================
+
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
+from django.core.validators import MinValueValidator, MaxValueValidator
 from decimal import Decimal
 import uuid
-import string
-import random
+
+# ========================================
+# 1. MODÈLE UTILISATEUR PERSONNALISÉ
+# ========================================
+
 from django.contrib.auth.models import AbstractUser
+from django.db import models
 
 class User(AbstractUser):
+    """Utilisateur personnalisé avec informations supplémentaires"""
+    
+    CUSTOMER = 'customer'
+    STAFF = 'staff'
+    ADMIN = 'admin'
+    
+    ROLE_CHOICES = [
+        (CUSTOMER, 'Client'),
+        (STAFF, 'Personnel'),
+        (ADMIN, 'Administrateur'),
+    ]
+    
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=CUSTOMER)
     phone = models.CharField(max_length=20, blank=True)
+    company = models.CharField(max_length=200, blank=True)
     address = models.TextField(blank=True)
-    city = models.CharField(max_length=100, default='Montreal')
     postal_code = models.CharField(max_length=10, blank=True)
-    company_name = models.CharField(max_length=200, blank=True)
-    date_joined = models.DateTimeField(auto_now_add=True)
+    city = models.CharField(max_length=100, blank=True)
+    newsletter = models.BooleanField(default=False)
     email_verified = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    # IMPORTANT: Ajouter ces lignes pour résoudre les conflits
     groups = models.ManyToManyField(
         'auth.Group',
-        related_name='jltsite_user', # <-- change this
+        related_name='jltsite_users',  # Changed from user_set
         blank=True,
+        help_text='The groups this user belongs to.',
+        verbose_name='groups',
     )
     user_permissions = models.ManyToManyField(
         'auth.Permission',
-        related_name='jltsite_user', # <-- change this
+        related_name='jltsite_users',  # Changed from user_set
         blank=True,
+        help_text='Specific permissions for this user.',
+        verbose_name='user permissions',
     )
     
-    def get_full_address(self):
-        return f"{self.address}, {self.city} {self.postal_code}"
+    class Meta:
+        verbose_name = 'Utilisateur'
+        verbose_name_plural = 'Utilisateurs'
+
+# ========================================
+# 2. MODÈLES PRODUITS
+# ========================================
 
 class Category(models.Model):
+    """Catégories de produits"""
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True)
     description = models.TextField(blank=True)
-    image = models.ImageField(upload_to='categories/', blank=True)
-    order = models.IntegerField(default=0)
+    image = models.ImageField(upload_to='categories/', blank=True, null=True)
     is_active = models.BooleanField(default=True)
+    order = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
+        verbose_name = 'Catégorie'
+        verbose_name_plural = 'Catégories'
         ordering = ['order', 'name']
-        verbose_name_plural = 'Categories'
     
     def __str__(self):
         return self.name
 
-class LunchBox(models.Model):
-    name = models.CharField(max_length=200)
+class Product(models.Model):
+    """Produits (Boîtes à lunch)"""
+    
+    DISPONIBLE = 'disponible'
+    RUPTURE = 'rupture'
+    COMMANDE = 'sur_commande'
+    
+    STATUS_CHOICES = [
+        (DISPONIBLE, 'Disponible'),
+        (RUPTURE, 'Rupture de stock'),
+        (COMMANDE, 'Sur commande'),
+    ]
+    
+    name = models.CharField(max_length=200, verbose_name='Nom')
     slug = models.SlugField(unique=True)
-    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='lunch_boxes')
-    description = models.TextField()
-    ingredients = models.TextField(help_text="Liste des ingrédients")
-    price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
-    image = models.ImageField(upload_to='lunch_boxes/')
-    thumbnail = models.ImageField(upload_to='lunch_boxes/thumbs/', blank=True)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
+    description = models.TextField(verbose_name='Description')
+    ingredients = models.TextField(verbose_name='Ingrédients', blank=True)
+    allergens = models.CharField(max_length=500, blank=True, verbose_name='Allergènes')
+    
+    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Prix')
+    promo_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name='Prix promo')
+    
+    image = models.ImageField(upload_to='images/', verbose_name='Image principale')
+    image_2 = models.ImageField(upload_to='products/', blank=True, null=True)
+    image_3 = models.ImageField(upload_to='products/', blank=True, null=True)
+    
     calories = models.IntegerField(null=True, blank=True)
-    is_vegetarian = models.BooleanField(default=False)
-    is_vegan = models.BooleanField(default=False)
-    is_gluten_free = models.BooleanField(default=False)
-    is_available = models.BooleanField(default=True)
-    preparation_time = models.IntegerField(help_text="Temps de préparation en minutes", default=30)
-    min_order_quantity = models.IntegerField(default=1)
+    preparation_time = models.IntegerField(help_text='En minutes', null=True, blank=True)
+    
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=DISPONIBLE)
+    stock = models.IntegerField(default=0, verbose_name='Stock disponible')
+    min_order = models.IntegerField(default=1, verbose_name='Commande minimum')
+    
+    is_vegetarian = models.BooleanField(default=False, verbose_name='Végétarien')
+    is_vegan = models.BooleanField(default=False, verbose_name='Végane')
+    is_gluten_free = models.BooleanField(default=False, verbose_name='Sans gluten')
+    is_featured = models.BooleanField(default=False, verbose_name='Mis en avant')
+    is_active = models.BooleanField(default=True, verbose_name='Actif')
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    # Statistiques
     views_count = models.IntegerField(default=0)
     sales_count = models.IntegerField(default=0)
     
     class Meta:
+        verbose_name = 'Produit'
+        verbose_name_plural = 'Produits'
         ordering = ['-created_at']
-        verbose_name_plural = 'Lunch Boxes'
     
     def __str__(self):
         return self.name
     
-    def get_rating(self):
-        reviews = self.reviews.filter(is_approved=True)
-        if reviews:
-            return reviews.aggregate(models.Avg('rating'))['rating__avg']
+    def get_price(self):
+        """Retourne le prix actuel (promo ou normal)"""
+        return self.promo_price if self.promo_price else self.price
+    
+    def is_in_stock(self):
+        """Vérifie si le produit est en stock"""
+        return self.stock > 0 and self.status == self.DISPONIBLE
+    
+    def get_discount_percentage(self):
+        """Calcule le pourcentage de réduction"""
+        if self.promo_price and self.promo_price < self.price:
+            return int(((self.price - self.promo_price) / self.price) * 100)
         return 0
 
-class PromoCode(models.Model):
-    DISCOUNT_TYPE_CHOICES = [
-        ('percentage', 'Pourcentage'),
-        ('fixed', 'Montant fixe'),
+# ========================================
+# 3. MODÈLES PANIER
+# ========================================
+
+class Cart(models.Model):
+    """Panier d'achat"""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
+    session_key = models.CharField(max_length=100, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Panier'
+        verbose_name_plural = 'Paniers'
+    
+    def __str__(self):
+        return f"Panier {self.id} - {self.user or self.session_key}"
+    
+    def get_total(self):
+        """Calcule le total du panier"""
+        total = Decimal('0.00')
+        for item in self.items.all():
+            total += item.get_subtotal()
+        return total
+    
+    def get_items_count(self):
+        """Compte le nombre total d'articles"""
+        return sum(item.quantity for item in self.items.all())
+
+class CartItem(models.Model):
+    """Article dans le panier"""
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+    notes = models.TextField(blank=True, verbose_name='Notes spéciales')
+    added_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Article du panier'
+        verbose_name_plural = 'Articles du panier'
+        unique_together = ['cart', 'product']
+    
+    def __str__(self):
+        return f"{self.quantity}x {self.product.name}"
+    
+    def get_subtotal(self):
+        """Calcule le sous-total de l'article"""
+        return self.product.get_price() * self.quantity
+
+# ========================================
+# 4. MODÈLES COMMANDES
+# ========================================
+
+class Order(models.Model):
+    """Commande"""
+    
+    # Statuts
+    PENDING = 'pending'
+    CONFIRMED = 'confirmed'
+    PREPARING = 'preparing'
+    READY = 'ready'
+    DELIVERED = 'delivered'
+    CANCELLED = 'cancelled'
+    
+    STATUS_CHOICES = [
+        (PENDING, 'En attente'),
+        (CONFIRMED, 'Confirmée'),
+        (PREPARING, 'En préparation'),
+        (READY, 'Prête'),
+        (DELIVERED, 'Livrée'),
+        (CANCELLED, 'Annulée'),
     ]
     
-    code = models.CharField(max_length=20, unique=True)
-    description = models.TextField(blank=True)
-    discount_type = models.CharField(max_length=10, choices=DISCOUNT_TYPE_CHOICES)
+    # Types de livraison
+    PICKUP = 'pickup'
+    DELIVERY = 'delivery'
+    
+    DELIVERY_CHOICES = [
+        (PICKUP, 'Ramassage'),
+        (DELIVERY, 'Livraison'),
+    ]
+    
+    # Informations de base
+    order_number = models.CharField(max_length=50, unique=True, editable=False)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='orders')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
+    
+    # Informations de contact
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    email = models.EmailField()
+    phone = models.CharField(max_length=20)
+    company = models.CharField(max_length=200, blank=True)
+    
+    # Livraison
+    delivery_type = models.CharField(max_length=20, choices=DELIVERY_CHOICES, default=DELIVERY)
+    delivery_address = models.TextField()
+    delivery_postal_code = models.CharField(max_length=10)
+    delivery_city = models.CharField(max_length=100)
+    delivery_date = models.DateField()
+    delivery_time = models.TimeField()
+    delivery_notes = models.TextField(blank=True)
+    
+    # Montants
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2)
+    tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('14.975'))
+    tax_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    delivery_fee = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    total = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    # Paiement
+    payment_method = models.CharField(max_length=50, blank=True)
+    payment_status = models.CharField(max_length=50, default='pending')
+    transaction_id = models.CharField(max_length=200, blank=True)
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    delivered_at = models.DateTimeField(null=True, blank=True)
+    
+    # Notes internes
+    admin_notes = models.TextField(blank=True)
+    
+    class Meta:
+        verbose_name = 'Commande'
+        verbose_name_plural = 'Commandes'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Commande {self.order_number}"
+    
+    def save(self, *args, **kwargs):
+        if not self.order_number:
+            # Générer un numéro de commande unique
+            self.order_number = self.generate_order_number()
+        super().save(*args, **kwargs)
+    
+    def generate_order_number(self):
+        """Génère un numéro de commande unique"""
+        date_str = timezone.now().strftime('%Y%m%d')
+        random_str = str(uuid.uuid4())[:6].upper()
+        return f"JLT-{date_str}-{random_str}"
+    
+    def calculate_totals(self):
+        """Recalcule les totaux de la commande"""
+        self.tax_amount = self.subtotal * (self.tax_rate / 100)
+        self.total = self.subtotal + self.tax_amount + self.delivery_fee - self.discount_amount
+        return self.total
+
+class OrderItem(models.Model):
+    """Article d'une commande"""
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
+    product_name = models.CharField(max_length=200)  # Gardé au cas où le produit est supprimé
+    product_price = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity = models.PositiveIntegerField()
+    notes = models.TextField(blank=True)
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    class Meta:
+        verbose_name = 'Article de commande'
+        verbose_name_plural = 'Articles de commande'
+    
+    def __str__(self):
+        return f"{self.quantity}x {self.product_name}"
+    
+    def save(self, *args, **kwargs):
+        self.subtotal = self.product_price * self.quantity
+        super().save(*args, **kwargs)
+
+# ========================================
+# 5. MODÈLES POUR PROMOTIONS ET COUPONS
+# ========================================
+
+class Coupon(models.Model):
+    """Codes de réduction"""
+    code = models.CharField(max_length=50, unique=True)
+    description = models.TextField()
+    discount_type = models.CharField(
+        max_length=20,
+        choices=[
+            ('percentage', 'Pourcentage'),
+            ('fixed', 'Montant fixe'),
+        ]
+    )
     discount_value = models.DecimalField(max_digits=10, decimal_places=2)
-    minimum_order = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    usage_limit = models.IntegerField(null=True, blank=True, help_text="Laisser vide pour illimité")
+    minimum_amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    usage_limit = models.IntegerField(default=0, help_text='0 = illimité')
     usage_count = models.IntegerField(default=0)
-    user_limit = models.IntegerField(default=1, help_text="Nombre d'utilisations par client")
-    is_combinable = models.BooleanField(default=False, help_text="Peut être combiné avec d'autres codes")
     valid_from = models.DateTimeField()
     valid_until = models.DateTimeField()
     is_active = models.BooleanField(default=True)
-    applicable_products = models.ManyToManyField(LunchBox, blank=True, related_name='promo_codes')
-    applicable_categories = models.ManyToManyField(Category, blank=True, related_name='promo_codes')
-    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Coupon'
+        verbose_name_plural = 'Coupons'
     
     def __str__(self):
         return self.code
     
     def is_valid(self):
+        """Vérifie si le coupon est valide"""
         now = timezone.now()
-        if not self.is_active:
-            return False
-        if now < self.valid_from or now > self.valid_until:
-            return False
-        if self.usage_limit and self.usage_count >= self.usage_limit:
-            return False
-        return True
-    
-    def calculate_discount(self, subtotal):
-        if self.discount_type == 'percentage':
-            return (subtotal * self.discount_value) / 100
-        return min(self.discount_value, subtotal)
+        return (
+            self.is_active and
+            self.valid_from <= now <= self.valid_until and
+            (self.usage_limit == 0 or self.usage_count < self.usage_limit)
+        )
 
-class Cart(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
-    session_key = models.CharField(max_length=40, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    def get_subtotal(self):
-        return sum(item.get_total() for item in self.items.all())
-    
-    def get_total_with_discounts(self, promo_codes=[]):
-        subtotal = self.get_subtotal()
-        total_discount = Decimal('0')
-        
-        for code in promo_codes:
-            if code.is_valid() and subtotal >= code.minimum_order:
-                total_discount += code.calculate_discount(subtotal)
-                if not code.is_combinable:
-                    break
-        
-        return max(subtotal - total_discount, Decimal('0'))
-
-class CartItem(models.Model):
-    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
-    lunch_box = models.ForeignKey(LunchBox, on_delete=models.CASCADE)
-    quantity = models.IntegerField(default=1, validators=[MinValueValidator(1)])
-    customization_notes = models.TextField(blank=True)
-    added_at = models.DateTimeField(auto_now_add=True)
-    
-    def get_total(self):
-        return self.lunch_box.price * self.quantity
-
-class Order(models.Model):
-    STATUS_CHOICES = [
-        ('pending', 'En attente'),
-        ('confirmed', 'Confirmée'),
-        ('preparing', 'En préparation'),
-        ('ready', 'Prête'),
-        ('delivered', 'Livrée'),
-        ('cancelled', 'Annulée'),
-    ]
-    
-    DELIVERY_TYPE_CHOICES = [
-        ('pickup', 'Ramassage'),
-        ('delivery', 'Livraison'),
-    ]
-    
-    order_number = models.CharField(max_length=20, unique=True, editable=False)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='orders')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    delivery_type = models.CharField(max_length=20, choices=DELIVERY_TYPE_CHOICES)
-    delivery_address = models.TextField()
-    delivery_date = models.DateField()
-    delivery_time = models.TimeField()
-    special_instructions = models.TextField(blank=True)
-    subtotal = models.DecimalField(max_digits=10, decimal_places=2)
-    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    delivery_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    tax_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    promo_codes_used = models.ManyToManyField(PromoCode, blank=True)
-    payment_method = models.CharField(max_length=50, blank=True)
-    payment_id = models.CharField(max_length=100, blank=True)
-    is_paid = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        ordering = ['-created_at']
-    
-    def save(self, *args, **kwargs):
-        if not self.order_number:
-            self.order_number = self.generate_order_number()
-        super().save(*args, **kwargs)
-    
-    def generate_order_number(self):
-        prefix = timezone.now().strftime('%Y%m%d')
-        random_suffix = ''.join(random.choices(string.digits, k=6))
-        return f"CMD-{prefix}-{random_suffix}"
-    
-    def __str__(self):
-        return f"Commande {self.order_number}"
-
-class OrderItem(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
-    lunch_box = models.ForeignKey(LunchBox, on_delete=models.SET_NULL, null=True)
-    quantity = models.IntegerField()
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
-    customization_notes = models.TextField(blank=True)
-    
-    def get_total(self):
-        return self.unit_price * self.quantity
-
-class Event(models.Model):
-    EVENT_TYPE_CHOICES = [
-        ('corporate', 'Corporatif'),
-        ('wedding', 'Mariage'),
-        ('birthday', 'Anniversaire'),
-        ('other', 'Autre'),
-    ]
-    
-    name = models.CharField(max_length=200)
-    slug = models.SlugField(unique=True)
-    event_type = models.CharField(max_length=20, choices=EVENT_TYPE_CHOICES)
-    description = models.TextField()
-    date = models.DateField()
-    time = models.TimeField()
-    location = models.CharField(max_length=300)
-    guest_count = models.IntegerField()
-    menu_items = models.ManyToManyField(LunchBox, through='EventMenuItem')
-    total_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    client = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='events')
-    is_confirmed = models.BooleanField(default=False)
-    notes = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    def __str__(self):
-        return f"{self.name} - {self.date}"
-
-class EventMenuItem(models.Model):
-    event = models.ForeignKey(Event, on_delete=models.CASCADE)
-    lunch_box = models.ForeignKey(LunchBox, on_delete=models.CASCADE)
-    quantity = models.IntegerField()
-    special_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-
-class Contact(models.Model):
-    SUBJECT_CHOICES = [
-        ('general', 'Question générale'),
-        ('order', 'Commande'),
-        ('event', 'Événement'),
-        ('complaint', 'Réclamation'),
-        ('other', 'Autre'),
-    ]
-    
-    name = models.CharField(max_length=100)
-    email = models.EmailField()
-    phone = models.CharField(max_length=20, blank=True)
-    subject = models.CharField(max_length=20, choices=SUBJECT_CHOICES)
-    message = models.TextField()
-    is_read = models.BooleanField(default=False)
-    is_answered = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        ordering = ['-created_at']
-    
-    def __str__(self):
-        return f"{self.name} - {self.subject}"
+# ========================================
+# 6. MODÈLES POUR REVIEWS
+# ========================================
 
 class Review(models.Model):
-    lunch_box = models.ForeignKey(LunchBox, on_delete=models.CASCADE, related_name='reviews')
+    """Avis sur les produits"""
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     order = models.ForeignKey(Order, on_delete=models.SET_NULL, null=True, blank=True)
     rating = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     comment = models.TextField()
-    is_approved = models.BooleanField(default=False)
+    is_verified_purchase = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
-        unique_together = ['lunch_box', 'user', 'order']
+        verbose_name = 'Avis'
+        verbose_name_plural = 'Avis'
         ordering = ['-created_at']
-
-class Analytics(models.Model):
-    date = models.DateField(unique=True)
-    total_orders = models.IntegerField(default=0)
-    total_revenue = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    total_customers = models.IntegerField(default=0)
-    new_customers = models.IntegerField(default=0)
-    returning_customers = models.IntegerField(default=0)
-    average_order_value = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    most_sold_item = models.ForeignKey(LunchBox, on_delete=models.SET_NULL, null=True, blank=True)
-    promo_codes_used = models.IntegerField(default=0)
-    cancelled_orders = models.IntegerField(default=0)
+        unique_together = ['product', 'user', 'order']
     
-    class Meta:
-        ordering = ['-date']
-        verbose_name_plural = 'Analytics'
-
-# admin.py
-from django.contrib import admin
-from .models import *
-
-@admin.register(User)
-class UserAdmin(admin.ModelAdmin):
-    list_display = ['username', 'email', 'company_name', 'date_joined', 'email_verified']
-    search_fields = ['username', 'email', 'company_name']
-    list_filter = ['email_verified', 'date_joined']
-
-@admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
-    list_display = ['name', 'order', 'is_active']
-    prepopulated_fields = {'slug': ('name',)}
-
-@admin.register(LunchBox)
-class LunchBoxAdmin(admin.ModelAdmin):
-    list_display = ['name', 'category', 'price', 'is_available', 'sales_count']
-    list_filter = ['category', 'is_available', 'is_vegetarian', 'is_vegan', 'is_gluten_free']
-    search_fields = ['name', 'description']
-    prepopulated_fields = {'slug': ('name',)}
-
-@admin.register(PromoCode)
-class PromoCodeAdmin(admin.ModelAdmin):
-    list_display = ['code', 'discount_type', 'discount_value', 'is_combinable', 'is_active', 'usage_count']
-    list_filter = ['is_active', 'is_combinable', 'discount_type']
-    search_fields = ['code']
-
-@admin.register(Order)
-class OrderAdmin(admin.ModelAdmin):
-    list_display = ['order_number', 'user', 'status', 'total_amount', 'is_paid', 'created_at']
-    list_filter = ['status', 'is_paid', 'delivery_type', 'created_at']
-    search_fields = ['order_number', 'user__email']
-    readonly_fields = ['order_number']
-
-@admin.register(Event)
-class EventAdmin(admin.ModelAdmin):
-    list_display = ['name', 'event_type', 'date', 'guest_count', 'is_confirmed']
-    list_filter = ['event_type', 'is_confirmed', 'date']
-    search_fields = ['name', 'client__email']
-
-@admin.register(Contact)
-class ContactAdmin(admin.ModelAdmin):
-    list_display = ['name', 'email', 'subject', 'is_read', 'is_answered', 'created_at']
-    list_filter = ['subject', 'is_read', 'is_answered', 'created_at']
-    search_fields = ['name', 'email']
-
-@admin.register(Review)
-class ReviewAdmin(admin.ModelAdmin):
-    list_display = ['lunch_box', 'user', 'rating', 'is_approved', 'created_at']
-    list_filter = ['rating', 'is_approved', 'created_at']
-
-@admin.register(Analytics)
-class AnalyticsAdmin(admin.ModelAdmin):
-    list_display = ['date', 'total_orders', 'total_revenue', 'average_order_value']
-    list_filter = ['date']
-
-# views.py
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.db.models import Q, Count, Sum, Avg
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from django.core.paginator import Paginator
-from django.utils import timezone
-from decimal import Decimal
-import json
-
-def calculate_cart_totals(cart, promo_codes=[]):
-    """Calcule les totaux du panier avec taxes et promotions"""
-    subtotal = cart.get_subtotal()
-    discount = Decimal('0')
-    
-    # Appliquer les codes promo
-    for code in promo_codes:
-        if code.is_valid() and subtotal >= code.minimum_order:
-            discount += code.calculate_discount(subtotal)
-            if not code.is_combinable:
-                break
-    
-    # Calcul des taxes (exemple: 14.975% pour Québec)
-    TAX_RATE = Decimal('0.14975')
-    subtotal_after_discount = subtotal - discount
-    tax = subtotal_after_discount * TAX_RATE
-    
-    # Frais de livraison
-    delivery_fee = Decimal('5.00') if subtotal < 50 else Decimal('0')
-    
-    total = subtotal_after_discount + tax + delivery_fee
-    
-    return {
-        'subtotal': subtotal,
-        'discount': discount,
-        'tax': tax,
-        'delivery_fee': delivery_fee,
-        'total': total
-    }
-
-@require_POST
-def add_to_cart(request, lunch_box_id):
-    """Ajouter un article au panier"""
-    lunch_box = get_object_or_404(LunchBox, id=lunch_box_id, is_available=True)
-    quantity = int(request.POST.get('quantity', 1))
-    customization = request.POST.get('customization', '')
-    
-    # Obtenir ou créer le panier
-    if request.user.is_authenticated:
-        cart, created = Cart.objects.get_or_create(user=request.user)
-    else:
-        session_key = request.session.session_key
-        if not session_key:
-            request.session.save()
-            session_key = request.session.session_key
-        cart, created = Cart.objects.get_or_create(session_key=session_key)
-    
-    # Ajouter ou mettre à jour l'article
-    cart_item, created = CartItem.objects.get_or_create(
-        cart=cart,
-        lunch_box=lunch_box,
-        defaults={'quantity': quantity, 'customization_notes': customization}
-    )
-    
-    if not created:
-        cart_item.quantity += quantity
-        cart_item.save()
-    
-    # Incrémenter le compteur de vues
-    lunch_box.views_count += 1
-    lunch_box.save()
-    
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return JsonResponse({
-            'success': True,
-            'cart_count': cart.items.count(),
-            'message': f'{lunch_box.name} ajouté au panier'
-        })
-    
-    messages.success(request, f'{lunch_box.name} a été ajouté au panier')
-    return redirect('lunch_box_detail', slug=lunch_box.slug)
-
-@require_POST
-def apply_promo_code(request):
-    """Appliquer un code promo au panier"""
-    code = request.POST.get('promo_code', '').upper()
-    
-    try:
-        promo = PromoCode.objects.get(code=code)
-        
-        if not promo.is_valid():
-            return JsonResponse({'success': False, 'message': 'Code promo invalide ou expiré'})
-        
-        # Vérifier l'utilisation par utilisateur
-        if request.user.is_authenticated:
-            user_usage = Order.objects.filter(
-                user=request.user,
-                promo_codes_used=promo
-            ).count()
-            if user_usage >= promo.user_limit:
-                return JsonResponse({'success': False, 'message': 'Vous avez déjà utilisé ce code'})
-        
-        # Stocker le code en session
-        if 'promo_codes' not in request.session:
-            request.session['promo_codes'] = []
-        
-        if code not in request.session['promo_codes']:
-            if not promo.is_combinable and request.session['promo_codes']:
-                return JsonResponse({'success': False, 'message': 'Ce code ne peut pas être combiné'})
-            request.session['promo_codes'].append(code)
-            request.session.modified = True
-        
-        return JsonResponse({
-            'success': True,
-            'message': f'Code {code} appliqué avec succès',
-            'discount_type': promo.discount_type,
-            'discount_value': float(promo.discount_value)
-        })
-        
-    except PromoCode.DoesNotExist:
-        return JsonResponse({'success': False, 'message': 'Code promo invalide'})
-
-@login_required
-def checkout(request):
-    """Page de paiement"""
-    cart = get_object_or_404(Cart, user=request.user)
-    
-    if not cart.items.exists():
-        messages.warning(request, 'Votre panier est vide')
-        return redirect('lunch_boxes')
-    
-    # Récupérer les codes promo de la session
-    promo_codes = []
-    if 'promo_codes' in request.session:
-        promo_codes = PromoCode.objects.filter(
-            code__in=request.session['promo_codes'],
-            is_active=True
-        )
-    
-    # Calculer les totaux
-    totals = calculate_cart_totals(cart, promo_codes)
-    
-    if request.method == 'POST':
-        # Créer la commande
-        order = Order.objects.create(
-            user=request.user,
-            delivery_type=request.POST.get('delivery_type'),
-            delivery_address=request.POST.get('delivery_address'),
-            delivery_date=request.POST.get('delivery_date'),
-            delivery_time=request.POST.get('delivery_time'),
-            special_instructions=request.POST.get('special_instructions', ''),
-            subtotal=totals['subtotal'],
-            discount_amount=totals['discount'],
-            delivery_fee=totals['delivery_fee'],
-            tax_amount=totals['tax'],
-            total_amount=totals['total']
-        )
-        
-        # Ajouter les articles de la commande
-        for item in cart.items.all():
-            OrderItem.objects.create(
-                order=order,
-                lunch_box=item.lunch_box,
-                quantity=item.quantity,
-                unit_price=item.lunch_box.price,
-                customization_notes=item.customization_notes
-            )
-            # Incrémenter les ventes
-            item.lunch_box.sales_count += item.quantity
-            item.lunch_box.save()
-        
-        # Ajouter les codes promo utilisés
-        order.promo_codes_used.set(promo_codes)
-        for promo in promo_codes:
-            promo.usage_count += 1
-            promo.save()
-        
-        # Vider le panier et la session
-        cart.items.all().delete()
-        request.session.pop('promo_codes', None)
-        
-        # Mise à jour des analytics
-        update_daily_analytics()
-        
-        messages.success(request, f'Commande {order.order_number} créée avec succès')
-        return redirect('order_confirmation', order_number=order.order_number)
-    
-    context = {
-        'cart': cart,
-        'totals': totals,
-        'promo_codes': promo_codes
-    }
-    return render(request, 'checkout.html', context)
-
-def update_daily_analytics():
-    """Met à jour les statistiques quotidiennes"""
-    today = timezone.now().date()
-    analytics, created = Analytics.objects.get_or_create(date=today)
-    
-    # Statistiques du jour
-    daily_orders = Order.objects.filter(created_at__date=today)
-    
-    analytics.total_orders = daily_orders.count()
-    analytics.total_revenue = daily_orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
-    analytics.cancelled_orders = daily_orders.filter(status='cancelled').count()
-    
-    # Clients
-    customers = daily_orders.values('user').distinct()
-    analytics.total_customers = customers.count()
-    
-    # Nouveaux vs anciens clients
-    new_customers = 0
-    for order in daily_orders:
-        if order.user:
-            first_order = Order.objects.filter(user=order.user).order_by('created_at').first()
-            if first_order.created_at.date() == today:
-                new_customers += 1
-    
-    analytics.new_customers = new_customers
-    analytics.returning_customers = analytics.total_customers - new_customers
-    
-    # Valeur moyenne des commandes
-    if analytics.total_orders > 0:
-        analytics.average_order_value = analytics.total_revenue / analytics.total_orders
-    
-    # Article le plus vendu
-    top_item = OrderItem.objects.filter(
-        order__created_at__date=today
-    ).values('lunch_box').annotate(
-        total_qty=Sum('quantity')
-    ).order_by('-total_qty').first()
-    
-    if top_item:
-        analytics.most_sold_item_id = top_item['lunch_box']
-    
-    # Codes promo utilisés
-    analytics.promo_codes_used = daily_orders.filter(
-        promo_codes_used__isnull=False
-    ).distinct().count()
-    
-    analytics.save()
-
+    def __str__(self):
+        return f"Avis de {self.user.username} sur {self.product.name}"

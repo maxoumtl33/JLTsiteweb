@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -7,7 +8,12 @@
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family:Playfair+Display:wght@400;700&display=swap');
-        
+        @font-face {
+            font-family: 'NeueKabel-Regular';
+            src: url('{% static "fonts/NeueKabel-Regular.otf" %}') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+        }
         * {
             margin: 0;
             padding: 0;
@@ -15,12 +21,18 @@
         }
         
         body {
-            font-family: Georgia, serif;
+            font-family: 'NeueKabel-Regular', serif;
             background-color: black;
             min-height: 100vh;
             overflow-x: hidden;
-            border-left: 35px solid white;
-            border-right: 35px solid white;
+        }
+
+        .logo-image {
+            width: 200px;
+        }
+
+        .logoscroll {
+            width: 100px;
         }
         
         /* Barre décorative du haut */
@@ -106,7 +118,7 @@
         }
         
         .logo-icon {
-            font-family: 'Playfair Display', serif;
+
             font-size: 36px;
             color: #F4C843;
             font-style: italic;
@@ -114,7 +126,6 @@
         }
         
         .logo-text {
-            font-family: 'Playfair Display', serif;
             font-size: 28px;
             color: #000;
             letter-spacing: 1px;
@@ -144,7 +155,6 @@
             border: 1px solid #ddd;
             border-radius: 25px;
             width: 200px;
-            font-family: Georgia, serif;
             background-color: white;
         }
         
@@ -221,7 +231,6 @@
         }
         
         .menu-section h3 {
-            font-family: Georgia, serif;
             font-size: 18px;
             color: #000;
             margin-bottom: 20px;
@@ -301,7 +310,6 @@
         }
         
         .hero-content h1 {
-            font-family: Georgia, serif;
             font-size: 42px;
             color: #F4C843;
             margin-bottom: 15px;
@@ -375,7 +383,6 @@
         }
         
         .service-content h2 {
-            font-family: Georgia, serif;
             font-size: 24px;
             color: #000;
             margin-bottom: 15px;
@@ -397,7 +404,6 @@
             padding: 12px 30px;
             border: none;
             cursor: pointer;
-            font-family: Georgia, serif;
             font-size: 14px;
             transition: all 0.3s ease;
             text-transform: none;
@@ -433,7 +439,6 @@
         }
         
         .event-banner h2 {
-            font-family: Georgia, serif;
             font-size: 36px;
             margin-bottom: 10px;
             font-weight: normal;
@@ -469,7 +474,6 @@
         }
         
         .footer-section h3 {
-            font-family: Georgia, serif;
             font-size: 16px;
             margin-bottom: 20px;
             font-weight: normal;
@@ -590,12 +594,15 @@
                 <span></span>
             </div>
             
-            <!-- Logo -->
-            <a href="/" class="logo">
-                <div class="logo-icon">JL</div>
-                <div class="logo-text">Julien-Leblanc</div>
-                <div class="logo-subtitle">TRAITEUR</div>
-            </a>
+                        
+            <div class="logo">
+                <div class="logo-container">
+                    <img src="{% static 'images/JLT_noir_jaune.png' %}" alt="Logo" class="logo-image" />
+                </div>
+                <div class="logo-container">
+                    <img src="{% static 'images/jaune.png' %}" alt="Logo" class="logoscroll" style="display: none;"/>
+                </div>
+            </div>
             
             <!-- Actions -->
             <div class="header-actions">
@@ -777,7 +784,7 @@
             <br>
             <br>
             
-            <a href="#" class="btn-consulter">Contactez notre équipe conseil</a>
+            <a href="{% url 'contacts' %}" class="btn-consulter">Contactez notre équipe conseil</a>
         </div>
         <div class="event-banner-image">
             <p>Soyez curieux,<br>allez voir ce<br>qu'on fait d'autre...</p>
@@ -841,24 +848,24 @@
 
     
 <script>
-window.addEventListener('scroll', () => {
-    const header = document.querySelector('header');
-    const logoText = document.querySelector('.logo-text');
-    const logoSubtitle = document.querySelector('.logo-subtitle');
-    const scrollPosition = window.scrollY;
-    const thresholdPoint = 60; // ajustez selon votre besoin
-
-    if (scrollPosition > thresholdPoint) {
-        header.style.height = '85px'; // hauteur réduite
-        header.style.padding = '5px';
-        logoText.style.display = 'none'; // cacher texte
-        logoSubtitle.style.display = 'none'; // cacher sous-titre
-    } else {
-        header.style.height = '150px'; // hauteur initiale
-        logoText.style.display = 'block'; // montrer texte
-        logoSubtitle.style.display = 'block'; // montrer sous-titre
-    }
-});
+ window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            const logoText = document.querySelector('.logo-image');
+            const scrollPosition = window.scrollY;
+            const thresholdPoint = 60; // ajustez selon votre besoin
+            const logoscroll = document.querySelector('.logoscroll');
+        
+            if (scrollPosition > thresholdPoint) {
+                header.style.height = '100px'; // hauteur réduite
+                header.style.padding = '5px';
+                logoText.style.display = 'none'; // cacher texte
+                logoscroll.style.display = 'block';
+            } else {
+                header.style.height = '150px'; // hauteur initiale
+                logoText.style.display = 'block'; // montrer texte
+                logoscroll.style.display = 'none';
+            }
+        });
 
         // Menu burger functionality
         document.addEventListener('DOMContentLoaded', function() {
@@ -963,16 +970,6 @@ window.addEventListener('scroll', () => {
                 }
             });
             
-            // Button click handlers
-            document.querySelectorAll('.btn-consulter').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const serviceCard = e.target.closest('.service-card');
-                    if (serviceCard) {
-                        const serviceName = serviceCard.querySelector('h2').textContent;
-                        console.log('Navigation vers le menu de:', serviceName);
-                    }
-                });
-            });
+            
         });
 </script>

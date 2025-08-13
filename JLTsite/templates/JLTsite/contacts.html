@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -7,7 +8,12 @@
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family:Playfair+Display:wght@400;700&display=swap');
-        
+        @font-face {
+            font-family: 'NeueKabel-Regular';
+            src: url('{% static "fonts/NeueKabel-Regular.otf" %}') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+        }
         * {
             margin: 0;
             padding: 0;
@@ -15,7 +21,7 @@
         }
         
         body {
-            font-family: Georgia, serif;
+            font-family: 'NeueKabel-Regular';
             background-color: #F7F3EA;
             min-height: 100vh;
             overflow-x: hidden;
@@ -26,11 +32,17 @@
         
         /* Header */
         header {
-            background-color: #F7F3EA;
-            padding: 20px 60px;
-            position: relative;
+            background-color: white;
+            padding: 20px;
             z-index: 100;
+            width: calc(100% - 16%);
+            margin: 0 8%;
+            position: sticky; /* Ajouté */
+            top: 0;
+            z-index: 100;
+            transition: height 0.3s ease;
             height: 150px;
+            
         }
         
         .header-content {
@@ -39,7 +51,10 @@
             align-items: center;
             max-width: 1400px;
             margin: 0 auto;
+            height: 13vh;
         }
+
+       
         
         /* Menu burger */
         .menu-burger {
@@ -51,7 +66,7 @@
             justify-content: space-between;
             transition: all 0.3s ease;
             z-index: 1001;
-            position: relative;
+            margin-left: 30px;
         }
         
         .menu-burger span {
@@ -59,7 +74,6 @@
             height: 2px;
             background-color: #000;
             transition: all 0.3s ease;
-            display: block;
         }
         
         .menu-burger.active span:nth-child(1) {
@@ -84,7 +98,6 @@
         }
         
         .logo-icon {
-            font-family: 'Playfair Display', serif;
             font-size: 36px;
             color: #F4C843;
             font-style: italic;
@@ -92,7 +105,6 @@
         }
         
         .logo-text {
-            font-family: 'Playfair Display', serif;
             font-size: 28px;
             color: #000;
             letter-spacing: 1px;
@@ -122,7 +134,6 @@
             border: 1px solid #ddd;
             border-radius: 25px;
             width: 200px;
-            font-family: Georgia, serif;
             background-color: white;
         }
         
@@ -200,7 +211,6 @@
         }
         
         .hero-section h1 {
-            font-family: 'Playfair Display', serif;
             font-size: 56px;
             color: #F4C843;
             margin-bottom: 20px;
@@ -215,6 +225,89 @@
             margin: 0 auto;
             line-height: 1.6;
             opacity: 0.9;
+        }
+
+        .logo-image {
+            width: 200px;
+        }
+
+        .logoscroll {
+            width: 100px;
+        }
+
+        /* Menu de navigation latéral */
+        .side-menu {
+            position: fixed;
+            left: -400px;
+            top: 0;
+            width: 400px;
+            height: 100vh;
+            background-color: #F7F3EA;
+            z-index: 999;
+            transition: left 0.4s ease;
+            overflow-y: auto;
+            padding: 100px 40px 40px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .side-menu.active {
+            left: 0;
+        }
+        
+        .menu-section {
+            margin-bottom: 40px;
+        }
+        
+        .menu-section h3 {
+            font-size: 18px;
+            color: #000;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: normal;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #000;
+        }
+        
+        .menu-section ul {
+            list-style: none;
+        }
+        
+        .menu-section ul li {
+            margin-bottom: 12px;
+        }
+        
+        .menu-section ul li a {
+            color: #333;
+            text-decoration: none;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            display: block;
+            padding: 5px 0;
+        }
+        
+        .menu-section ul li a:hover {
+            color: #F4C843;
+            padding-left: 10px;
+        }
+        
+        /* Overlay */
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .menu-overlay.active {
+            display: block;
+            opacity: 1;
         }
         
         /* Contact Container */
@@ -237,7 +330,6 @@
         }
         
         .contact-form-section h2 {
-            font-family: 'Playfair Display', serif;
             font-size: 32px;
             color: #000;
             margin-bottom: 10px;
@@ -277,7 +369,6 @@
             width: 100%;
             padding: 12px;
             border: 1px solid #ddd;
-            font-family: Georgia, serif;
             font-size: 14px;
             transition: all 0.3s ease;
             background-color: #fff;
@@ -319,7 +410,6 @@
             padding: 15px 40px;
             border: none;
             cursor: pointer;
-            font-family: Georgia, serif;
             font-size: 16px;
             transition: all 0.3s ease;
             text-transform: uppercase;
@@ -341,7 +431,6 @@
         }
         
         .contact-info-section h2 {
-            font-family: 'Playfair Display', serif;
             font-size: 32px;
             color: #000;
             margin-bottom: 40px;
@@ -404,7 +493,6 @@
         }
         
         .map-overlay h3 {
-            font-family: 'Playfair Display', serif;
             font-size: 24px;
             color: #000;
             margin-bottom: 15px;
@@ -440,7 +528,6 @@
         }
         
         .hours-content h2 {
-            font-family: 'Playfair Display', serif;
             font-size: 42px;
             color: #F4C843;
             margin-bottom: 40px;
@@ -481,7 +568,6 @@
         }
         
         .faq-section h2 {
-            font-family: 'Playfair Display', serif;
             font-size: 42px;
             text-align: center;
             color: #000;
@@ -564,7 +650,6 @@
         }
         
         .footer-section h3 {
-            font-family: Georgia, serif;
             font-size: 16px;
             margin-bottom: 20px;
             font-weight: normal;
@@ -662,8 +747,8 @@
     <!-- Barre décorative -->
     <div class="decorative-bar"></div>
     
-    <!-- Header -->
     <header>
+        
         <div class="header-content">
             <!-- Menu burger -->
             <div class="menu-burger" id="menuBurger">
@@ -672,13 +757,14 @@
                 <span></span>
             </div>
             
-            <!-- Logo -->
-            <a href="/" class="logo">
-                <div class="logo-icon">JL</div>
-                <div class="logo-text">Julien-Leblanc</div>
-                <div class="logo-subtitle">TRAITEUR</div>
-            </a>
-            
+            <div class="logo">
+            <div class="logo-container">
+                <img src="{% static 'images/JLT_noir_jaune.png' %}" alt="Logo" class="logo-image" />
+            </div>
+            <div class="logo-container">
+                <img src="{% static 'images/jaune.png' %}" alt="Logo" class="logoscroll" style="display: none;"/>
+            </div>
+        </div>
             <!-- Actions -->
             <div class="header-actions">
                 <div class="search-box">
@@ -696,6 +782,59 @@
             </div>
         </div>
     </header>
+    <div class="side-menu" id="sideMenu">
+        <div class="menu-section">
+            <h3>REPAS D'AFFAIRES</h3>
+            <ul>
+                <li><a href="#dejeuners">Déjeuners</a></li>
+                <li><a href="#pauses">Pauses & collations</a></li>
+                <li><a href="#repas-froids">Repas froids</a></li>
+                <li><a href="#repas-chauds">Repas chauds</a></li>
+                <li><a href="#cocktails">Cocktails & 5@7</a></li>
+            </ul>
+        </div>
+        
+        <div class="menu-section">
+            <h3>BOÎTES REPAS</h3>
+            <ul>
+                <li><a href="#pret-manger">Prêt-à-manger</a></li>
+                <li><a href="#pret-emporter">Prêt-à-emporter</a></li>
+            </ul>
+        </div>
+        
+        <div class="menu-section">
+            <h3>ÉVÉNEMENTS</h3>
+            <ul>
+                <li><a href="#stations">Stations culinaires</a></li>
+                <li><a href="#banquets">Banquets</a></li>
+                <li><a href="#thematiques">Repas et événements thématiques</a></li>
+                <li><a href="#cocktails-events">Cocktails & 5@7</a></li>
+                <li><a href="#chef">Chef à domicile</a></li>
+            </ul>
+        </div>
+        
+        <div class="menu-section">
+            <h3>À PROPOS</h3>
+            <ul>
+                <li><a href="#histoire">Notre histoire</a></li>
+                <li><a href="#achat-local">Achat local</a></li>
+                <li><a href="#environnement">Pratiques environnementales</a></li>
+                <li><a href="#realisations">Réalisations</a></li>
+                <li><a href="#carrieres">Carrières</a></li>
+                <li><a href="#faq">FAQ</a></li>
+            </ul>
+        </div>
+        
+        <div class="menu-section">
+            <h3>NOUS JOINDRE</h3>
+            <ul>
+                <li><a href="#contact">Contactez notre équipe conseil</a></li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Overlay -->
+    <div class="menu-overlay" id="menuOverlay"></div>
     
     <!-- Hero Section -->
     <section class="hero-section">
@@ -1007,30 +1146,7 @@
                     item.classList.toggle('active');
                 });
             });
-            
-            // Form submission
-            const contactForm = document.getElementById('contactForm');
-            
-            contactForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                // Collect form data
-                const formData = new FormData(contactForm);
-                const data = {};
-                
-                formData.forEach((value, key) => {
-                    data[key] = value;
-                });
-                
-                console.log('Form submitted with data:', data);
-                
-                // Show success message
-                alert('Merci pour votre demande! Nous vous contacterons dans les plus brefs délais.');
-                
-                // Reset form
-                contactForm.reset();
-            });
-            
+        
             // Language selector
             const langButtons = document.querySelectorAll('.language-selector span');
             langButtons.forEach(btn => {
@@ -1103,15 +1219,472 @@
                 e.target.value = value;
             });
             
-            // Menu burger (if needed)
-            const menuBurger = document.getElementById('menuBurger');
-            if (menuBurger) {
-                menuBurger.addEventListener('click', function() {
-                    this.classList.toggle('active');
-                    console.log('Menu toggled');
+            
+        });
+
+        // Menu burger functionality
+                document.addEventListener('DOMContentLoaded', function() {
+                    const menuBurger = document.getElementById('menuBurger');
+                    const sideMenu = document.getElementById('sideMenu');
+                    const menuOverlay = document.getElementById('menuOverlay');
+                    
+                    // Toggle menu
+                    menuBurger.addEventListener('click', function() {
+                        console.log('Menu burger clicked');
+                        menuBurger.classList.toggle('active');
+                        sideMenu.classList.toggle('active');
+                        menuOverlay.classList.toggle('active');
+                    });
+                    
+                    // Close menu when clicking overlay
+                    menuOverlay.addEventListener('click', function() {
+                        menuBurger.classList.remove('active');
+                        sideMenu.classList.remove('active');
+                        menuOverlay.classList.remove('active');
+                    });
+                    
+                    // Smooth scroll for anchor links
+                    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                        anchor.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            const targetId = this.getAttribute('href');
+                            
+                            if (targetId === '#') return;
+                            
+                            const target = document.querySelector(targetId);
+                            
+                            if (target) {
+                                // Close menu if open
+                                menuBurger.classList.remove('active');
+                                sideMenu.classList.remove('active');
+                                menuOverlay.classList.remove('active');
+                                
+                                // Scroll to section
+                                target.scrollIntoView({
+                                    behavior: 'smooth',
+                                    block: 'start'
+                                });
+                            }
+                        });
+                    });
+                    
+                    // Animation on scroll
+                    const observerOptions = {
+                        threshold: 0.1,
+                        rootMargin: '0px 0px -50px 0px'
+                    };
+                    
+                    const observer = new IntersectionObserver((entries) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                entry.target.style.opacity = '0';
+                                entry.target.style.transform = 'translateY(20px)';
+                                
+                                setTimeout(() => {
+                                    entry.target.style.transition = 'all 0.6s ease';
+                                    entry.target.style.opacity = '1';
+                                    entry.target.style.transform = 'translateY(0)';
+                                }, 100);
+                                
+                                observer.unobserve(entry.target);
+                            }
+                        });
+                    }, observerOptions);
+                    
+                    // Observe service cards
+                    document.querySelectorAll('.service-card').forEach(card => {
+                        observer.observe(card);
+                    });
+                    
+                    // Cart management
+                    const cartIcon = document.querySelector('.cart-icon');
+                    const cartCount = document.querySelector('.cart-count');
+                    
+                    // Language selector
+                    const langButtons = document.querySelectorAll('.language-selector span');
+                    langButtons.forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            langButtons.forEach(b => b.classList.remove('active'));
+                            btn.classList.add('active');
+                            console.log('Language selected:', btn.textContent);
+                        });
+                    });
+                    
+                    // Hero animation on load
+                    window.addEventListener('load', () => {
+                        const heroContent = document.querySelector('.hero-content');
+                        if (heroContent) {
+                            heroContent.style.opacity = '0';
+                            heroContent.style.transform = 'translateX(-30px)';
+                            
+                            setTimeout(() => {
+                                heroContent.style.transition = 'all 1s ease';
+                                heroContent.style.opacity = '1';
+                                heroContent.style.transform = 'translateX(0)';
+                            }, 200);
+                        }
+                    });
+                    
+                    
                 });
+      
+
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            const logoText = document.querySelector('.logo-image');
+            const scrollPosition = window.scrollY;
+            const thresholdPoint = 60; // ajustez selon votre besoin
+            const logoscroll = document.querySelector('.logoscroll');
+        
+            if (scrollPosition > thresholdPoint) {
+                header.style.height = '100px'; // hauteur réduite
+                header.style.padding = '5px';
+                logoText.style.display = 'none'; // cacher texte
+                logoscroll.style.display = 'block';
+            } else {
+                header.style.height = '150px'; // hauteur initiale
+                logoText.style.display = 'block'; // montrer texte
+                logoscroll.style.display = 'none';
             }
         });
+
+        // ========================================
+// contact-form.js - Gestion du formulaire de contact avec AJAX
+// ========================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // Sélectionner le formulaire
+    const contactForm = document.getElementById('contactForm');
+    
+    if (contactForm) {
+        // Gérer la soumission du formulaire
+        contactForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Désactiver le bouton de soumission
+            const submitBtn = contactForm.querySelector('.btn-submit');
+            const originalBtnText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Envoi en cours...';
+            
+            // Récupérer les données du formulaire
+            const formData = new FormData(contactForm);
+            const data = {
+                'first_name': formData.get('firstName'),
+                'last_name': formData.get('lastName'),
+                'email': formData.get('email'),
+                'phone': formData.get('phone'),
+                'company': formData.get('company') || '',
+                'event_type': formData.get('eventType'),
+                'guest_count': parseInt(formData.get('guestCount')),
+                'event_date': formData.get('eventDate'),
+                'budget': formData.get('budget') || '',
+                'message': formData.get('message'),
+                'newsletter': document.getElementById('newsletter').checked
+            };
+            
+            try {
+                // Envoyer la requête AJAX
+                const response = await fetch('/api/contact/submit/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')  // Token CSRF pour Django
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Succès - Afficher le message de confirmation
+                    showSuccessMessage(result.message || 'Votre demande a été envoyée avec succès!');
+                    
+                    // Réinitialiser le formulaire
+                    contactForm.reset();
+                    
+                    // Optionnel : Rediriger après 3 secondes
+                    setTimeout(() => {
+                        window.location.href = '/contact/success/';
+                    }, 3000);
+                    
+                } else {
+                    // Erreur - Afficher les erreurs
+                    showErrorMessage(result.message || 'Une erreur est survenue.');
+                    
+                    // Afficher les erreurs de validation spécifiques
+                    if (result.errors) {
+                        displayValidationErrors(result.errors);
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Erreur:', error);
+                showErrorMessage('Une erreur de connexion est survenue. Veuillez réessayer.');
+                
+            } finally {
+                // Réactiver le bouton
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalBtnText;
+            }
+        });
+        
+        // Validation en temps réel
+        setupRealtimeValidation();
+    }
+    
+    // Fonction pour obtenir le cookie CSRF (Django)
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Afficher le message de succès
+    function showSuccessMessage(message) {
+        // Supprimer les messages existants
+        removeExistingMessages();
+        
+        // Créer le message de succès
+        const successDiv = document.createElement('div');
+        successDiv.className = 'alert alert-success';
+        successDiv.innerHTML = `
+            <div style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 15px; border-radius: 4px; margin-bottom: 20px; position: relative;">
+                <button type="button" onclick="this.parentElement.remove()" style="position: absolute; right: 10px; top: 10px; background: none; border: none; font-size: 20px; cursor: pointer; color: #155724;">&times;</button>
+                <strong>✅ Succès!</strong> ${message}
+            </div>
+        `;
+        
+        // Insérer avant le formulaire
+        contactForm.parentNode.insertBefore(successDiv, contactForm);
+        
+        // Scroll vers le message
+        successDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    
+    // Afficher le message d'erreur
+    function showErrorMessage(message) {
+        // Supprimer les messages existants
+        removeExistingMessages();
+        
+        // Créer le message d'erreur
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'alert alert-error';
+        errorDiv.innerHTML = `
+            <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; border-radius: 4px; margin-bottom: 20px; position: relative;">
+                <button type="button" onclick="this.parentElement.remove()" style="position: absolute; right: 10px; top: 10px; background: none; border: none; font-size: 20px; cursor: pointer; color: #721c24;">&times;</button>
+                <strong>❌ Erreur!</strong> ${message}
+            </div>
+        `;
+        
+        // Insérer avant le formulaire
+        contactForm.parentNode.insertBefore(errorDiv, contactForm);
+        
+        // Scroll vers le message
+        errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    
+    // Supprimer les messages existants
+    function removeExistingMessages() {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => alert.remove());
+    }
+    
+    // Afficher les erreurs de validation
+    function displayValidationErrors(errors) {
+        // Nettoyer les erreurs précédentes
+        clearValidationErrors();
+        
+        // Afficher chaque erreur
+        Object.keys(errors).forEach(field => {
+            const input = contactForm.querySelector(`[name="${field}"]`);
+            if (input) {
+                // Ajouter la classe d'erreur
+                input.classList.add('error');
+                
+                // Créer le message d'erreur
+                const errorSpan = document.createElement('span');
+                errorSpan.className = 'error-message';
+                errorSpan.style.cssText = 'color: #dc3545; font-size: 12px; margin-top: 5px; display: block;';
+                errorSpan.textContent = Array.isArray(errors[field]) ? errors[field][0] : errors[field];
+                
+                // Insérer après le champ
+                input.parentNode.appendChild(errorSpan);
+            }
+        });
+    }
+    
+    // Nettoyer les erreurs de validation
+    function clearValidationErrors() {
+        const errorMessages = contactForm.querySelectorAll('.error-message');
+        errorMessages.forEach(msg => msg.remove());
+        
+        const errorInputs = contactForm.querySelectorAll('.error');
+        errorInputs.forEach(input => input.classList.remove('error'));
+    }
+    
+    // Configuration de la validation en temps réel
+    function setupRealtimeValidation() {
+        // Validation de l'email
+        const emailInput = contactForm.querySelector('[name="email"]');
+        if (emailInput) {
+            emailInput.addEventListener('blur', function() {
+                if (!validateEmail(this.value)) {
+                    showFieldError(this, 'Veuillez entrer une adresse email valide.');
+                } else {
+                    clearFieldError(this);
+                }
+            });
+        }
+        
+        // Validation du téléphone
+        const phoneInput = contactForm.querySelector('[name="phone"]');
+        if (phoneInput) {
+            // Formatage automatique
+            phoneInput.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length > 0) {
+                    if (value.length <= 3) {
+                        value = value;
+                    } else if (value.length <= 6) {
+                        value = value.slice(0, 3) + '-' + value.slice(3);
+                    } else {
+                        value = value.slice(0, 3) + '-' + value.slice(3, 6) + '-' + value.slice(6, 10);
+                    }
+                }
+                e.target.value = value;
+            });
+            
+            phoneInput.addEventListener('blur', function() {
+                if (!validatePhone(this.value)) {
+                    showFieldError(this, 'Veuillez entrer un numéro de téléphone valide (XXX-XXX-XXXX).');
+                } else {
+                    clearFieldError(this);
+                }
+            });
+        }
+        
+        // Validation de la date
+        const dateInput = contactForm.querySelector('[name="event_date"]');
+        if (dateInput) {
+            // Définir la date minimum à aujourd'hui
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.setAttribute('min', today);
+            
+            dateInput.addEventListener('change', function() {
+                const selectedDate = new Date(this.value);
+                const todayDate = new Date();
+                todayDate.setHours(0, 0, 0, 0);
+                
+                if (selectedDate < todayDate) {
+                    showFieldError(this, 'La date de l\'événement doit être dans le futur.');
+                } else {
+                    clearFieldError(this);
+                }
+            });
+        }
+        
+        // Validation du nombre d'invités
+        const guestInput = contactForm.querySelector('[name="guest_count"]');
+        if (guestInput) {
+            guestInput.addEventListener('blur', function() {
+                if (parseInt(this.value) < 1) {
+                    showFieldError(this, 'Le nombre d\'invités doit être au moins 1.');
+                } else {
+                    clearFieldError(this);
+                }
+            });
+        }
+    }
+    
+    // Valider l'email
+    function validateEmail(email) {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
+    }
+    
+    // Valider le téléphone
+    function validatePhone(phone) {
+        const re = /^\d{3}-\d{3}-\d{4}$/;
+        return re.test(phone);
+    }
+    
+    // Afficher l'erreur d'un champ
+    function showFieldError(field, message) {
+        clearFieldError(field);
+        field.classList.add('error');
+        field.style.borderColor = '#dc3545';
+        
+        const errorSpan = document.createElement('span');
+        errorSpan.className = 'field-error-message';
+        errorSpan.style.cssText = 'color: #dc3545; font-size: 12px; margin-top: 5px; display: block;';
+        errorSpan.textContent = message;
+        
+        field.parentNode.appendChild(errorSpan);
+    }
+    
+    // Nettoyer l'erreur d'un champ
+    function clearFieldError(field) {
+        field.classList.remove('error');
+        field.style.borderColor = '';
+        
+        const errorMsg = field.parentNode.querySelector('.field-error-message');
+        if (errorMsg) {
+            errorMsg.remove();
+        }
+    }
+    
+    // Animation des champs au focus
+    const formInputs = document.querySelectorAll('input, select, textarea');
+    formInputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.style.transform = 'scale(1.02)';
+            this.parentElement.style.transition = 'transform 0.3s ease';
+        });
+        
+        input.addEventListener('blur', function() {
+            this.parentElement.style.transform = 'scale(1)';
+        });
+    });
+    
+    // Compteur de caractères pour le message
+    const messageTextarea = contactForm.querySelector('[name="message"]');
+    if (messageTextarea) {
+        const maxLength = 1000;
+        
+        // Créer le compteur
+        const counter = document.createElement('div');
+        counter.className = 'character-counter';
+        counter.style.cssText = 'text-align: right; font-size: 12px; color: #666; margin-top: 5px;';
+        counter.textContent = `0 / ${maxLength} caractères`;
+        
+        messageTextarea.parentNode.appendChild(counter);
+        
+        // Mettre à jour le compteur
+        messageTextarea.addEventListener('input', function() {
+            const length = this.value.length;
+            counter.textContent = `${length} / ${maxLength} caractères`;
+            
+            if (length > maxLength * 0.9) {
+                counter.style.color = '#dc3545';
+            } else if (length > maxLength * 0.7) {
+                counter.style.color = '#ffc107';
+            } else {
+                counter.style.color = '#666';
+            }
+        });
+    }
+});
     </script>
 </body>
 </html>

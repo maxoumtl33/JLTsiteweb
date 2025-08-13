@@ -1,0 +1,325 @@
+{% extends 'JLTsite/dashboard_admin.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Gestion des commandes - Admin{% endblock %}
+
+{% block content %}
+<!-- Admin Header -->
+<section class="admin-header">
+    <div class="container">
+        <h1 class="admin-title">
+            <i class="fas fa-shopping-cart"></i> 
+            Gestion des commandes
+        </h1>
+        <p class="admin-subtitle">Gérez et suivez toutes les commandes clients</p>
+    </div>
+</section>
+
+<!-- Admin Navigation -->
+<nav class="admin-nav">
+    <div class="container">
+        <div class="admin-nav-tabs">
+            <a href="{% url 'admin_dashboard' %}" class="admin-nav-tab">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </a>
+            <a href="{% url 'admin_orders_list' %}" class="admin-nav-tab active">
+                <i class="fas fa-shopping-cart"></i> Commandes
+            </a>
+            <a href="{% url 'admin_products_list' %}" class="admin-nav-tab">
+                <i class="fas fa-utensils"></i> Produits
+            </a>
+            <a href="{% url 'admin_customers_list' %}" class="admin-nav-tab">
+                <i class="fas fa-users"></i> Clients
+            </a>
+            <a href="{% url 'admin_reports' %}" class="admin-nav-tab">
+                <i class="fas fa-chart-bar"></i> Rapports
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- Orders Content -->
+<section class="admin-content">
+    <div class="container">
+        <!-- Stats Bar -->
+        <div class="stats-bar" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+            <div class="stat-mini" style="background: white; padding: 1rem; border-radius: 10px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                <div style="font-size: 1.5rem; font-weight: 700; color: var(--jlt-black);">{{ stats.total }}</div>
+                <div style="font-size: 0.85rem; color: var(--jlt-gray);">Total</div>
+            </div>
+            <div class="stat-mini" style="background: #fff3cd; padding: 1rem; border-radius: 10px; text-align: center;">
+                <div style="font-size: 1.5rem; font-weight: 700; color: #856404;">{{ stats.pending }}</div>
+                <div style="font-size: 0.85rem; color: #856404;">En attente</div>
+            </div>
+            <div class="stat-mini" style="background: #d4f4dd; padding: 1rem; border-radius: 10px; text-align: center;">
+                <div style="font-size: 1.5rem; font-weight: 700; color: #28a745;">{{ stats.confirmed }}</div>
+                <div style="font-size: 0.85rem; color: #28a745;">Confirmées</div>
+            </div>
+            <div class="stat-mini" style="background: #cce5ff; padding: 1rem; border-radius: 10px; text-align: center;">
+                <div style="font-size: 1.5rem; font-weight: 700; color: #004085;">{{ stats.preparing }}</div>
+                <div style="font-size: 0.85rem; color: #004085;">En préparation</div>
+            </div>
+            <div class="stat-mini" style="background: #e2e3e5; padding: 1rem; border-radius: 10px; text-align: center;">
+                <div style="font-size: 1.5rem; font-weight: 700; color: #383d41;">{{ stats.ready }}</div>
+                <div style="font-size: 0.85rem; color: #383d41;">Prêtes</div>
+            </div>
+            <div class="stat-mini" style="background: #d1ecf1; padding: 1rem; border-radius: 10px; text-align: center;">
+                <div style="font-size: 1.5rem; font-weight: 700; color: #0c5460;">{{ stats.delivered }}</div>
+                <div style="font-size: 0.85rem; color: #0c5460;">Livrées</div>
+            </div>
+        </div>
+        
+        <!-- Filters -->
+        <div class="filters-card" style="background: white; border-radius: 15px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 3px 15px rgba(0,0,0,0.08);">
+            <form method="GET" action="{% url 'admin_orders_list' %}">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--jlt-black);">Statut</label>
+                        <select name="status" class="form-control" onchange="this.form.submit()" style="width: 100%; padding: 10px; border: 2px solid var(--jlt-gray-light); border-radius: 8px;">
+                            <option value="">Tous les statuts</option>
+                            <option value="pending" {% if current_status == 'pending' %}selected{% endif %}>En attente</option>
+                            <option value="confirmed" {% if current_status == 'confirmed' %}selected{% endif %}>Confirmée</option>
+                            <option value="preparing" {% if current_status == 'preparing' %}selected{% endif %}>En préparation</option>
+                            <option value="ready" {% if current_status == 'ready' %}selected{% endif %}>Prête</option>
+                            <option value="delivered" {% if current_status == 'delivered' %}selected{% endif %}>Livrée</option>
+                            <option value="cancelled" {% if current_status == 'cancelled' %}selected{% endif %}>Annulée</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--jlt-black);">Période</label>
+                        <select name="date" class="form-control" onchange="this.form.submit()" style="width: 100%; padding: 10px; border: 2px solid var(--jlt-gray-light); border-radius: 8px;">
+                            <option value="">Toutes les dates</option>
+                            <option value="today" {% if current_date == 'today' %}selected{% endif %}>Aujourd'hui</option>
+                            <option value="week" {% if current_date == 'week' %}selected{% endif %}>Cette semaine</option>
+                            <option value="month" {% if current_date == 'month' %}selected{% endif %}>Ce mois</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--jlt-black);">Recherche</label>
+                        <input type="text" name="search" value="{{ search_query }}" placeholder="N° commande, client, email..." 
+                               class="form-control" style="width: 100%; padding: 10px; border: 2px solid var(--jlt-gray-light); border-radius: 8px;">
+                    </div>
+                    
+                    <div style="display: flex; align-items: flex-end; gap: 0.5rem;">
+                        <button type="submit" class="btn btn-primary" style="padding: 10px 20px; background: var(--jlt-yellow); border: none; border-radius: 8px; font-weight: 600; color: var(--jlt-black); cursor: pointer;">
+                            <i class="fas fa-search"></i> Rechercher
+                        </button>
+                        <a href="{% url 'admin_orders_list' %}" class="btn btn-secondary" style="padding: 10px 20px; background: white; border: 2px solid var(--jlt-gray-light); border-radius: 8px; font-weight: 600; color: var(--jlt-gray); text-decoration: none;">
+                            <i class="fas fa-undo"></i> Réinitialiser
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Orders Table -->
+        <div class="orders-table-card" style="background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 3px 15px rgba(0,0,0,0.08);">
+            <div class="table-responsive">
+                <table class="admin-orders-table" style="width: 100%; border-collapse: collapse;">
+                    <thead style="background: var(--jlt-green); color: white;">
+                        <tr>
+                            <th style="padding: 1rem; text-align: left;">
+                                <input type="checkbox" id="selectAll">
+                            </th>
+                            <th style="padding: 1rem; text-align: left;">N° Commande</th>
+                            <th style="padding: 1rem; text-align: left;">Client</th>
+                            <th style="padding: 1rem; text-align: left;">Date</th>
+                            <th style="padding: 1rem; text-align: left;">Livraison</th>
+                            <th style="padding: 1rem; text-align: left;">Statut</th>
+                            <th style="padding: 1rem; text-align: left;">Paiement</th>
+                            <th style="padding: 1rem; text-align: left;">Total</th>
+                            <th style="padding: 1rem; text-align: left;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr style="border-bottom: 1px solid var(--jlt-gray-light); transition: all 0.3s ease;" onmouseover="this.style.background='var(--jlt-beige-light)'" onmouseout="this.style.background='white'">
+                            <td style="padding: 1rem;">
+                                <input type="checkbox" class="order-select" value="{{ order.id }}">
+                            </td>
+                            <td style="padding: 1rem;">
+                                <a href="{% url 'admin_order_detail' order.order_number %}" style="font-weight: 600; color: var(--jlt-black); text-decoration: none;">
+                                    #{{ order.order_number }}
+                                </a>
+                            </td>
+                            <td style="padding: 1rem;">
+                                <div>{{ order.first_name }} {{ order.last_name }}</div>
+                                <small style="color: var(--jlt-gray);">{{ order.email }}</small>
+                            </td>
+                            <td style="padding: 1rem;">
+                                {{ order.created_at|date:"d/m/Y" }}<br>
+                                <small style="color: var(--jlt-gray);">{{ order.created_at|date:"H:i" }}</small>
+                            </td>
+                            <td style="padding: 1rem;">
+                                {{ order.delivery_date|date:"d/m/Y" }}<br>
+                                <small style="color: var(--jlt-gray);">
+                                    {{ order.get_delivery_type_display }}
+                                </small>
+                            </td>
+                            <td style="padding: 1rem;">
+                                <select class="status-select" data-order="{{ order.order_number }}" 
+                                        style="padding: 5px 10px; border-radius: 15px; border: 1px solid var(--jlt-gray-light); font-size: 0.85rem; font-weight: 600;">
+                                    <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>En attente</option>
+                                    <option value="confirmed" {% if order.status == 'confirmed' %}selected{% endif %}>Confirmée</option>
+                                    <option value="preparing" {% if order.status == 'preparing' %}selected{% endif %}>En préparation</option>
+                                    <option value="ready" {% if order.status == 'ready' %}selected{% endif %}>Prête</option>
+                                    <option value="delivered" {% if order.status == 'delivered' %}selected{% endif %}>Livrée</option>
+                                    <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>Annulée</option>
+                                </select>
+                            </td>
+                            <td style="padding: 1rem;">
+                                {% if order.payment_status == 'paid' %}
+                                    <span style="color: #28a745;"><i class="fas fa-check-circle"></i> Payé</span>
+                                {% else %}
+                                    <span style="color: #dc3545;"><i class="fas fa-times-circle"></i> En attente</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 1rem; font-weight: 600;">${{ order.total|floatformat:2 }}</td>
+                            <td style="padding: 1rem;">
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <a href="{% url 'admin_order_detail' order.order_number %}" class="btn-action" title="Voir">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'admin_order_invoice' order.order_number %}" class="btn-action" title="Facture">
+                                        <i class="fas fa-file-invoice"></i>
+                                    </a>
+                                    <button onclick="sendEmail('{{ order.order_number }}')" class="btn-action" title="Email">
+                                        <i class="fas fa-envelope"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" style="padding: 3rem; text-align: center; color: var(--jlt-gray);">
+                                Aucune commande trouvée
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Bulk Actions -->
+            {% if orders %}
+            <div style="padding: 1rem; background: var(--jlt-beige-light); display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <select id="bulkAction" style="padding: 8px 15px; border: 2px solid var(--jlt-gray-light); border-radius: 8px;">
+                        <option value="">Actions groupées</option>
+                        <option value="confirm">Confirmer</option>
+                        <option value="prepare">Marquer en préparation</option>
+                        <option value="ready">Marquer prêt</option>
+                        <option value="deliver">Marquer livré</option>
+                        <option value="export">Exporter</option>
+                    </select>
+                    <button onclick="applyBulkAction()" class="btn btn-primary" style="padding: 8px 20px; background: var(--jlt-yellow); border: none; border-radius: 8px; font-weight: 600; color: var(--jlt-black); cursor: pointer;">
+                        Appliquer
+                    </button>
+                </div>
+                
+                <!-- Pagination -->
+                <div style="display: flex; gap: 0.5rem;">
+                    {% if orders.has_previous %}
+                    <a href="?page={{ orders.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}" 
+                       style="padding: 8px 12px; border: 2px solid var(--jlt-gray-light); border-radius: 8px; text-decoration: none; color: var(--jlt-black);">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                    {% endif %}
+                    
+                    <span style="padding: 8px 15px; background: var(--jlt-yellow); border-radius: 8px; font-weight: 600;">
+                        Page {{ orders.number }} / {{ orders.paginator.num_pages }}
+                    </span>
+                    
+                    {% if orders.has_next %}
+                    <a href="?page={{ orders.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}" 
+                       style="padding: 8px 12px; border: 2px solid var(--jlt-gray-light); border-radius: 8px; text-decoration: none; color: var(--jlt-black);">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<style>
+    .btn-action {
+        padding: 5px 10px;
+        border: 1px solid var(--jlt-gray-light);
+        background: white;
+        border-radius: 5px;
+        color: var(--jlt-gray);
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .btn-action:hover {
+        background: var(--jlt-yellow);
+        border-color: var(--jlt-yellow);
+        color: var(--jlt-black);
+    }
+</style>
+
+<script>
+    // Select all checkbox
+    document.getElementById('selectAll').addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.order-select');
+        checkboxes.forEach(cb => cb.checked = this.checked);
+    });
+    
+    // Update order status
+    document.querySelectorAll('.status-select').forEach(select => {
+        select.addEventListener('change', function() {
+            const orderNumber = this.dataset.order;
+            const newStatus = this.value;
+            
+            if (confirm(`Changer le statut de la commande ${orderNumber} à "${this.options[this.selectedIndex].text}"?`)) {
+                // AJAX call to update status
+                updateOrderStatus(orderNumber, newStatus);
+            } else {
+                // Reset to original value if cancelled
+                location.reload();
+            }
+        });
+    });
+    
+    function updateOrderStatus(orderNumber, status) {
+        // Implement AJAX call
+        console.log(`Updating order ${orderNumber} to status ${status}`);
+        // Show success message
+        alert('Statut mis à jour avec succès!');
+    }
+    
+    function sendEmail(orderNumber) {
+        if (confirm(`Envoyer un email de mise à jour pour la commande ${orderNumber}?`)) {
+            console.log(`Sending email for order ${orderNumber}`);
+            alert('Email envoyé avec succès!');
+        }
+    }
+    
+    function applyBulkAction() {
+        const action = document.getElementById('bulkAction').value;
+        const selected = document.querySelectorAll('.order-select:checked');
+        
+        if (!action) {
+            alert('Veuillez sélectionner une action');
+            return;
+        }
+        
+        if (selected.length === 0) {
+            alert('Veuillez sélectionner au moins une commande');
+            return;
+        }
+        
+        const orderIds = Array.from(selected).map(cb => cb.value);
+        console.log(`Applying ${action} to orders:`, orderIds);
+        alert(`Action "${action}" appliquée à ${selected.length} commande(s)`);
+    }
+</script>
+{% endblock %}

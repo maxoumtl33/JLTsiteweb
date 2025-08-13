@@ -1,0 +1,976 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Boutique Boîtes à Lunch - Julien-Leblanc Traiteur{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Hero Section */
+    .shop-hero {
+        background: linear-gradient(135deg, var(--jlt-green) 0%, var(--jlt-green-dark) 100%);
+        padding: 4rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .shop-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 60%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(244, 200, 67, 0.15) 0%, transparent 70%);
+        animation: float 20s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(10deg); }
+    }
+    
+    .shop-hero h1 {
+        color: white;
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .shop-hero p {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1.2rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Filters Section */
+    .filters-section {
+        background: white;
+        padding: 2rem 0;
+        border-bottom: 1px solid var(--jlt-gray-light);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .filter-tabs {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+    }
+    
+    .filter-tab {
+        padding: 0.75rem 1.5rem;
+        background: var(--jlt-beige);
+        border: 2px solid transparent;
+        border-radius: 30px;
+        font-weight: 600;
+        color: var(--jlt-black);
+        text-decoration: none;
+        white-space: nowrap;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .filter-tab:hover {
+        background: var(--jlt-yellow);
+        transform: translateY(-2px);
+    }
+    
+    .filter-tab.active {
+        background: var(--jlt-yellow);
+        border-color: var(--jlt-yellow-hover);
+    }
+    
+    .filter-tab i {
+        font-size: 1.2rem;
+    }
+    
+    .search-bar {
+        position: relative;
+        max-width: 400px;
+    }
+    
+    .search-bar input {
+        width: 100%;
+        padding: 12px 50px 12px 20px;
+        border: 2px solid var(--jlt-gray-light);
+        border-radius: 30px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .search-bar input:focus {
+        border-color: var(--jlt-yellow);
+        outline: none;
+    }
+    
+    .search-bar button {
+        position: absolute;
+        right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: var(--jlt-yellow);
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .search-bar button:hover {
+        background: var(--jlt-yellow-hover);
+    }
+    
+    .filter-options {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .filter-dropdown {
+        position: relative;
+    }
+    
+    .filter-dropdown select {
+        appearance: none;
+        padding: 10px 40px 10px 15px;
+        border: 2px solid var(--jlt-gray-light);
+        border-radius: 8px;
+        background: white;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .filter-dropdown select:hover {
+        border-color: var(--jlt-yellow);
+    }
+    
+    .filter-dropdown::after {
+        content: '\f107';
+        font-family: 'Font Awesome 5 Free';
+        font-weight: 900;
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+    }
+    
+    .dietary-filters {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .dietary-badge {
+        padding: 8px 15px;
+        background: white;
+        border: 2px solid var(--jlt-gray-light);
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    
+    .dietary-badge input {
+        display: none;
+    }
+    
+    .dietary-badge:hover {
+        border-color: var(--jlt-yellow);
+    }
+    
+    .dietary-badge.active {
+        background: var(--jlt-yellow);
+        border-color: var(--jlt-yellow);
+    }
+    
+    /* Products Grid */
+    .products-section {
+        padding: 3rem 0;
+        background: var(--jlt-beige);
+        min-height: 500px;
+    }
+    
+    .section-header {
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .results-count {
+        color: var(--jlt-gray);
+        font-weight: 500;
+    }
+    
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 2rem;
+        margin-bottom: 3rem;
+    }
+    
+    .product-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+    
+    .product-image {
+        position: relative;
+        height: 220px;
+        overflow: hidden;
+        background: var(--jlt-gray-light);
+    }
+    
+    .product-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+    
+    .product-card:hover .product-image img {
+        transform: scale(1.1);
+    }
+    
+    .product-badges {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        display: flex;
+        gap: 0.5rem;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .badge-promo {
+        background: var(--jlt-yellow);
+        color: var(--jlt-black);
+    }
+    
+    .badge-new {
+        background: var(--jlt-green);
+        color: white;
+    }
+    
+    .badge-featured {
+        background: var(--jlt-black);
+        color: var(--jlt-yellow);
+    }
+    
+    .badge-vegan {
+        background: #4CAF50;
+        color: white;
+    }
+    
+    .badge-gluten-free {
+        background: #FF9800;
+        color: white;
+    }
+    
+    .product-quick-view {
+        position: absolute;
+        bottom: 15px;
+        right: 15px;
+        background: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        opacity: 0;
+        transform: scale(0.8);
+        transition: all 0.3s ease;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    }
+    
+    .product-card:hover .product-quick-view {
+        opacity: 1;
+        transform: scale(1);
+    }
+    
+    .product-quick-view:hover {
+        background: var(--jlt-yellow);
+    }
+    
+    .product-info {
+        padding: 1.5rem;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .product-category {
+        color: var(--jlt-gray);
+        font-size: 0.85rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .product-name {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--jlt-black);
+        margin-bottom: 0.5rem;
+        line-height: 1.3;
+        text-decoration: none;
+        display: block;
+    }
+    
+    .product-name:hover {
+        color: var(--jlt-yellow);
+    }
+    
+    .product-description {
+        color: var(--jlt-gray);
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin-bottom: 1rem;
+        flex-grow: 1;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .product-meta {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        font-size: 0.85rem;
+        color: var(--jlt-gray);
+    }
+    
+    .product-meta i {
+        color: var(--jlt-yellow);
+    }
+    
+    .product-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 1rem;
+        border-top: 1px solid var(--jlt-gray-light);
+    }
+    
+    .product-price {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .price-current {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--jlt-black);
+    }
+    
+    .price-original {
+        font-size: 1.1rem;
+        color: var(--jlt-gray);
+        text-decoration: line-through;
+    }
+    
+    .btn-add-cart {
+        background: var(--jlt-yellow);
+        border: none;
+        padding: 10px 20px;
+        border-radius: 25px;
+        font-weight: 600;
+        color: var(--jlt-black);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-add-cart:hover {
+        background: var(--jlt-yellow-hover);
+        transform: translateY(-2px);
+    }
+    
+    /* Featured Products */
+    .featured-section {
+        background: white;
+        padding: 3rem 0;
+        margin-bottom: 3rem;
+    }
+    
+    .featured-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+    
+    .featured-header h2 {
+        font-size: 2.5rem;
+        color: var(--jlt-black);
+        margin-bottom: 1rem;
+    }
+    
+    .featured-header p {
+        color: var(--jlt-gray);
+        font-size: 1.1rem;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 0;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        color: var(--jlt-gray-light);
+        margin-bottom: 1rem;
+    }
+    
+    .empty-state h3 {
+        color: var(--jlt-gray);
+        margin-bottom: 0.5rem;
+    }
+    
+    .empty-state p {
+        color: var(--jlt-gray);
+    }
+    
+    /* Pagination */
+    .pagination {
+        justify-content: center;
+        margin-top: 3rem;
+    }
+    
+    .page-link {
+        color: var(--jlt-black);
+        border: 2px solid var(--jlt-gray-light);
+        margin: 0 0.25rem;
+        border-radius: 8px;
+        padding: 10px 15px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .page-link:hover {
+        background: var(--jlt-yellow);
+        border-color: var(--jlt-yellow);
+        color: var(--jlt-black);
+    }
+    
+    .page-item.active .page-link {
+        background: var(--jlt-yellow);
+        border-color: var(--jlt-yellow);
+        color: var(--jlt-black);
+    }
+    
+    /* Loading State */
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        padding: 3rem;
+    }
+    
+    .loading-spinner.active {
+        display: block;
+    }
+    
+    .spinner {
+        border: 4px solid var(--jlt-gray-light);
+        border-top: 4px solid var(--jlt-yellow);
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .shop-hero h1 {
+            font-size: 2rem;
+        }
+        
+        .filter-tabs {
+            flex-wrap: nowrap;
+        }
+        
+        .products-grid {
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .filter-options {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .search-bar {
+            max-width: none;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .products-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .product-footer {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .btn-add-cart {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="shop-hero">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="fade-in">Nos Boîtes à Lunch</h1>
+                <p class="fade-in">Découvrez notre sélection de repas préparés avec passion, livrés directement chez vous ou au bureau.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Filters Section -->
+<section class="filters-section">
+    <div class="container">
+        <!-- Category Tabs -->
+        <div class="filter-tabs">
+            <a href="{% url 'shop_boites_lunch' %}" class="filter-tab {% if not current_category %}active{% endif %}">
+                <i class="fas fa-th"></i> Tous les produits
+            </a>
+            {% for category in categories %}
+            <a href="?category={{ category.slug }}" 
+               class="filter-tab {% if current_category == category.slug %}active{% endif %}">
+                {{ category.name }}
+            </a>
+            {% endfor %}
+        </div>
+        
+        <!-- Filter Options -->
+        <div class="row">
+            <div class="col-md-4">
+                <div class="search-bar">
+                    <form method="get" action="{% url 'shop_boites_lunch' %}">
+                        <input type="text" name="q" placeholder="Rechercher un plat..." 
+                               value="{{ search_query|default:'' }}">
+                        <button type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="filter-options">
+                    <div class="filter-dropdown">
+                        <select name="sort" onchange="this.form.submit()">
+                            <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>
+                                Plus récents
+                            </option>
+                            <option value="price_asc" {% if sort_by == 'price_asc' %}selected{% endif %}>
+                                Prix croissant
+                            </option>
+                            <option value="price_desc" {% if sort_by == 'price_desc' %}selected{% endif %}>
+                                Prix décroissant
+                            </option>
+                            <option value="popular" {% if sort_by == 'popular' %}selected{% endif %}>
+                                Plus populaires
+                            </option>
+                            <option value="rating" {% if sort_by == 'rating' %}selected{% endif %}>
+                                Mieux notés
+                            </option>
+                        </select>
+                    </div>
+                    
+                    <div class="dietary-filters">
+                        <label class="dietary-badge {% if 'vegetarian' in dietary %}active{% endif %}">
+                            <input type="checkbox" name="dietary" value="vegetarian" 
+                                   {% if 'vegetarian' in dietary %}checked{% endif %}>
+                            <i class="fas fa-leaf"></i> Végétarien
+                        </label>
+                        <label class="dietary-badge {% if 'vegan' in dietary %}active{% endif %}">
+                            <input type="checkbox" name="dietary" value="vegan" 
+                                   {% if 'vegan' in dietary %}checked{% endif %}>
+                            <i class="fas fa-seedling"></i> Végane
+                        </label>
+                        <label class="dietary-badge {% if 'gluten_free' in dietary %}active{% endif %}">
+                            <input type="checkbox" name="dietary" value="gluten_free" 
+                                   {% if 'gluten_free' in dietary %}checked{% endif %}>
+                            <i class="fas fa-bread-slice"></i> Sans gluten
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Products (if any) -->
+{% if featured_products %}
+<section class="featured-section">
+    <div class="container">
+        <div class="featured-header">
+            <h2>Nos Favoris</h2>
+            <p>Les choix préférés de nos clients</p>
+        </div>
+        <div class="products-grid">
+            {% for product in featured_products %}
+            <div class="product-card">
+                <div class="product-image">
+                    {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                    {% else %}
+                    <img src="https://via.placeholder.com/300x220/F5F2E8/6B7652?text=JL+Traiteur" alt="{{ product.name }}">
+                    {% endif %}
+                    
+                    <div class="product-badges">
+                        {% if product.promo_price %}
+                        <span class="badge badge-promo">-{{ product.get_discount_percentage }}%</span>
+                        {% endif %}
+                        {% if product.is_featured %}
+                        <span class="badge badge-featured">Vedette</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="product-quick-view" data-product-id="{{ product.id }}">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                </div>
+                
+                <div class="product-info">
+                    <div class="product-category">{{ product.category.name }}</div>
+                    <a href="{% url 'product_detail' product.slug %}" class="product-name">
+                        {{ product.name }}
+                    </a>
+                    <p class="product-description">{{ product.description|truncatewords:15 }}</p>
+                    
+                    <div class="product-meta">
+                        {% if product.is_vegetarian %}
+                        <span><i class="fas fa-leaf"></i> Végé</span>
+                        {% endif %}
+                        {% if product.calories %}
+                        <span><i class="fas fa-fire"></i> {{ product.calories }} cal</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="product-footer">
+                        <div class="product-price">
+                            <span class="price-current">${{ product.get_price|floatformat:2 }}</span>
+                            {% if product.promo_price %}
+                            <span class="price-original">${{ product.price|floatformat:2 }}</span>
+                            {% endif %}
+                        </div>
+                        <button class="btn-add-cart" data-product-id="{{ product.id }}">
+                            <i class="fas fa-plus"></i> Ajouter
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Products Section -->
+<section class="products-section">
+    <div class="container">
+        <div class="section-header">
+            <h2>{{ current_category|default:"Tous nos plats" }}</h2>
+            <span class="results-count">{{ products.paginator.count }} résultat{{ products.paginator.count|pluralize }}</span>
+        </div>
+        
+        {% if products %}
+        <div class="products-grid">
+            {% for product in products %}
+            <div class="product-card">
+                <div class="product-image">
+                    {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                    {% else %}
+                    <img src="https://via.placeholder.com/300x220/F5F2E8/6B7652?text=JL+Traiteur" alt="{{ product.name }}">
+                    {% endif %}
+                    
+                    <div class="product-badges">
+                        {% if product.promo_price %}
+                        <span class="badge badge-promo">-{{ product.get_discount_percentage }}%</span>
+                        {% endif %}
+                        {% if product.is_vegan %}
+                        <span class="badge badge-vegan">Végane</span>
+                        {% elif product.is_vegetarian %}
+                        <span class="badge badge-vegan">Végé</span>
+                        {% endif %}
+                        {% if product.is_gluten_free %}
+                        <span class="badge badge-gluten-free">Sans gluten</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="product-quick-view" data-product-id="{{ product.id }}">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                </div>
+                
+                <div class="product-info">
+                    <div class="product-category">{{ product.category.name }}</div>
+                    <a href="{% url 'product_detail' product.slug %}" class="product-name">
+                        {{ product.name }}
+                    </a>
+                    <p class="product-description">{{ product.description|truncatewords:15 }}</p>
+                    
+                    <div class="product-meta">
+                        {% if product.preparation_time %}
+                        <span><i class="fas fa-clock"></i> {{ product.preparation_time }} min</span>
+                        {% endif %}
+                        {% if product.calories %}
+                        <span><i class="fas fa-fire"></i> {{ product.calories }} cal</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="product-footer">
+                        <div class="product-price">
+                            <span class="price-current">${{ product.get_price|floatformat:2 }}</span>
+                            {% if product.promo_price %}
+                            <span class="price-original">${{ product.price|floatformat:2 }}</span>
+                            {% endif %}
+                        </div>
+                        {% if product.is_in_stock %}
+                        <button class="btn-add-cart" data-product-id="{{ product.id }}">
+                            <i class="fas fa-plus"></i> Ajouter
+                        </button>
+                        {% else %}
+                        <button class="btn-add-cart" disabled style="opacity: 0.5;">
+                            Rupture
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if products.has_other_pages %}
+        <nav aria-label="Navigation">
+            <ul class="pagination">
+                {% if products.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ products.previous_page_number }}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for num in products.paginator.page_range %}
+                    {% if products.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if products.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ products.next_page_number }}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <!-- Empty State -->
+        <div class="empty-state">
+            <i class="fas fa-search"></i>
+            <h3>Aucun produit trouvé</h3>
+            <p>Essayez de modifier vos filtres ou votre recherche</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Loading Spinner -->
+<div class="loading-spinner">
+    <div class="spinner"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add to cart functionality
+    document.querySelectorAll('.btn-add-cart').forEach(button => {
+        button.addEventListener('click', function() {
+            const productId = this.dataset.productId;
+            const button = this;
+            
+            // Disable button temporarily
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Ajout...';
+            
+            fetch("{% url 'add_to_cart' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    quantity: 1
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update cart count in navbar
+                    const cartBadge = document.querySelector('.navbar .badge');
+                    if (cartBadge) {
+                        cartBadge.textContent = data.cart_count;
+                    }
+                    
+                    // Success animation
+                    button.innerHTML = '<i class="fas fa-check"></i> Ajouté!';
+                    button.style.background = 'var(--jlt-green)';
+                    button.style.color = 'white';
+                    
+                    setTimeout(() => {
+                        button.disabled = false;
+                        button.innerHTML = '<i class="fas fa-plus"></i> Ajouter';
+                        button.style.background = '';
+                        button.style.color = '';
+                    }, 2000);
+                } else {
+                    alert(data.message || 'Erreur lors de l\'ajout au panier');
+                    button.disabled = false;
+                    button.innerHTML = '<i class="fas fa-plus"></i> Ajouter';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-plus"></i> Ajouter';
+            });
+        });
+    });
+    
+    // Quick view functionality
+    document.querySelectorAll('.product-quick-view').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const productId = this.dataset.productId;
+            // Implement quick view modal here
+            console.log('Quick view for product:', productId);
+        });
+    });
+    
+    // Dietary filters
+    document.querySelectorAll('.dietary-badge input').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const badge = this.closest('.dietary-badge');
+            if (this.checked) {
+                badge.classList.add('active');
+            } else {
+                badge.classList.remove('active');
+            }
+            // Submit form or update filters
+            updateFilters();
+        });
+    });
+    
+    function updateFilters() {
+        const form = document.createElement('form');
+        form.method = 'GET';
+        form.action = "{% url 'shop_boites_lunch' %}";
+        
+        // Get all filter values
+        const searchInput = document.querySelector('.search-bar input');
+        if (searchInput && searchInput.value) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'q';
+            input.value = searchInput.value;
+            form.appendChild(input);
+        }
+        
+        // Dietary filters
+        document.querySelectorAll('.dietary-badge input:checked').forEach(checkbox => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'dietary';
+            input.value = checkbox.value;
+            form.appendChild(input);
+        });
+        
+        // Sort
+        const sortSelect = document.querySelector('.filter-dropdown select');
+        if (sortSelect && sortSelect.value) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'sort';
+            input.value = sortSelect.value;
+            form.appendChild(input);
+        }
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+</script>
+{% endblock %}

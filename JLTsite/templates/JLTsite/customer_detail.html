@@ -1,0 +1,749 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ customer.first_name }} {{ customer.last_name }} - Détail client{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Admin styles */
+    .admin-header {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        padding: 2rem 0;
+        color: white;
+    }
+    
+    .admin-nav {
+        background: #34495e;
+        border-bottom: 3px solid var(--jlt-yellow);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+    
+    .admin-nav-tabs {
+        display: flex;
+        gap: 0;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .admin-nav-tab {
+        padding: 1rem 1.5rem;
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .admin-nav-tab:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+    }
+    
+    .admin-nav-tab.active {
+        background: rgba(244, 200, 67, 0.1);
+        color: var(--jlt-yellow);
+        border-bottom: 3px solid var(--jlt-yellow);
+    }
+    
+    .customer-detail-container {
+        padding: 2rem 0;
+        background: var(--jlt-beige);
+        min-height: calc(100vh - 200px);
+    }
+    
+    /* Customer Header Card */
+    .customer-header-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+    }
+    
+    .customer-header-content {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }
+    
+    .customer-avatar-large {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--jlt-yellow) 0%, var(--jlt-green) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: white;
+        flex-shrink: 0;
+    }
+    
+    .customer-header-info {
+        flex: 1;
+    }
+    
+    .customer-name-large {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--jlt-black);
+        margin-bottom: 0.5rem;
+    }
+    
+    .customer-meta {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 1rem;
+    }
+    
+    .customer-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--jlt-gray);
+    }
+    
+    .customer-badges {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .customer-badge {
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .badge-vip {
+        background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+        color: white;
+    }
+    
+    .badge-premium {
+        background: #d4f4dd;
+        color: #28a745;
+    }
+    
+    .badge-new {
+        background: #cce5ff;
+        color: #004085;
+    }
+    
+    .customer-actions-header {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        background: var(--jlt-beige);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 1.3rem;
+        color: var(--jlt-yellow);
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--jlt-black);
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: var(--jlt-gray);
+        font-size: 0.9rem;
+    }
+    
+    .stat-trend {
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    
+    .trend-up {
+        color: #28a745;
+    }
+    
+    .trend-down {
+        color: #dc3545;
+    }
+    
+    /* Content Cards */
+    .detail-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+    }
+    
+    .detail-card-header {
+        background: linear-gradient(135deg, var(--jlt-beige) 0%, var(--jlt-beige-light) 100%);
+        padding: 1rem 1.5rem;
+        border-bottom: 2px solid var(--jlt-yellow);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .detail-card-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--jlt-black);
+        margin: 0;
+    }
+    
+    .detail-card-body {
+        padding: 1.5rem;
+    }
+    
+    /* Orders Table */
+    .orders-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .orders-table th {
+        background: var(--jlt-beige-light);
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--jlt-black);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+    }
+    
+    .orders-table td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--jlt-gray-light);
+        color: var(--jlt-gray);
+    }
+    
+    .order-status {
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .status-delivered { background: #d1ecf1; color: #0c5460; }
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-confirmed { background: #d4f4dd; color: #28a745; }
+    
+    /* Favorite Products */
+    .favorite-products {
+        display: grid;
+        gap: 1rem;
+    }
+    
+    .favorite-product {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        background: var(--jlt-beige-light);
+        border-radius: 10px;
+    }
+    
+    .product-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .product-image-small {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+    
+    .product-name {
+        font-weight: 600;
+        color: var(--jlt-black);
+    }
+    
+    .product-stats {
+        text-align: right;
+    }
+    
+    .product-orders {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--jlt-black);
+    }
+    
+    .product-quantity {
+        font-size: 0.85rem;
+        color: var(--jlt-gray);
+    }
+    
+    /* Contact Info */
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .info-item {
+        padding: 1rem;
+        background: var(--jlt-beige-light);
+        border-radius: 10px;
+    }
+    
+    .info-label {
+        font-size: 0.85rem;
+        color: var(--jlt-gray);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .info-value {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--jlt-black);
+    }
+    
+    .info-value a {
+        color: var(--jlt-yellow);
+        text-decoration: none;
+    }
+    
+    .info-value a:hover {
+        text-decoration: underline;
+    }
+    
+    /* Actions Buttons */
+    .btn-action {
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+    }
+    
+    .btn-primary {
+        background: var(--jlt-yellow);
+        color: var(--jlt-black);
+    }
+    
+    .btn-secondary {
+        background: white;
+        color: var(--jlt-gray);
+        border: 2px solid var(--jlt-gray-light);
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    /* Timeline */
+    .timeline {
+        position: relative;
+        padding-left: 40px;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 15px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--jlt-gray-light);
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-bottom: 1.5rem;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -30px;
+        top: 5px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--jlt-yellow);
+        border: 2px solid white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .timeline-date {
+        font-size: 0.85rem;
+        color: var(--jlt-gray);
+        margin-bottom: 0.25rem;
+    }
+    
+    .timeline-content {
+        font-weight: 500;
+        color: var(--jlt-black);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Admin Header -->
+<section class="admin-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">
+                    <i class="fas fa-user"></i> Détail client
+                </h1>
+                <p style="margin: 0; opacity: 0.9;">
+                    Profil et historique du client
+                </p>
+            </div>
+            <a href="{% url 'admin_customers_list' %}" class="btn-action btn-secondary">
+                <i class="fas fa-arrow-left"></i> Retour à la liste
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Admin Navigation -->
+<nav class="admin-nav">
+    <div class="container">
+        <div class="admin-nav-tabs">
+            <a href="{% url 'admin_dashboard' %}" class="admin-nav-tab">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </a>
+            <a href="{% url 'admin_orders_list' %}" class="admin-nav-tab">
+                <i class="fas fa-shopping-cart"></i> Commandes
+            </a>
+            <a href="{% url 'admin_products_list' %}" class="admin-nav-tab">
+                <i class="fas fa-utensils"></i> Produits
+            </a>
+            <a href="{% url 'admin_customers_list' %}" class="admin-nav-tab active">
+                <i class="fas fa-users"></i> Clients
+            </a>
+            <a href="{% url 'admin_reports' %}" class="admin-nav-tab">
+                <i class="fas fa-chart-bar"></i> Rapports
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- Customer Detail Content -->
+<section class="customer-detail-container">
+    <div class="container">
+        <!-- Customer Header -->
+        <div class="customer-header-card">
+            <div class="customer-header-content">
+                <div class="customer-avatar-large">
+                    {{ customer.first_name|first }}{{ customer.last_name|first }}
+                </div>
+                
+                <div class="customer-header-info">
+                    <h2 class="customer-name-large">{{ customer.first_name }} {{ customer.last_name }}</h2>
+                    
+                    <div class="customer-meta">
+                        <div class="customer-meta-item">
+                            <i class="fas fa-envelope"></i>
+                            {{ customer.email }}
+                        </div>
+                        <div class="customer-meta-item">
+                            <i class="fas fa-phone"></i>
+                            {{ customer.phone|default:"Non renseigné" }}
+                        </div>
+                        {% if customer.company %}
+                        <div class="customer-meta-item">
+                            <i class="fas fa-building"></i>
+                            {{ customer.company }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="customer-badges">
+                        {% if stats.total_orders >= 10 %}
+                        <span class="customer-badge badge-vip">
+                            <i class="fas fa-crown"></i> Client VIP
+                        </span>
+                        {% elif stats.total_orders >= 5 %}
+                        <span class="customer-badge badge-premium">
+                            Client Premium
+                        </span>
+                        {% endif %}
+                        
+                        {% if customer.created_at|timesince < "30 days" %}
+                        <span class="customer-badge badge-new">
+                            Nouveau client
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="customer-actions-header">
+                    <button onclick="sendEmail('{{ customer.email }}')" class="btn-action btn-primary">
+                        <i class="fas fa-envelope"></i> Envoyer email
+                    </button>
+                    <button onclick="createOrder({{ customer.id }})" class="btn-action btn-secondary">
+                        <i class="fas fa-plus"></i> Nouvelle commande
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <div class="stat-value">{{ stats.total_orders }}</div>
+                <div class="stat-label">Commandes totales</div>
+                <div class="stat-trend trend-up">
+                    <i class="fas fa-arrow-up"></i> +15% ce mois
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="stat-value">${{ stats.total_spent|floatformat:0 }}</div>
+                <div class="stat-label">Total dépensé</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stat-value">${{ stats.avg_order|floatformat:0 }}</div>
+                <div class="stat-label">Panier moyen</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-calendar"></i>
+                </div>
+                <div class="stat-value">{{ customer.created_at|timesince }}</div>
+                <div class="stat-label">Client depuis</div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <!-- Main Column -->
+            <div class="col-lg-8">
+                <!-- Recent Orders -->
+                <div class="detail-card">
+                    <div class="detail-card-header">
+                        <h3 class="detail-card-title">Commandes récentes</h3>
+                        <a href="{% url 'admin_orders_list' %}?search={{ customer.email }}" class="btn-action btn-secondary" style="padding: 5px 15px; font-size: 0.9rem;">
+                            Voir tout
+                        </a>
+                    </div>
+                    <div class="detail-card-body">
+                        <div class="table-responsive">
+                            <table class="orders-table">
+                                <thead>
+                                    <tr>
+                                        <th>N° Commande</th>
+                                        <th>Date</th>
+                                        <th>Statut</th>
+                                        <th>Total</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in orders|slice:":5" %}
+                                    <tr>
+                                        <td>
+                                            <strong>#{{ order.order_number }}</strong>
+                                        </td>
+                                        <td>{{ order.created_at|date:"d/m/Y" }}</td>
+                                        <td>
+                                            <span class="order-status status-{{ order.status }}">
+                                                {{ order.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <strong>${{ order.total|floatformat:2 }}</strong>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'admin_order_detail' order.order_number %}" class="btn-action btn-secondary" style="padding: 5px 10px; font-size: 0.85rem;">
+                                                Voir
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" style="text-align: center; padding: 2rem; color: var(--jlt-gray);">
+                                            Aucune commande pour ce client
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Favorite Products -->
+                <div class="detail-card">
+                    <div class="detail-card-header">
+                        <h3 class="detail-card-title">Produits favoris</h3>
+                    </div>
+                    <div class="detail-card-body">
+                        <div class="favorite-products">
+                            {% for product in stats.favorite_products %}
+                            <div class="favorite-product">
+                                <div class="product-info">
+                                    <div style="width: 50px; height: 50px; background: var(--jlt-beige); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-utensils" style="color: var(--jlt-gray);"></i>
+                                    </div>
+                                    <div>
+                                        <div class="product-name">{{ product.product__name }}</div>
+                                        <div style="font-size: 0.85rem; color: var(--jlt-gray);">
+                                            Commandé {{ product.times_ordered }} fois
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="product-stats">
+                                    <div class="product-orders">{{ product.total_quantity }}</div>
+                                    <div class="product-quantity">unités totales</div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <p style="text-align: center; color: var(--jlt-gray); padding: 2rem 0;">
+                                Aucun produit commandé pour le moment
+                            </p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Contact Information -->
+                <div class="detail-card">
+                    <div class="detail-card-header">
+                        <h3 class="detail-card-title">Informations de contact</h3>
+                    </div>
+                    <div class="detail-card-body">
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-label">Email</div>
+                                <div class="info-value">
+                                    <a href="mailto:{{ customer.email }}">{{ customer.email }}</a>
+                                </div>
+                            </div>
+                            
+                            <div class="info-item">
+                                <div class="info-label">Téléphone</div>
+                                <div class="info-value">
+                                    {% if customer.phone %}
+                                    <a href="tel:{{ customer.phone }}">{{ customer.phone }}</a>
+                                    {% else %}
+                                    Non renseigné
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            {% if customer.company %}
+                            <div class="info-item">
+                                <div class="info-label">Entreprise</div>
+                                <div class="info-value">{{ customer.company }}</div>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="info-item">
+                                <div class="info-label">Inscrit le</div>
+                                <div class="info-value">{{ customer.created_at|date:"d/m/Y" }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Activity Timeline -->
+                <div class="detail-card">
+                    <div class="detail-card-header">
+                        <h3 class="detail-card-title">Activité récente</h3>
+                    </div>
+                    <div class="detail-card-body">
+                        <div class="timeline">
+                            {% for order in orders|slice:":10" %}
+                            <div class="timeline-item">
+                                <div class="timeline-date">{{ order.created_at|date:"d/m/Y H:i" }}</div>
+                                <div class="timeline-content">
+                                    Commande #{{ order.order_number }} - ${{ order.total|floatformat:2 }}
+                                </div>
+                            </div>
+                            {% endfor %}
+                            
+                            <div class="timeline-item">
+                                <div class="timeline-date">{{ customer.created_at|date:"d/m/Y" }}</div>
+                                <div class="timeline-content">
+                                    Inscription du client
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function sendEmail(email) {
+        window.location.href = `mailto:${email}`;
+    }
+    
+    function createOrder(customerId) {
+        // Redirect to create order page with customer pre-selected
+        window.location.href = `/admin/orders/create?customer=${customerId}`;
+    }
+</script>
+{% endblock %}

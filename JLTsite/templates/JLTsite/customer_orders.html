@@ -1,0 +1,721 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Mes commandes - Julien-Leblanc Traiteur{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Header */
+    .dashboard-header {
+        background: linear-gradient(135deg, var(--jlt-green) 0%, var(--jlt-green-dark) 100%);
+        padding: 3rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .dashboard-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 60%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(244, 200, 67, 0.1) 0%, transparent 70%);
+        animation: float 20s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(10deg); }
+    }
+    
+    .page-header h1 {
+        color: white;
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .page-header p {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1.1rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Dashboard Navigation */
+    .dashboard-nav {
+        background: white;
+        border-bottom: 1px solid var(--jlt-gray-light);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .nav-tabs {
+        display: flex;
+        gap: 0;
+        border: none;
+        margin: 0;
+    }
+    
+    .nav-tab {
+        flex: 1;
+        text-align: center;
+        padding: 1.25rem 1rem;
+        background: transparent;
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: var(--jlt-gray);
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .nav-tab:hover {
+        background: var(--jlt-beige-light);
+        color: var(--jlt-black);
+    }
+    
+    .nav-tab.active {
+        color: var(--jlt-black);
+        border-bottom-color: var(--jlt-yellow);
+        background: var(--jlt-beige-light);
+    }
+    
+    .nav-tab i {
+        font-size: 1.2rem;
+    }
+    
+    /* Orders Content */
+    .orders-content {
+        padding: 3rem 0;
+        background: var(--jlt-beige);
+        min-height: 500px;
+    }
+    
+    /* Filters Section */
+    .filters-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+    
+    .filters-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .filters-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--jlt-black);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .filters-title i {
+        color: var(--jlt-yellow);
+    }
+    
+    .btn-reset {
+        background: transparent;
+        border: 1px solid var(--jlt-gray-light);
+        color: var(--jlt-gray);
+        padding: 6px 15px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-reset:hover {
+        border-color: var(--jlt-yellow);
+        color: var(--jlt-black);
+    }
+    
+    .filters-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .filter-group select {
+        width: 100%;
+        padding: 10px 15px;
+        border: 2px solid var(--jlt-gray-light);
+        border-radius: 8px;
+        background: white;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .filter-group select:focus {
+        outline: none;
+        border-color: var(--jlt-yellow);
+    }
+    
+    /* Orders Table */
+    .orders-table-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+    }
+    
+    .table-responsive {
+        overflow-x: auto;
+    }
+    
+    .orders-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    .orders-table thead {
+        background: var(--jlt-green);
+        color: white;
+    }
+    
+    .orders-table th {
+        padding: 1.25rem 1rem;
+        font-weight: 600;
+        text-align: left;
+        white-space: nowrap;
+    }
+    
+    .orders-table tbody tr {
+        border-bottom: 1px solid var(--jlt-gray-light);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .orders-table tbody tr:hover {
+        background: var(--jlt-beige-light);
+    }
+    
+    .orders-table td {
+        padding: 1.25rem 1rem;
+        vertical-align: middle;
+    }
+    
+    .order-number-link {
+        font-weight: 600;
+        color: var(--jlt-black);
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+    
+    .order-number-link:hover {
+        color: var(--jlt-yellow);
+    }
+    
+    .order-status {
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        display: inline-block;
+    }
+    
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .status-confirmed {
+        background: #d4f4dd;
+        color: var(--jlt-green);
+    }
+    
+    .status-preparing {
+        background: #cce5ff;
+        color: #004085;
+    }
+    
+    .status-ready {
+        background: #e2e3e5;
+        color: #383d41;
+    }
+    
+    .status-delivered {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .status-cancelled {
+        background: #fde2e2;
+        color: #dc3545;
+    }
+    
+    .order-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .btn-action {
+        background: transparent;
+        border: 1px solid var(--jlt-gray-light);
+        color: var(--jlt-gray);
+        width: 35px;
+        height: 35px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-action:hover {
+        border-color: var(--jlt-yellow);
+        background: var(--jlt-yellow);
+        color: var(--jlt-black);
+    }
+    
+    /* Mobile View - Cards */
+    .orders-cards {
+        display: none;
+    }
+    
+    .order-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .order-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    
+    .order-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+    
+    .order-card-number {
+        font-weight: 600;
+        font-size: 1.05rem;
+        color: var(--jlt-black);
+    }
+    
+    .order-card-body {
+        display: grid;
+        gap: 0.75rem;
+    }
+    
+    .order-card-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--jlt-gray-light);
+    }
+    
+    .order-card-row:last-child {
+        border-bottom: none;
+    }
+    
+    .order-card-label {
+        color: var(--jlt-gray);
+        font-size: 0.9rem;
+    }
+    
+    .order-card-value {
+        font-weight: 600;
+        color: var(--jlt-black);
+    }
+    
+    /* Pagination */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 2rem;
+    }
+    
+    .page-link {
+        padding: 8px 14px;
+        border: 2px solid var(--jlt-gray-light);
+        border-radius: 8px;
+        color: var(--jlt-black);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .page-link:hover {
+        border-color: var(--jlt-yellow);
+        background: var(--jlt-yellow);
+        color: var(--jlt-black);
+    }
+    
+    .page-link.active {
+        background: var(--jlt-yellow);
+        border-color: var(--jlt-yellow);
+        color: var(--jlt-black);
+    }
+    
+    .page-link.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+    }
+    
+    .empty-icon {
+        font-size: 4rem;
+        color: var(--jlt-gray-light);
+        margin-bottom: 1.5rem;
+    }
+    
+    .empty-title {
+        font-size: 1.5rem;
+        color: var(--jlt-gray);
+        margin-bottom: 0.5rem;
+    }
+    
+    .empty-desc {
+        color: var(--jlt-gray);
+        margin-bottom: 2rem;
+    }
+    
+    .btn-primary {
+        background: var(--jlt-yellow);
+        color: var(--jlt-black);
+        padding: 12px 30px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    
+    .btn-primary:hover {
+        background: var(--jlt-yellow-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(244, 200, 67, 0.4);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .page-header h1 {
+            font-size: 1.8rem;
+        }
+        
+        .orders-table-card {
+            display: none;
+        }
+        
+        .orders-cards {
+            display: block;
+        }
+        
+        .nav-tab span {
+            display: none;
+        }
+        
+        .filters-header {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .btn-reset {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Dashboard Header -->
+<section class="dashboard-header">
+    <div class="container">
+        <div class="page-header">
+            <h1><i class="fas fa-shopping-bag"></i> Mes commandes</h1>
+            <p>Consultez l'historique de toutes vos commandes</p>
+        </div>
+    </div>
+</section>
+
+<!-- Dashboard Navigation -->
+<section class="dashboard-nav">
+    <div class="container">
+        <div class="nav-tabs">
+            <a href="{% url 'customer_dashboard' %}" class="nav-tab">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Tableau de bord</span>
+            </a>
+            <a href="{% url 'customer_orders' %}" class="nav-tab active">
+                <i class="fas fa-shopping-bag"></i>
+                <span>Mes commandes</span>
+            </a>
+            <a href="{% url 'customer_profile' %}" class="nav-tab">
+                <i class="fas fa-user"></i>
+                <span>Mon profil</span>
+            </a>
+            <a href="{% url 'shop_boites_lunch' %}" class="nav-tab">
+                <i class="fas fa-utensils"></i>
+                <span>Commander</span>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Orders Content -->
+<section class="orders-content">
+    <div class="container">
+        <!-- Filters -->
+        <div class="filters-card">
+            <div class="filters-header">
+                <h3 class="filters-title">
+                    <i class="fas fa-filter"></i> Filtres
+                </h3>
+                <button class="btn-reset" onclick="resetFilters()">
+                    <i class="fas fa-undo"></i> Réinitialiser
+                </button>
+            </div>
+            <form method="GET" action="{% url 'customer_orders' %}" id="filtersForm">
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <select name="status" onchange="this.form.submit()">
+                            <option value="">Tous les statuts</option>
+                            <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>
+                                En attente
+                            </option>
+                            <option value="confirmed" {% if request.GET.status == 'confirmed' %}selected{% endif %}>
+                                Confirmée
+                            </option>
+                            <option value="preparing" {% if request.GET.status == 'preparing' %}selected{% endif %}>
+                                En préparation
+                            </option>
+                            <option value="ready" {% if request.GET.status == 'ready' %}selected{% endif %}>
+                                Prête
+                            </option>
+                            <option value="delivered" {% if request.GET.status == 'delivered' %}selected{% endif %}>
+                                Livrée
+                            </option>
+                            <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>
+                                Annulée
+                            </option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <select name="period" onchange="this.form.submit()">
+                            <option value="">Toutes les périodes</option>
+                            <option value="week" {% if request.GET.period == 'week' %}selected{% endif %}>
+                                Cette semaine
+                            </option>
+                            <option value="month" {% if request.GET.period == 'month' %}selected{% endif %}>
+                                Ce mois
+                            </option>
+                            <option value="3months" {% if request.GET.period == '3months' %}selected{% endif %}>
+                                3 derniers mois
+                            </option>
+                            <option value="year" {% if request.GET.period == 'year' %}selected{% endif %}>
+                                Cette année
+                            </option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        {% if orders %}
+        <!-- Desktop Table View -->
+        <div class="orders-table-card">
+            <div class="table-responsive">
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>N° Commande</th>
+                            <th>Date</th>
+                            <th>Statut</th>
+                            <th>Livraison</th>
+                            <th>Articles</th>
+                            <th>Total</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr onclick="window.location.href='{% url 'customer_order_detail' order.order_number %}'">
+                            <td>
+                                <a href="{% url 'customer_order_detail' order.order_number %}" class="order-number-link">
+                                    #{{ order.order_number }}
+                                </a>
+                            </td>
+                            <td>{{ order.created_at|date:"d/m/Y" }}</td>
+                            <td>
+                                <span class="order-status status-{{ order.status }}">
+                                    {{ order.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {{ order.delivery_date|date:"d/m/Y" }}<br>
+                                <small>{{ order.delivery_time|time:"H:i" }}</small>
+                            </td>
+                            <td>{{ order.items.count }}</td>
+                            <td><strong>${{ order.total|floatformat:2 }}</strong></td>
+                            <td onclick="event.stopPropagation()">
+                                <div class="order-actions">
+                                    <a href="{% url 'customer_order_detail' order.order_number %}" 
+                                       class="btn-action" title="Voir les détails">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if order.status == 'delivered' %}
+                                    <button class="btn-action" title="Commander à nouveau" onclick="reorderItems('{{ order.order_number }}')">
+                                        <i class="fas fa-redo"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Mobile Cards View -->
+        <div class="orders-cards">
+            {% for order in orders %}
+            <div class="order-card" onclick="window.location.href='{% url 'customer_order_detail' order.order_number %}'">
+                <div class="order-card-header">
+                    <span class="order-card-number">#{{ order.order_number }}</span>
+                    <span class="order-status status-{{ order.status }}">
+                        {{ order.get_status_display }}
+                    </span>
+                </div>
+                <div class="order-card-body">
+                    <div class="order-card-row">
+                        <span class="order-card-label">Date de commande</span>
+                        <span class="order-card-value">{{ order.created_at|date:"d/m/Y" }}</span>
+                    </div>
+                    <div class="order-card-row">
+                        <span class="order-card-label">Livraison</span>
+                        <span class="order-card-value">
+                            {{ order.delivery_date|date:"d/m/Y" }} à {{ order.delivery_time|time:"H:i" }}
+                        </span>
+                    </div>
+                    <div class="order-card-row">
+                        <span class="order-card-label">Articles</span>
+                        <span class="order-card-value">{{ order.items.count }}</span>
+                    </div>
+                    <div class="order-card-row">
+                        <span class="order-card-label">Total</span>
+                        <span class="order-card-value" style="color: var(--jlt-yellow); font-size: 1.1rem;">
+                            ${{ order.total|floatformat:2 }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if orders.has_other_pages %}
+        <nav aria-label="Navigation">
+            <ul class="pagination">
+                {% if orders.has_previous %}
+                <li>
+                    <a class="page-link" href="?page={{ orders.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.period %}&period={{ request.GET.period }}{% endif %}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for num in orders.paginator.page_range %}
+                    {% if orders.number == num %}
+                    <li>
+                        <span class="page-link active">{{ num }}</span>
+                    </li>
+                    {% elif num > orders.number|add:'-3' and num < orders.number|add:'3' %}
+                    <li>
+                        <a class="page-link" href="?page={{ num }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.period %}&period={{ request.GET.period }}{% endif %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if orders.has_next %}
+                <li>
+                    <a class="page-link" href="?page={{ orders.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.period %}&period={{ request.GET.period }}{% endif %}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <!-- Empty State -->
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-shopping-bag"></i>
+            </div>
+            <h3 class="empty-title">Aucune commande trouvée</h3>
+            <p class="empty-desc">
+                {% if request.GET.status or request.GET.period %}
+                    Aucune commande ne correspond à vos critères de recherche
+                {% else %}
+                    Vous n'avez pas encore passé de commande
+                {% endif %}
+            </p>
+            <a href="{% url 'shop_boites_lunch' %}" class="btn btn-primary">
+                <i class="fas fa-utensils"></i> Découvrir nos plats
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Reset filters
+    function resetFilters() {
+        window.location.href = "{% url 'customer_orders' %}";
+    }
+    
+    // Reorder functionality
+    function reorderItems(orderNumber) {
+        event.stopPropagation();
+        if (confirm('Voulez-vous commander à nouveau les mêmes articles?')) {
+            // TODO: Implement reorder functionality
+            console.log('Reorder order:', orderNumber);
+            // This would typically make an AJAX call to add items to cart
+        }
+    }
+</script>
+{% endblock %}

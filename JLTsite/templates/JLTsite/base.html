@@ -1,52 +1,339 @@
 {% load static %}
 
-<!-- base.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Julien Leblanc Traiteur{% endblock %}</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title>{% block title %}Julien-Leblanc Traiteur{% endblock %}</title>
+    
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&family=Dancing+Script:wght@400..700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     
-  
-    {% block extra_css %}
-    {% endblock %}
-    {% block extra_js %}
-    {% endblock %}
-    <script src="https://kit.fontawesome.com/779d014a69.js" crossorigin="anonymous"></script>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <style>
+        @font-face {
+            font-family: 'NeueKabel-Regular';
+            src: url('{% static "fonts/NeueKabel-Regular.otf" %}') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+        }
+        :root {
+            --jlt-yellow: #F4C843;
+            --jlt-yellow-hover: #E6B935;
+            --jlt-black: #0B0B0B;
+            --jlt-green: #6B7652;
+            --jlt-green-dark: #5A6347;
+            --jlt-beige: #F5F2E8;
+            --jlt-beige-light: #FAF8F3;
+            --jlt-gray: #6C757D;
+            --jlt-gray-light: #E9ECEF;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'NeueKabel-Regular';
+            background-color: var(--jlt-beige);
+            color: var(--jlt-black);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .logo-image {
+            width: 200px;
+        }
 
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            color: var(--jlt-black);
+        }
+        
+        /* Navigation */
+        .navbar {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            padding: 1rem 0;
+        }
+        
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            color: var(--jlt-black) !important;
+            text-decoration: none;
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background-color: var(--jlt-yellow);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-weight: bold;
+            font-style: italic;
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .navbar-nav .nav-link {
+            color: var(--jlt-black);
+            font-weight: 500;
+            margin: 0 1rem;
+            transition: color 0.3s ease;
+        }
+        
+        .navbar-nav .nav-link:hover {
+            color: var(--jlt-yellow);
+        }
+        
+        /* Buttons */
+        .btn-primary {
+            background-color: var(--jlt-yellow);
+            border: none;
+            color: var(--jlt-black);
+            font-weight: 600;
+            padding: 12px 30px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.9rem;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--jlt-yellow-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(244, 200, 67, 0.3);
+        }
+        
+        .btn-secondary {
+            background-color: var(--jlt-green);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 12px 30px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-secondary:hover {
+            background-color: var(--jlt-green-dark);
+            transform: translateY(-2px);
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--jlt-black);
+            color: var(--jlt-black);
+            font-weight: 600;
+            padding: 10px 28px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline:hover {
+            background-color: var(--jlt-black);
+            color: white;
+        }
+        
+        /* Forms */
+        .form-control {
+            border: 1px solid var(--jlt-gray-light);
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background-color: white;
+        }
+        
+        .form-control:focus {
+            border-color: var(--jlt-yellow);
+            box-shadow: 0 0 0 0.2rem rgba(244, 200, 67, 0.25);
+            outline: none;
+        }
+        
+        .form-label {
+            font-weight: 500;
+            color: var(--jlt-black);
+            margin-bottom: 8px;
+        }
+        
+        /* Alert Messages */
+        .alert {
+            border-radius: 8px;
+            border: none;
+            padding: 1rem 1.5rem;
+            font-weight: 500;
+        }
+        
+        .alert-success {
+            background-color: #d4f4dd;
+            color: var(--jlt-green);
+        }
+        
+        .alert-danger {
+            background-color: #fde2e2;
+            color: #dc3545;
+        }
+        
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        /* Footer */
+        footer {
+            background-color: var(--jlt-green);
+            color: white;
+            padding: 3rem 0 1rem;
+            margin-top: auto;
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .navbar-nav {
+                text-align: center;
+            }
+            
+            .navbar-nav .nav-link {
+                margin: 0.5rem 0;
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <header>
-        
-        <nav>
-            <!-- Add navigation links here -->
-        </nav>
-    </header>
-
-    <main>
-        {% block content %}
-        {% endblock %}
-    </main>
-
-    <footer style="text-align: center; margin-top: 50px; color: white;">
-        <p>2025 © All rights reserved | Julien-Leblanc Traiteur</p>
-        <p>
-            <a href="https://www.instagram.com/julienleblanctraiteur/?hl=en" target="_blank">
-                <i class="fab fa-instagram"></i> Instagram
-            </a> |
-            <a href="tel:+1234567890">
-                <i class="fas fa-phone-alt"></i> Téléphone: +15149370698
-            </a> |
-            <a href="https://www.google.com/maps/place/Julien-Leblanc+traiteur/@45.4946342,-73.5856569,651m/data=!3m2!1e3!4b1!4m6!3m5!1s0x4cc91a6b49675e23:0xc3833e27a346b078!8m2!3d45.4946342!4d-73.583082!16s%2Fg%2F1tfk417b?entry=ttu&g_ep=EgoyMDI1MDIwNS4xIKXMDSoASAFQAw%3D%3D" target="_blank">
-                <i class="fas fa-map-marker-alt"></i> Adresse: 2295 Rue St Marc, Montréal, QC H3H 1E4
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'home' %}">
+                <img src="{% static 'images/JLT_noir_jaune.png' %}" alt="Logo" class="logo-image" />
             </a>
-        </p>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'home' %}">Accueil</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'repas' %}">Nos Repas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'événements' %}">Nos Evénements</a>
+                    </li>
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'customer_dashboard' %}">Mon Compte</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'logout' %}">Déconnexion</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'login' %}">Connexion</a>
+                        </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'cart' %}">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span class="badge bg-warning text-dark">0</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Messages -->
+    {% if messages %}
+        <div class="container mt-3">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    
+    <!-- Main Content -->
+    <main class="flex-grow-1">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5 style="color: var(--jlt-yellow);">Julien-Leblanc Traiteur</h5>
+                    <p>Service traiteur haut de gamme pour tous vos événements à Montréal et ses environs.</p>
+                </div>
+                <div class="col-md-4">
+                    <h5 style="color: var(--jlt-yellow);">Contact</h5>
+                    <p>
+                        <i class="fas fa-phone"></i> 514-XXX-XXXX<br>
+                        <i class="fas fa-envelope"></i> info@julienblanc-traiteur.com
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <h5 style="color: var(--jlt-yellow);">Suivez-nous</h5>
+                    <div class="social-links">
+                        <a href="#" style="color: white; margin-right: 15px;"><i class="fab fa-facebook fa-lg"></i></a>
+                        <a href="#" style="color: white; margin-right: 15px;"><i class="fab fa-instagram fa-lg"></i></a>
+                        <a href="#" style="color: white;"><i class="fab fa-linkedin fa-lg"></i></a>
+                    </div>
+                </div>
+            </div>
+            <hr style="border-color: rgba(255,255,255,0.2); margin: 2rem 0 1rem;">
+            <div class="text-center">
+                <p>&copy; 2025 Julien-Leblanc Traiteur. Tous droits réservés.</p>
+            </div>
+        </div>
     </footer>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

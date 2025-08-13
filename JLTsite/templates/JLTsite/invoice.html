@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facture #{{ order.order_number }} - Julien-Leblanc Traiteur</title>
+    
+    <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+            background: white;
+        }
+        
+        .invoice-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+            background: white;
+        }
+        
+        /* Header */
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #F4C843;
+        }
+        
+        .company-info {
+            flex: 1;
+        }
+        
+        .company-logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #6B7652;
+            margin-bottom: 10px;
+        }
+        
+        .company-details {
+            color: #666;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+        
+        .invoice-title {
+            text-align: right;
+        }
+        
+        .invoice-title h1 {
+            font-size: 36px;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 300;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .invoice-number {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .invoice-date {
+            font-size: 14px;
+            color: #999;
+        }
+        
+        /* Invoice Info */
+        .invoice-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        
+        .info-section {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .info-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #6B7652;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+        
+        .info-content {
+            line-height: 1.8;
+            color: #333;
+        }
+        
+        .info-content strong {
+            color: #000;
+        }
+        
+        /* Products Table */
+        .products-section {
+            margin-bottom: 40px;
+        }
+        
+        .products-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .products-table thead {
+            background: #6B7652;
+            color: white;
+        }
+        
+        .products-table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 500;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .products-table th:last-child,
+        .products-table td:last-child {
+            text-align: right;
+        }
+        
+        .products-table tbody tr {
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .products-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .products-table td {
+            padding: 15px;
+            color: #333;
+        }
+        
+        .product-name {
+            font-weight: 600;
+            color: #000;
+        }
+        
+        .product-category {
+            font-size: 12px;
+            color: #999;
+            margin-top: 3px;
+        }
+        
+        /* Totals */
+        .totals-section {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 40px;
+        }
+        
+        .totals-table {
+            width: 350px;
+        }
+        
+        .totals-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .totals-row.total {
+            border-bottom: none;
+            border-top: 2px solid #F4C843;
+            padding-top: 15px;
+            margin-top: 10px;
+        }
+        
+        .totals-label {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .totals-value {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .total .totals-label,
+        .total .totals-value {
+            font-size: 18px;
+            color: #000;
+        }
+        
+        /* Footer */
+        .invoice-footer {
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .footer-notes {
+            margin-bottom: 30px;
+        }
+        
+        .footer-notes h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #6B7652;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .footer-notes p {
+            color: #666;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+        
+        .payment-info {
+            background: #fff9e6;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-left: 4px solid #F4C843;
+        }
+        
+        .payment-info h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .payment-info p {
+            color: #666;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            padding-top: 30px;
+            color: #999;
+            font-size: 12px;
+        }
+        
+        .footer-bottom strong {
+            color: #6B7652;
+        }
+        
+        /* Status Badge */
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-left: 10px;
+        }
+        
+        .status-paid {
+            background: #d4f4dd;
+            color: #28a745;
+        }
+        
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        /* Print Styles */
+        @media print {
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            
+            .invoice-container {
+                padding: 20px;
+            }
+            
+            .no-print {
+                display: none !important;
+            }
+            
+            .products-table tbody tr:hover {
+                background: transparent;
+            }
+        }
+        
+        /* Action Buttons (for screen only) */
+        .action-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #333;
+            padding: 15px;
+            text-align: center;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        .action-bar button {
+            padding: 10px 20px;
+            margin: 0 5px;
+            border: none;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-print {
+            background: #F4C843;
+            color: #000;
+        }
+        
+        .btn-download {
+            background: #6B7652;
+            color: white;
+        }
+        
+        .btn-back {
+            background: #e0e0e0;
+            color: #333;
+        }
+        
+        .action-bar button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        @media screen {
+            .invoice-container {
+                margin-top: 80px;
+                box-shadow: 0 0 30px rgba(0,0,0,0.1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Action Bar (screen only) -->
+    <div class="action-bar no-print">
+        <button class="btn-print" onclick="window.print()">
+            <i class="fas fa-print"></i> Imprimer
+        </button>
+        <button class="btn-download" onclick="downloadPDF()">
+            <i class="fas fa-download"></i> Télécharger PDF
+        </button>
+        <button class="btn-back" onclick="window.history.back()">
+            <i class="fas fa-arrow-left"></i> Retour
+        </button>
+    </div>
+    
+    <!-- Invoice Content -->
+    <div class="invoice-container">
+        <!-- Header -->
+        <div class="invoice-header">
+            <div class="company-info">
+                <div class="company-logo">JULIEN-LEBLANC TRAITEUR</div>
+                <div class="company-details">
+                    123 Rue Example<br>
+                    Montréal, QC H2X 1Y2<br>
+                    Téléphone: (514) 123-4567<br>
+                    Email: info@julien-leblanc-traiteur.com<br>
+                    Site web: www.julien-leblanc-traiteur.com
+                </div>
+            </div>
+            
+            <div class="invoice-title">
+                <h1>Facture</h1>
+                <div class="invoice-number">N° {{ order.order_number }}</div>
+                <div class="invoice-date">Date: {{ order.created_at|date:"d/m/Y" }}</div>
+                {% if order.payment_status == 'paid' %}
+                <span class="status-badge status-paid">Payée</span>
+                {% else %}
+                <span class="status-badge status-pending">En attente</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Invoice Info -->
+        <div class="invoice-info">
+            <div class="info-section">
+                <div class="info-title">Facturer à</div>
+                <div class="info-content">
+                    <strong>{{ order.first_name }} {{ order.last_name }}</strong><br>
+                    {% if order.company %}{{ order.company }}<br>{% endif %}
+                    {{ order.email }}<br>
+                    {{ order.phone }}
+                    {% if order.delivery_type == 'delivery' and order.delivery_address %}
+                    <br><br>
+                    {{ order.delivery_address }}<br>
+                    {{ order.delivery_city }}, {{ order.delivery_postal_code }}
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="info-section">
+                <div class="info-title">Détails de livraison</div>
+                <div class="info-content">
+                    <strong>Type:</strong> {{ order.get_delivery_type_display }}<br>
+                    <strong>Date:</strong> {{ order.delivery_date|date:"d/m/Y" }}<br>
+                    <strong>Heure:</strong> {{ order.delivery_time }}<br>
+                    {% if order.special_instructions %}
+                    <br>
+                    <strong>Instructions:</strong><br>
+                    {{ order.special_instructions }}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Products Table -->
+        <div class="products-section">
+            <table class="products-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50%;">Produit</th>
+                        <th style="width: 15%;">Prix unitaire</th>
+                        <th style="width: 15%;">Quantité</th>
+                        <th style="width: 20%;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items.all %}
+                    <tr>
+                        <td>
+                            <div class="product-name">{{ item.product.name }}</div>
+                            <div class="product-category">{{ item.product.category.name }}</div>
+                        </td>
+                        <td>${{ item.price|floatformat:2 }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td><strong>${{ item.subtotal|floatformat:2 }}</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Totals -->
+        <div class="totals-section">
+            <div class="totals-table">
+                <div class="totals-row">
+                    <span class="totals-label">Sous-total</span>
+                    <span class="totals-value">${{ order.subtotal|default:order.total|floatformat:2 }}</span>
+                </div>
+                
+                {% if order.delivery_fee %}
+                <div class="totals-row">
+                    <span class="totals-label">Frais de livraison</span>
+                    <span class="totals-value">${{ order.delivery_fee|floatformat:2 }}</span>
+                </div>
+                {% endif %}
+                
+                {% if order.tax %}
+                <div class="totals-row">
+                    <span class="totals-label">TPS (5%)</span>
+                    <span class="totals-value">${{ order.gst|floatformat:2 }}</span>
+                </div>
+                <div class="totals-row">
+                    <span class="totals-label">TVQ (9.975%)</span>
+                    <span class="totals-value">${{ order.qst|floatformat:2 }}</span>
+                </div>
+                {% endif %}
+                
+                {% if order.discount %}
+                <div class="totals-row">
+                    <span class="totals-label">Réduction</span>
+                    <span class="totals-value" style="color: #dc3545;">-${{ order.discount|floatformat:2 }}</span>
+                </div>
+                {% endif %}
+                
+                <div class="totals-row total">
+                    <span class="totals-label">Total</span>
+                    <span class="totals-value">${{ order.total|floatformat:2 }} CAD</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="invoice-footer">
+            {% if order.payment_status != 'paid' %}
+            <div class="payment-info">
+                <h3>Information de paiement</h3>
+                <p>
+                    Le paiement peut être effectué par virement bancaire, chèque ou carte de crédit.<br>
+                    Veuillez effectuer le paiement dans les 30 jours suivant la date de facturation.<br>
+                    Pour les virements bancaires, veuillez utiliser le numéro de facture comme référence.
+                </p>
+            </div>
+            {% endif %}
+            
+            {% if order.admin_notes %}
+            <div class="footer-notes">
+                <h3>Notes</h3>
+                <p>{{ order.admin_notes }}</p>
+            </div>
+            {% endif %}
+            
+            <div class="footer-notes">
+                <h3>Conditions</h3>
+                <p>
+                    Merci pour votre commande! Pour toute question concernant cette facture, 
+                    n'hésitez pas à nous contacter. Les prix incluent toutes les taxes applicables.
+                    Les commandes annulées moins de 48h avant la livraison peuvent être sujettes à des frais.
+                </p>
+            </div>
+            
+            <div class="footer-bottom">
+                <strong>Julien-Leblanc Traiteur</strong> - Excellence culinaire depuis 1985<br>
+                NEQ: 1234567890 | TPS: 123456789RT0001 | TVQ: 1234567890TQ0001
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function downloadPDF() {
+            // In a real implementation, you would use a library like jsPDF or html2pdf
+            alert('Fonction de téléchargement PDF à implémenter avec une bibliothèque comme jsPDF');
+            // window.print(); // For now, just trigger print dialog
+        }
+    </script>
+</body>
+</html>

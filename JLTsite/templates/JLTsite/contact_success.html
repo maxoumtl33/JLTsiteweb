@@ -1,0 +1,219 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demande envoyée - Julien-Leblanc Traiteur</title>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family:Playfair+Display:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Georgia, serif;
+            background-color: #F7F3EA;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .success-container {
+            background: white;
+            padding: 60px;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            max-width: 600px;
+            text-align: center;
+            animation: fadeInUp 0.6s ease;
+        }
+        
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background-color: #5cb85c;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            animation: scaleIn 0.4s ease 0.2s both;
+        }
+        
+        .success-icon::after {
+            content: '✓';
+            color: white;
+            font-size: 48px;
+            font-weight: bold;
+        }
+        
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 36px;
+            color: #444E36;
+            margin-bottom: 20px;
+            font-weight: normal;
+        }
+        
+        .highlight {
+            color: #F4C843;
+        }
+        
+        p {
+            color: #666;
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .details {
+            background-color: #F7F3EA;
+            padding: 25px;
+            border-left: 4px solid #F4C843;
+            margin: 30px 0;
+            text-align: left;
+        }
+        
+        .details h2 {
+            font-size: 20px;
+            color: #444E36;
+            margin-bottom: 15px;
+            font-weight: normal;
+        }
+        
+        .details p {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        
+        .btn-group {
+            margin-top: 40px;
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+        
+        .btn {
+            padding: 15px 40px;
+            text-decoration: none;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background-color: #F4C843;
+            color: #000;
+        }
+        
+        .btn-primary:hover {
+            background-color: #e6b800;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(244, 200, 67, 0.4);
+        }
+        
+        .btn-secondary {
+            background-color: transparent;
+            color: #444E36;
+            border: 2px solid #444E36;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #444E36;
+            color: white;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+            }
+            to {
+                transform: scale(1);
+            }
+        }
+        
+        .footer-info {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid #e0e0e0;
+            color: #999;
+            font-size: 14px;
+        }
+        
+        .contact-info {
+            margin-top: 20px;
+        }
+        
+        .contact-info a {
+            color: #444E36;
+            text-decoration: none;
+        }
+        
+        .contact-info a:hover {
+            color: #F4C843;
+        }
+    </style>
+</head>
+<body>
+    <div class="success-container">
+        <div class="success-icon"></div>
+        
+        <h1>Merci <span class="highlight">pour votre demande!</span></h1>
+        
+        <p>
+            Votre demande de soumission a été envoyée avec succès à notre équipe.
+        </p>
+        
+        <div class="details">
+            <h2>Prochaines étapes :</h2>
+            <p>📧 Vous recevrez un email de confirmation dans quelques instants</p>
+            <p>📞 Un membre de notre équipe vous contactera sous 24-48 heures</p>
+            <p>📋 Nous préparerons une proposition personnalisée pour votre événement</p>
+        </div>
+        
+        <p>
+            Nous avons hâte de contribuer au succès de votre événement et de vous offrir une expérience culinaire mémorable.
+        </p>
+        
+        <div class="btn-group">
+            <a href="/" class="btn btn-primary">Retour à l'accueil</a>
+            <a href="/menu" class="btn btn-secondary">Voir nos menus</a>
+        </div>
+        
+        <div class="footer-info">
+            <p>Des questions? N'hésitez pas à nous contacter directement:</p>
+            <div class="contact-info">
+                <p>
+                    📞 <a href="tel:5148120498">514 812-0698</a> | 
+                    ✉️ <a href="mailto:contact@julien-leblanc.com">contact@julien-leblanc.com</a>
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Redirection automatique après 10 secondes
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 10000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,1066 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Commande confirmée - Julien-Leblanc Traiteur{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Confirmation Header */
+    .confirmation-header {
+        background: linear-gradient(135deg, var(--jlt-green) 0%, var(--jlt-green-dark) 100%);
+        padding: 4rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .confirmation-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 60%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(244, 200, 67, 0.2) 0%, transparent 70%);
+        animation: float 20s ease-in-out infinite;
+    }
+    
+    .confirmation-header::after {
+        content: '🎉';
+        position: absolute;
+        top: 20px;
+        right: 10%;
+        font-size: 100px;
+        opacity: 0.1;
+        animation: bounce 2s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(10deg); }
+    }
+    
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-20px); }
+    }
+    
+    .success-icon {
+        width: 80px;
+        height: 80px;
+        background: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 2rem;
+        position: relative;
+        z-index: 1;
+        animation: scaleIn 0.5s ease-out;
+    }
+    
+    @keyframes scaleIn {
+        from {
+            transform: scale(0);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+    
+    .success-icon i {
+        font-size: 2.5rem;
+        color: var(--jlt-green);
+    }
+    
+    .confirmation-header h1 {
+        color: white;
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        position: relative;
+        z-index: 1;
+        animation: fadeInUp 0.6s ease-out 0.2s both;
+    }
+    
+    .confirmation-header p {
+        color: rgba(255, 255, 255, 0.95);
+        font-size: 1.2rem;
+        position: relative;
+        z-index: 1;
+        animation: fadeInUp 0.6s ease-out 0.4s both;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Progress Steps Complete */
+    .progress-steps {
+        background: white;
+        padding: 2rem 0;
+        border-bottom: 1px solid var(--jlt-gray-light);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .steps-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .step {
+        flex: 1;
+        text-align: center;
+        position: relative;
+    }
+    
+    .step:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        width: 100%;
+        height: 2px;
+        background: var(--jlt-green);
+        z-index: 0;
+    }
+    
+    .step-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--jlt-green);
+        border: 2px solid var(--jlt-green);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 0.5rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .step-label {
+        font-size: 0.9rem;
+        color: var(--jlt-black);
+        font-weight: 600;
+    }
+    
+    /* Confirmation Content */
+    .confirmation-content {
+        padding: 3rem 0;
+        background: var(--jlt-beige);
+    }
+    
+    /* Order Summary Card */
+    .order-summary-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        animation: fadeIn 0.8s ease-out 0.6s both;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .order-header {
+        background: var(--jlt-yellow);
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .order-number {
+        font-size: 1rem;
+        color: var(--jlt-black);
+        margin-bottom: 0.5rem;
+        opacity: 0.8;
+    }
+    
+    .order-number-value {
+        font-family: 'Playfair Display', serif;
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--jlt-black);
+        letter-spacing: 2px;
+    }
+    
+    .order-body {
+        padding: 2rem;
+    }
+    
+    /* Info Sections */
+    .info-section {
+        margin-bottom: 2rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid var(--jlt-gray-light);
+    }
+    
+    .info-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+    
+    .info-section-title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--jlt-black);
+    }
+    
+    .info-section-title i {
+        color: var(--jlt-yellow);
+        font-size: 1.3rem;
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+    }
+    
+    .info-label {
+        color: var(--jlt-gray);
+        font-weight: 500;
+    }
+    
+    .info-value {
+        color: var(--jlt-black);
+        font-weight: 600;
+        text-align: right;
+    }
+    
+    /* Order Items */
+    .order-items {
+        margin-top: 1rem;
+    }
+    
+    .order-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        background: var(--jlt-beige);
+        border-radius: 10px;
+        margin-bottom: 1rem;
+    }
+    
+    .order-item-image {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+    
+    .order-item-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .order-item-details {
+        flex: 1;
+    }
+    
+    .order-item-name {
+        font-weight: 600;
+        color: var(--jlt-black);
+        margin-bottom: 0.25rem;
+    }
+    
+    .order-item-qty {
+        font-size: 0.9rem;
+        color: var(--jlt-gray);
+    }
+    
+    .order-item-price {
+        font-weight: 600;
+        color: var(--jlt-black);
+        font-size: 1.1rem;
+    }
+    
+    /* Totals */
+    .totals-section {
+        background: var(--jlt-beige);
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin-top: 1rem;
+    }
+    
+    .total-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+    }
+    
+    .total-row.grand-total {
+        border-top: 2px solid var(--jlt-gray-light);
+        margin-top: 0.5rem;
+        padding-top: 1rem;
+    }
+    
+    .total-label {
+        color: var(--jlt-gray);
+    }
+    
+    .total-value {
+        font-weight: 600;
+        color: var(--jlt-black);
+    }
+    
+    .total-row.grand-total .total-label {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--jlt-black);
+    }
+    
+    .total-row.grand-total .total-value {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--jlt-yellow);
+    }
+    
+    /* Action Buttons */
+    .action-buttons {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        margin-top: 2rem;
+        text-align: center;
+        animation: fadeIn 0.8s ease-out 0.8s both;
+    }
+    
+    .btn-group {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .btn {
+        padding: 12px 30px;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        border: none;
+    }
+    
+    .btn-primary {
+        background: var(--jlt-yellow);
+        color: var(--jlt-black);
+    }
+    
+    .btn-primary:hover {
+        background: var(--jlt-yellow-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(244, 200, 67, 0.4);
+    }
+    
+    .btn-secondary {
+        background: white;
+        color: var(--jlt-black);
+        border: 2px solid var(--jlt-gray-light);
+    }
+    
+    .btn-secondary:hover {
+        border-color: var(--jlt-yellow);
+        background: var(--jlt-beige-light);
+    }
+    
+    .btn-print {
+        background: var(--jlt-green);
+        color: white;
+    }
+    
+    .btn-print:hover {
+        background: var(--jlt-green-dark);
+        transform: translateY(-2px);
+    }
+    
+    /* Important Notice */
+    .important-notice {
+        background: linear-gradient(135deg, var(--jlt-beige) 0%, var(--jlt-beige-light) 100%);
+        border-left: 4px solid var(--jlt-yellow);
+        padding: 1.5rem;
+        border-radius: 0 10px 10px 0;
+        margin-top: 2rem;
+        animation: fadeIn 0.8s ease-out 1s both;
+    }
+    
+    .important-notice h4 {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        color: var(--jlt-black);
+    }
+    
+    .important-notice h4 i {
+        color: var(--jlt-yellow);
+    }
+    
+    .notice-list {
+        list-style: none;
+        padding: 0;
+    }
+    
+    .notice-list li {
+        padding: 0.5rem 0;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .notice-list li i {
+        color: var(--jlt-green);
+        margin-top: 0.25rem;
+    }
+    
+    /* What's Next Section */
+    .whats-next {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        margin-top: 2rem;
+        animation: fadeIn 0.8s ease-out 1.2s both;
+    }
+    
+    .timeline {
+        position: relative;
+        padding-left: 3rem;
+        margin-top: 1.5rem;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 15px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--jlt-gray-light);
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-bottom: 2rem;
+    }
+    
+    .timeline-item:last-child {
+        padding-bottom: 0;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -35px;
+        top: 5px;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: white;
+        border: 3px solid var(--jlt-yellow);
+    }
+    
+    .timeline-item.completed::before {
+        background: var(--jlt-green);
+        border-color: var(--jlt-green);
+    }
+    
+    .timeline-item.completed::after {
+        content: '✓';
+        position: absolute;
+        left: -28px;
+        top: 9px;
+        color: white;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+    
+    .timeline-title {
+        font-weight: 600;
+        color: var(--jlt-black);
+        margin-bottom: 0.25rem;
+    }
+    
+    .timeline-desc {
+        color: var(--jlt-gray);
+        font-size: 0.9rem;
+    }
+    
+    /* Share Section */
+    .share-section {
+        text-align: center;
+        padding-top: 2rem;
+        margin-top: 2rem;
+        border-top: 1px solid var(--jlt-gray-light);
+    }
+    
+    .share-text {
+        color: var(--jlt-gray);
+        margin-bottom: 1rem;
+    }
+    
+    .social-share {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+    }
+    
+    .social-share-btn {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .social-share-btn.facebook {
+        background: #1877f2;
+        color: white;
+    }
+    
+    .social-share-btn.twitter {
+        background: #1da1f2;
+        color: white;
+    }
+    
+    .social-share-btn.whatsapp {
+        background: #25d366;
+        color: white;
+    }
+    
+    .social-share-btn.email {
+        background: var(--jlt-gray);
+        color: white;
+    }
+    
+    .social-share-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .confirmation-header h1 {
+            font-size: 2rem;
+        }
+        
+        .btn-group {
+            flex-direction: column;
+        }
+        
+        .btn {
+            width: 100%;
+        }
+        
+        .info-row {
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        
+        .info-value {
+            text-align: left;
+        }
+    }
+    
+    @media print {
+        .navbar,
+        .footer,
+        .action-buttons,
+        .share-section,
+        .progress-steps {
+            display: none;
+        }
+        
+        .confirmation-header {
+            background: none;
+            color: black;
+        }
+        
+        .confirmation-header h1,
+        .confirmation-header p {
+            color: black;
+        }
+        
+        .success-icon {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Confirmation Header -->
+<section class="confirmation-header">
+    <div class="container">
+        <div class="success-icon">
+            <i class="fas fa-check"></i>
+        </div>
+        <h1>Merci pour votre commande!</h1>
+        <p>Votre commande a été confirmée avec succès</p>
+    </div>
+</section>
+
+<!-- Progress Steps Complete -->
+<section class="progress-steps">
+    <div class="container">
+        <div class="steps-container">
+            <div class="step">
+                <div class="step-circle">
+                    <i class="fas fa-check"></i>
+                </div>
+                <div class="step-label">Panier</div>
+            </div>
+            <div class="step">
+                <div class="step-circle">
+                    <i class="fas fa-check"></i>
+                </div>
+                <div class="step-label">Livraison</div>
+            </div>
+            <div class="step">
+                <div class="step-circle">
+                    <i class="fas fa-check"></i>
+                </div>
+                <div class="step-label">Paiement</div>
+            </div>
+            <div class="step">
+                <div class="step-circle">
+                    <i class="fas fa-check"></i>
+                </div>
+                <div class="step-label">Confirmation</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Confirmation Content -->
+<section class="confirmation-content">
+    <div class="container">
+        <div class="row">
+            <!-- Left Column - Order Details -->
+            <div class="col-lg-8">
+                <div class="order-summary-card">
+                    <div class="order-header">
+                        <div class="order-number">Numéro de commande</div>
+                        <div class="order-number-value">{{ order.order_number }}</div>
+                    </div>
+                    
+                    <div class="order-body">
+                        <!-- Customer Information -->
+                        <div class="info-section">
+                            <h3 class="info-section-title">
+                                <i class="fas fa-user"></i> Informations client
+                            </h3>
+                            <div class="info-row">
+                                <span class="info-label">Nom:</span>
+                                <span class="info-value">{{ order.first_name }} {{ order.last_name }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Email:</span>
+                                <span class="info-value">{{ order.email }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Téléphone:</span>
+                                <span class="info-value">{{ order.phone }}</span>
+                            </div>
+                            {% if order.company %}
+                            <div class="info-row">
+                                <span class="info-label">Entreprise:</span>
+                                <span class="info-value">{{ order.company }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Delivery Information -->
+                        <div class="info-section">
+                            <h3 class="info-section-title">
+                                <i class="fas fa-truck"></i> Informations de livraison
+                            </h3>
+                            <div class="info-row">
+                                <span class="info-label">Type:</span>
+                                <span class="info-value">{{ order.get_delivery_type_display }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Date:</span>
+                                <span class="info-value">{{ order.delivery_date|date:"l d F Y" }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Heure:</span>
+                                <span class="info-value">{{ order.delivery_time|time:"H:i" }}</span>
+                            </div>
+                            {% if order.delivery_type == 'delivery' %}
+                            <div class="info-row">
+                                <span class="info-label">Adresse:</span>
+                                <span class="info-value">
+                                    {{ order.delivery_address }}<br>
+                                    {{ order.delivery_city }}, {{ order.delivery_postal_code }}
+                                </span>
+                            </div>
+                            {% endif %}
+                            {% if order.delivery_notes %}
+                            <div class="info-row">
+                                <span class="info-label">Instructions:</span>
+                                <span class="info-value">{{ order.delivery_notes }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Order Items -->
+                        <div class="info-section">
+                            <h3 class="info-section-title">
+                                <i class="fas fa-utensils"></i> Articles commandés
+                            </h3>
+                            <div class="order-items">
+                                {% for item in order.items.all %}
+                                <div class="order-item">
+                                    <div class="order-item-image">
+                                        {% if item.product.image %}
+                                        <img src="{{ item.product.image.url }}" alt="{{ item.product_name }}">
+                                        {% else %}
+                                        <img src="https://via.placeholder.com/60x60/F5F2E8/6B7652?text=JL" alt="{{ item.product_name }}">
+                                        {% endif %}
+                                    </div>
+                                    <div class="order-item-details">
+                                        <div class="order-item-name">{{ item.product_name }}</div>
+                                        <div class="order-item-qty">Quantité: {{ item.quantity }}</div>
+                                        {% if item.notes %}
+                                        <div class="order-item-notes">
+                                            <i class="fas fa-sticky-note"></i> {{ item.notes }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="order-item-price">
+                                        ${{ item.subtotal|floatformat:2 }}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <!-- Totals -->
+                            <div class="totals-section">
+                                <div class="total-row">
+                                    <span class="total-label">Sous-total:</span>
+                                    <span class="total-value">${{ order.subtotal|floatformat:2 }}</span>
+                                </div>
+                                <div class="total-row">
+                                    <span class="total-label">TPS/TVQ ({{ order.tax_rate }}%):</span>
+                                    <span class="total-value">${{ order.tax_amount|floatformat:2 }}</span>
+                                </div>
+                                <div class="total-row">
+                                    <span class="total-label">Frais de livraison:</span>
+                                    <span class="total-value">
+                                        {% if order.delivery_fee > 0 %}
+                                            ${{ order.delivery_fee|floatformat:2 }}
+                                        {% else %}
+                                            <span style="color: var(--jlt-green);">GRATUIT</span>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                {% if order.discount_amount > 0 %}
+                                <div class="total-row">
+                                    <span class="total-label">Réduction:</span>
+                                    <span class="total-value" style="color: var(--jlt-green);">
+                                        -${{ order.discount_amount|floatformat:2 }}
+                                    </span>
+                                </div>
+                                {% endif %}
+                                <div class="total-row grand-total">
+                                    <span class="total-label">Total:</span>
+                                    <span class="total-value">${{ order.total|floatformat:2 }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Payment Information -->
+                        <div class="info-section">
+                            <h3 class="info-section-title">
+                                <i class="fas fa-credit-card"></i> Information de paiement
+                            </h3>
+                            <div class="info-row">
+                                <span class="info-label">Méthode:</span>
+                                <span class="info-value">
+                                    {% if order.payment_method == 'card' %}
+                                        Carte de crédit
+                                    {% elif order.payment_method == 'transfer' %}
+                                        Virement Interac
+                                    {% elif order.payment_method == 'cash' %}
+                                        Comptant à la livraison
+                                    {% else %}
+                                        {{ order.payment_method }}
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Statut:</span>
+                                <span class="info-value">
+                                    <span class="badge bg-success">{{ order.get_status_display }}</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <h4>Que souhaitez-vous faire?</h4>
+                    <div class="btn-group">
+                        <button onclick="window.print()" class="btn btn-print">
+                            <i class="fas fa-print"></i> Imprimer
+                        </button>
+                        <a href="{% url 'customer_dashboard' %}" class="btn btn-secondary">
+                            <i class="fas fa-user"></i> Mon compte
+                        </a>
+                        <a href="{% url 'shop_boites_lunch' %}" class="btn btn-primary">
+                            <i class="fas fa-shopping-cart"></i> Continuer mes achats
+                        </a>
+                    </div>
+                    
+                    <div class="share-section">
+                        <p class="share-text">Partagez votre expérience avec vos amis!</p>
+                        <div class="social-share">
+                            <a href="#" class="social-share-btn facebook">
+                                <i class="fab fa-facebook-f"></i>
+                            </a>
+                            <a href="#" class="social-share-btn twitter">
+                                <i class="fab fa-twitter"></i>
+                            </a>
+                            <a href="#" class="social-share-btn whatsapp">
+                                <i class="fab fa-whatsapp"></i>
+                            </a>
+                            <a href="#" class="social-share-btn email">
+                                <i class="fas fa-envelope"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column - What's Next -->
+            <div class="col-lg-4">
+                <!-- Important Notice -->
+                <div class="important-notice">
+                    <h4>
+                        <i class="fas fa-info-circle"></i>
+                        Informations importantes
+                    </h4>
+                    <ul class="notice-list">
+                        <li>
+                            <i class="fas fa-check"></i>
+                            <span>Un email de confirmation a été envoyé à <strong>{{ order.email }}</strong></span>
+                        </li>
+                        <li>
+                            <i class="fas fa-check"></i>
+                            <span>Conservez votre numéro de commande pour référence</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-check"></i>
+                            <span>Nous vous contacterons en cas de question</span>
+                        </li>
+                        {% if order.payment_method == 'transfer' %}
+                        <li>
+                            <i class="fas fa-exclamation-triangle" style="color: var(--jlt-yellow);"></i>
+                            <span>Veuillez effectuer le virement Interac à <strong>paiement@julienblanc-traiteur.com</strong></span>
+                        </li>
+                        {% elif order.payment_method == 'cash' %}
+                        <li>
+                            <i class="fas fa-money-bill" style="color: var(--jlt-yellow);"></i>
+                            <span>Préparez le montant exact de <strong>${{ order.total|floatformat:2 }}</strong> pour la livraison</span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+                
+                <!-- What's Next -->
+                <div class="whats-next">
+                    <h4>
+                        <i class="fas fa-arrow-right" style="color: var(--jlt-yellow);"></i>
+                        Prochaines étapes
+                    </h4>
+                    <div class="timeline">
+                        <div class="timeline-item completed">
+                            <div class="timeline-title">Commande confirmée</div>
+                            <div class="timeline-desc">Maintenant</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-title">En préparation</div>
+                            <div class="timeline-desc">Dans les 24h</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-title">Prête pour livraison</div>
+                            <div class="timeline-desc">{{ order.delivery_date|date:"d F" }}</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-title">Livrée</div>
+                            <div class="timeline-desc">{{ order.delivery_date|date:"d F" }} à {{ order.delivery_time|time:"H:i" }}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Contact Support -->
+                <div class="action-buttons">
+                    <h4>Besoin d'aide?</h4>
+                    <p style="color: var(--jlt-gray); margin-bottom: 1rem;">
+                        Notre équipe est là pour vous aider
+                    </p>
+                    <a href="tel:514-XXX-XXXX" class="btn btn-secondary" style="width: 100%; margin-bottom: 0.5rem;">
+                        <i class="fas fa-phone"></i> 514-XXX-XXXX
+                    </a>
+                    <a href="mailto:info@julienblanc-traiteur.com" class="btn btn-secondary" style="width: 100%;">
+                        <i class="fas fa-envelope"></i> Nous écrire
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Success Animation -->
+<div id="confetti"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Confetti animation on page load
+    function createConfetti() {
+        const confettiContainer = document.getElementById('confetti');
+        const colors = ['#F4C843', '#6B7652', '#4CAF50', '#FF9800'];
+        
+        for (let i = 0; i < 50; i++) {
+            setTimeout(() => {
+                const confetti = document.createElement('div');
+                confetti.style.cssText = `
+                    position: fixed;
+                    width: 10px;
+                    height: 10px;
+                    background: ${colors[Math.floor(Math.random() * colors.length)]};
+                    left: ${Math.random() * 100}%;
+                    top: -20px;
+                    opacity: ${Math.random()};
+                    transform: rotate(${Math.random() * 360}deg);
+                    animation: fall ${2 + Math.random() * 3}s linear;
+                    z-index: 9999;
+                `;
+                confettiContainer.appendChild(confetti);
+                
+                setTimeout(() => confetti.remove(), 5000);
+            }, i * 50);
+        }
+    }
+    
+    // CSS for confetti animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes fall {
+            to {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Trigger confetti on load
+    window.addEventListener('load', createConfetti);
+    
+    // Share functionality
+    document.querySelectorAll('.social-share-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const orderNumber = '{{ order.order_number }}';
+            const url = window.location.href;
+            const text = `Je viens de commander chez Julien-Leblanc Traiteur! Commande #${orderNumber}`;
+            
+            if (this.classList.contains('facebook')) {
+                window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+            } else if (this.classList.contains('twitter')) {
+                window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
+            } else if (this.classList.contains('whatsapp')) {
+                window.open(`https://wa.me/?text=${text} ${url}`, '_blank');
+            } else if (this.classList.contains('email')) {
+                window.location.href = `mailto:?subject=Ma commande chez Julien-Leblanc Traiteur&body=${text} ${url}`;
+            }
+        });
+    });
+    
+    // Print functionality
+    window.addEventListener('beforeprint', function() {
+        document.body.classList.add('printing');
+    });
+    
+    window.addEventListener('afterprint', function() {
+        document.body.classList.remove('printing');
+    });
+    
+    // Copy order number to clipboard
+    document.querySelector('.order-number-value').addEventListener('click', function() {
+        const orderNumber = this.textContent;
+        navigator.clipboard.writeText(orderNumber).then(() => {
+            // Show tooltip
+            const tooltip = document.createElement('div');
+            tooltip.textContent = 'Numéro copié!';
+            tooltip.style.cssText = `
+                position: absolute;
+                background: var(--jlt-green);
+                color: white;
+                padding: 5px 10px;
+                border-radius: 5px;
+                font-size: 0.9rem;
+                top: -30px;
+                left: 50%;
+                transform: translateX(-50%);
+                animation: fadeOut 2s;
+            `;
+            this.style.position = 'relative';
+            this.appendChild(tooltip);
+            
+            setTimeout(() => tooltip.remove(), 2000);
+        });
+    });
+    
+    // Add fade out animation
+    const fadeStyle = document.createElement('style');
+    fadeStyle.textContent = `
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            70% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+    `;
+    document.head.appendChild(fadeStyle);
+</script>
+{% endblock %}

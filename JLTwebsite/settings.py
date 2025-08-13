@@ -40,6 +40,9 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
+    'django.contrib.humanize',
+    'crispy_forms',
+    'widget_tweaks',
     'JLTsite',
 
 ]
@@ -84,7 +87,7 @@ WSGI_APPLICATION = 'JLTwebsite.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'jltwebsitevitrine.sqlite3',  # Adding .sqlite3 extension
+        'NAME': BASE_DIR / 'jltwebsitevitrine2.sqlite3',  # Adding .sqlite3 extension
     }
 }
 
@@ -139,8 +142,14 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'JLTsite/static'),
 ]
 
+SITE_URL = 'http://127.0.0.1:8000/'
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 86400 * 30  # 30 jours
+SESSION_SAVE_EVERY_REQUEST = True
 
 LOGOUT_REDIRECT_URL = 'login'  # Redirect to login page after logout
 
@@ -149,7 +158,7 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'testjltemail@gmail.com'
-EMAIL_HOST_PASSWORD = 'Julienleblanc2025#'  # Use environment variables for security
+EMAIL_HOST_PASSWORD = 'hyxf cbos dmdd oxsk'  # Use environment variables for security
 
 # Stripe configuration
 STRIPE_PUBLIC_KEY = 'pk_test_...'
@@ -168,3 +177,6 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 12
 }
+
+
+AUTH_USER_MODEL = 'JLTsite.User'

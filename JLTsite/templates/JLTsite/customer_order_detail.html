@@ -1,0 +1,855 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Commande #{{ order.order_number }} - Julien-Leblanc Traiteur{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Header */
+    .order-detail-header {
+        background: linear-gradient(135deg, var(--jlt-green) 0%, var(--jlt-green-dark) 100%);
+        padding: 3rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .order-detail-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 60%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(244, 200, 67, 0.1) 0%, transparent 70%);
+        animation: float 20s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(10deg); }
+    }
+    
+    .header-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: rgba(255, 255, 255, 0.9);
+        text-decoration: none;
+        font-weight: 500;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .back-link:hover {
+        color: white;
+        transform: translateX(-5px);
+    }
+    
+    .order-title {
+        color: white;
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+    
+    .order-meta {
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap;
+        color: rgba(255, 255, 255, 0.9);
+    }
+    
+    .order-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .order-meta-item i {
+        color: var(--jlt-yellow);
+    }
+    
+    /* Order Content */
+    .order-detail-content {
+        padding: 3rem 0;
+        background: var(--jlt-beige);
+        min-height: 500px;
+    }
+    
+    /* Status Timeline */
+    .status-timeline {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+    
+    .timeline-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    
+    .timeline-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--jlt-black);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .timeline-title i {
+        color: var(--jlt-yellow);
+    }
+    
+    .current-status {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .status-confirmed {
+        background: #d4f4dd;
+        color: var(--jlt-green);
+    }
+    
+    .status-preparing {
+        background: #cce5ff;
+        color: #004085;
+    }
+    
+    .status-ready {
+        background: #e2e3e5;
+        color: #383d41;
+    }
+    
+    .status-delivered {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .status-cancelled {
+        background: #fde2e2;
+        color: #dc3545;
+    }
+    
+    .timeline-steps {
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+    }
+    
+    .timeline-step {
+        flex: 1;
+        text-align: center;
+        position: relative;
+    }
+    
+    .timeline-step:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        width: 100%;
+        height: 2px;
+        background: var(--jlt-gray-light);
+        z-index: 0;
+    }
+    
+    .timeline-step.completed:not(:last-child)::after {
+        background: var(--jlt-green);
+    }
+    
+    .step-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: white;
+        border: 2px solid var(--jlt-gray-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 0.75rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .timeline-step.completed .step-icon {
+        background: var(--jlt-green);
+        border-color: var(--jlt-green);
+        color: white;
+    }
+    
+    .timeline-step.active .step-icon {
+        background: var(--jlt-yellow);
+        border-color: var(--jlt-yellow);
+        color: var(--jlt-black);
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(244, 200, 67, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(244, 200, 67, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(244, 200, 67, 0); }
+    }
+    
+    .step-label {
+        font-size: 0.85rem;
+        color: var(--jlt-gray);
+        font-weight: 500;
+    }
+    
+    .timeline-step.completed .step-label,
+    .timeline-step.active .step-label {
+        color: var(--jlt-black);
+        font-weight: 600;
+    }
+    
+    .step-date {
+        font-size: 0.75rem;
+        color: var(--jlt-gray);
+        margin-top: 0.25rem;
+    }
+    
+    /* Info Cards */
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .info-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+    }
+    
+    .info-card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--jlt-gray-light);
+    }
+    
+    .info-card-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--jlt-beige);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--jlt-yellow);
+        font-size: 1.2rem;
+    }
+    
+    .info-card-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--jlt-black);
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+    }
+    
+    .info-label {
+        color: var(--jlt-gray);
+        font-size: 0.9rem;
+    }
+    
+    .info-value {
+        color: var(--jlt-black);
+        font-weight: 600;
+        text-align: right;
+    }
+    
+    /* Order Items */
+    .items-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+    
+    .items-header {
+        background: linear-gradient(135deg, var(--jlt-beige) 0%, var(--jlt-beige-light) 100%);
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--jlt-gray-light);
+    }
+    
+    .items-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--jlt-black);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin: 0;
+    }
+    
+    .items-title i {
+        color: var(--jlt-yellow);
+    }
+    
+    .items-list {
+        padding: 1.5rem;
+    }
+    
+    .item-row {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        background: var(--jlt-beige-light);
+        border-radius: 10px;
+        margin-bottom: 1rem;
+    }
+    
+    .item-row:last-child {
+        margin-bottom: 0;
+    }
+    
+    .item-image {
+        width: 80px;
+        height: 80px;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-right: 1.5rem;
+        flex-shrink: 0;
+    }
+    
+    .item-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .item-details {
+        flex: 1;
+    }
+    
+    .item-name {
+        font-weight: 600;
+        color: var(--jlt-black);
+        font-size: 1.05rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .item-info {
+        color: var(--jlt-gray);
+        font-size: 0.9rem;
+    }
+    
+    .item-notes {
+        background: white;
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+        color: var(--jlt-gray);
+    }
+    
+    .item-notes i {
+        color: var(--jlt-yellow);
+        margin-right: 0.5rem;
+    }
+    
+    .item-price {
+        text-align: right;
+    }
+    
+    .item-price-unit {
+        font-size: 0.85rem;
+        color: var(--jlt-gray);
+    }
+    
+    .item-price-total {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--jlt-black);
+    }
+    
+    /* Totals Section */
+    .totals-section {
+        background: var(--jlt-beige);
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin-top: 1.5rem;
+    }
+    
+    .total-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+    }
+    
+    .total-row.grand-total {
+        border-top: 2px solid var(--jlt-gray-light);
+        margin-top: 0.5rem;
+        padding-top: 1rem;
+    }
+    
+    .total-label {
+        color: var(--jlt-gray);
+    }
+    
+    .total-value {
+        font-weight: 600;
+        color: var(--jlt-black);
+    }
+    
+    .total-row.grand-total .total-label {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--jlt-black);
+    }
+    
+    .total-row.grand-total .total-value {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--jlt-yellow);
+    }
+    
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn {
+        padding: 12px 25px;
+        border-radius: 8px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-primary {
+        background: var(--jlt-yellow);
+        color: var(--jlt-black);
+    }
+    
+    .btn-primary:hover {
+        background: var(--jlt-yellow-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(244, 200, 67, 0.4);
+    }
+    
+    .btn-secondary {
+        background: white;
+        color: var(--jlt-black);
+        border: 2px solid var(--jlt-gray-light);
+    }
+    
+    .btn-secondary:hover {
+        border-color: var(--jlt-yellow);
+        background: var(--jlt-beige-light);
+    }
+    
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        background: #c82333;
+    }
+    
+    /* Help Section */
+    .help-card {
+        background: linear-gradient(135deg, var(--jlt-green) 0%, var(--jlt-green-dark) 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        color: white;
+        text-align: center;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+    }
+    
+    .help-icon {
+        width: 60px;
+        height: 60px;
+        background: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        color: var(--jlt-green);
+        font-size: 1.5rem;
+    }
+    
+    .help-title {
+        font-size: 1.3rem;
+        margin-bottom: 0.5rem;
+        color: white;
+    }
+    
+    .help-text {
+        margin-bottom: 1.5rem;
+        opacity: 0.95;
+    }
+    
+    .help-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+    }
+    
+    .help-btn {
+        background: white;
+        color: var(--jlt-green);
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .help-btn:hover {
+        background: var(--jlt-yellow);
+        color: var(--jlt-black);
+        transform: translateY(-2px);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .order-meta {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .timeline-steps {
+            flex-direction: column;
+            gap: 2rem;
+        }
+        
+        .timeline-step:not(:last-child)::after {
+            display: none;
+        }
+        
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .item-row {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .item-image {
+            margin: 0 auto 1rem;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Order Detail Header -->
+<section class="order-detail-header">
+    <div class="container">
+        <div class="header-content">
+            <a href="{% url 'customer_orders' %}" class="back-link">
+                <i class="fas fa-arrow-left"></i> Retour aux commandes
+            </a>
+            <h1 class="order-title">Commande #{{ order.order_number }}</h1>
+            <div class="order-meta">
+                <div class="order-meta-item">
+                    <i class="fas fa-calendar"></i>
+                    Commandé le {{ order.created_at|date:"d F Y à H:i" }}
+                </div>
+                <div class="order-meta-item">
+                    <i class="fas fa-truck"></i>
+                    Livraison le {{ order.delivery_date|date:"d F Y" }}
+                </div>
+                <div class="order-meta-item">
+                    <i class="fas fa-dollar-sign"></i>
+                    Total: ${{ order.total|floatformat:2 }}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Order Detail Content -->
+<section class="order-detail-content">
+    <div class="container">
+        <!-- Status Timeline -->
+        <div class="status-timeline">
+            <div class="timeline-header">
+                <h3 class="timeline-title">
+                    <i class="fas fa-tasks"></i> Suivi de commande
+                </h3>
+                <span class="current-status status-{{ order.status }}">
+                    {{ order.get_status_display }}
+                </span>
+            </div>
+            
+            <div class="timeline-steps">
+                <div class="timeline-step {% if order.status != 'cancelled' %}completed{% endif %}">
+                    <div class="step-icon">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="step-label">Confirmée</div>
+                    {% if order.confirmed_at %}
+                    <div class="step-date">{{ order.confirmed_at|date:"d/m H:i" }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="timeline-step {% if order.status == 'preparing' or order.status == 'ready' or order.status == 'delivered' %}completed{% elif order.status == 'confirmed' %}active{% endif %}">
+                    <div class="step-icon">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                    <div class="step-label">En préparation</div>
+                </div>
+                
+                <div class="timeline-step {% if order.status == 'ready' or order.status == 'delivered' %}completed{% elif order.status == 'preparing' %}active{% endif %}">
+                    <div class="step-icon">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <div class="step-label">Prête</div>
+                </div>
+                
+                <div class="timeline-step {% if order.status == 'delivered' %}completed{% elif order.status == 'ready' %}active{% endif %}">
+                    <div class="step-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="step-label">Livrée</div>
+                    {% if order.delivered_at %}
+                    <div class="step-date">{{ order.delivered_at|date:"d/m H:i" }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Information Cards -->
+        <div class="info-grid">
+            <!-- Customer Info -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h4 class="info-card-title">Informations client</h4>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Nom:</span>
+                    <span class="info-value">{{ order.first_name }} {{ order.last_name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Email:</span>
+                    <span class="info-value">{{ order.email }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Téléphone:</span>
+                    <span class="info-value">{{ order.phone }}</span>
+                </div>
+                {% if order.company %}
+                <div class="info-row">
+                    <span class="info-label">Entreprise:</span>
+                    <span class="info-value">{{ order.company }}</span>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Delivery Info -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <h4 class="info-card-title">Informations de livraison</h4>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Type:</span>
+                    <span class="info-value">{{ order.get_delivery_type_display }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Date:</span>
+                    <span class="info-value">{{ order.delivery_date|date:"d F Y" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Heure:</span>
+                    <span class="info-value">{{ order.delivery_time|time:"H:i" }}</span>
+                </div>
+                {% if order.delivery_type == 'delivery' %}
+                <div class="info-row">
+                    <span class="info-label">Adresse:</span>
+                    <span class="info-value">
+                        {{ order.delivery_address }}<br>
+                        {{ order.delivery_city }}, {{ order.delivery_postal_code }}
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Order Items -->
+        <div class="items-card">
+            <div class="items-header">
+                <h3 class="items-title">
+                    <i class="fas fa-utensils"></i> Articles commandés ({{ order.items.count }})
+                </h3>
+            </div>
+            <div class="items-list">
+                {% for item in order.items.all %}
+                <div class="item-row">
+                    <div class="item-image">
+                        {% if item.product and item.product.image %}
+                        <img src="{{ item.product.image.url }}" alt="{{ item.product_name }}">
+                        {% else %}
+                        <img src="https://via.placeholder.com/80x80/F5F2E8/6B7652?text=JL" alt="{{ item.product_name }}">
+                        {% endif %}
+                    </div>
+                    <div class="item-details">
+                        <div class="item-name">{{ item.product_name }}</div>
+                        <div class="item-info">
+                            Quantité: {{ item.quantity }} × ${{ item.product_price|floatformat:2 }}
+                        </div>
+                        {% if item.notes %}
+                        <div class="item-notes">
+                            <i class="fas fa-sticky-note"></i> {{ item.notes }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="item-price">
+                        <div class="item-price-unit">Sous-total</div>
+                        <div class="item-price-total">${{ item.subtotal|floatformat:2 }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <!-- Totals -->
+                <div class="totals-section">
+                    <div class="total-row">
+                        <span class="total-label">Sous-total:</span>
+                        <span class="total-value">${{ order.subtotal|floatformat:2 }}</span>
+                    </div>
+                    <div class="total-row">
+                        <span class="total-label">TPS/TVQ ({{ order.tax_rate }}%):</span>
+                        <span class="total-value">${{ order.tax_amount|floatformat:2 }}</span>
+                    </div>
+                    <div class="total-row">
+                        <span class="total-label">Frais de livraison:</span>
+                        <span class="total-value">
+                            {% if order.delivery_fee > 0 %}
+                                ${{ order.delivery_fee|floatformat:2 }}
+                            {% else %}
+                                <span style="color: var(--jlt-green);">GRATUIT</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% if order.discount_amount > 0 %}
+                    <div class="total-row">
+                        <span class="total-label">Réduction:</span>
+                        <span class="total-value" style="color: var(--jlt-green);">
+                            -${{ order.discount_amount|floatformat:2 }}
+                        </span>
+                    </div>
+                    {% endif %}
+                    <div class="total-row grand-total">
+                        <span class="total-label">Total:</span>
+                        <span class="total-value">${{ order.total|floatformat:2 }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button onclick="window.print()" class="btn btn-secondary">
+                <i class="fas fa-print"></i> Imprimer
+            </button>
+            
+            {% if order.status == 'delivered' %}
+            <button onclick="reorderItems()" class="btn btn-primary">
+                <i class="fas fa-redo"></i> Commander à nouveau
+            </button>
+            {% endif %}
+            
+            {% if order.status == 'pending' or order.status == 'confirmed' %}
+            <button onclick="cancelOrder()" class="btn btn-danger">
+                <i class="fas fa-times"></i> Annuler la commande
+            </button>
+            {% endif %}
+        </div>
+        
+        <!-- Help Section -->
+        <div class="help-card" style="margin-top: 2rem;">
+            <div class="help-icon">
+                <i class="fas fa-question"></i>
+            </div>
+            <h3 class="help-title">Besoin d'aide avec votre commande?</h3>
+            <p class="help-text">Notre équipe est là pour vous aider avec toute question concernant votre commande</p>
+            <div class="help-actions">
+                <a href="tel:514-XXX-XXXX" class="help-btn">
+                    <i class="fas fa-phone"></i> 514-XXX-XXXX
+                </a>
+                <a href="mailto:info@julienblanc-traiteur.com" class="help-btn">
+                    <i class="fas fa-envelope"></i> Nous écrire
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Reorder items
+    function reorderItems() {
+        if (confirm('Voulez-vous commander à nouveau tous les articles de cette commande?')) {
+            // Implement reorder functionality
+            console.log('Reordering items from order {{ order.order_number }}');
+            // Redirect to cart with items added
+        }
+    }
+    
+    // Cancel order
+    function cancelOrder() {
+        if (confirm('Êtes-vous sûr de vouloir annuler cette commande? Cette action est irréversible.')) {
+            // Implement cancel functionality
+            console.log('Cancelling order {{ order.order_number }}');
+        }
+    }
+</script>
+{% endblock %}

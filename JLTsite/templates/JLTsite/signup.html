@@ -1,0 +1,590 @@
+{% extends 'JLTsite/base.html' %}
+
+{% block title %}Inscription - Julien-Leblanc Traiteur{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-container {
+        min-height: calc(100vh - 200px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 0;
+    }
+    
+    .auth-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        max-width: 1200px;
+        width: 100%;
+    }
+    
+    .auth-left {
+        background: linear-gradient(135deg, var(--jlt-yellow) 0%, var(--jlt-yellow-hover) 100%);
+        padding: 3rem;
+        color: var(--jlt-black);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .auth-left::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(107, 118, 82, 0.1) 0%, transparent 70%);
+        animation: rotate 30s linear infinite;
+    }
+    
+    .auth-left::after {
+        content: '🍽️';
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        font-size: 120px;
+        opacity: 0.1;
+        transform: rotate(-15deg);
+    }
+    
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    .auth-left h2 {
+        color: var(--jlt-black);
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .auth-left p {
+        font-size: 1.1rem;
+        line-height: 1.8;
+        opacity: 0.9;
+        position: relative;
+        z-index: 1;
+        color: var(--jlt-black);
+    }
+    
+    .auth-left .benefits {
+        margin-top: 2rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .auth-left .benefits li {
+        list-style: none;
+        padding: 0.5rem 0;
+        display: flex;
+        align-items: center;
+        color: var(--jlt-black);
+        font-weight: 500;
+    }
+    
+    .auth-left .benefits li i {
+        color: var(--jlt-green);
+        margin-right: 10px;
+        background: white;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+    }
+    
+    .auth-right {
+        padding: 2rem 3rem;
+        background-color: white;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    .auth-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .auth-header h3 {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        color: var(--jlt-black);
+    }
+    
+    .auth-header p {
+        color: var(--jlt-gray);
+        font-size: 1rem;
+    }
+    
+    .form-row {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-row .form-group {
+        flex: 1;
+        margin-bottom: 0;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--jlt-black);
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .form-label .required {
+        color: var(--jlt-yellow);
+    }
+    
+    .form-control {
+        height: 45px;
+        font-size: 0.95rem;
+        border: 2px solid var(--jlt-gray-light);
+    }
+    
+    .form-control:focus {
+        border-color: var(--jlt-yellow);
+    }
+    
+    .form-text {
+        font-size: 0.85rem;
+        color: var(--jlt-gray);
+        margin-top: 0.25rem;
+    }
+    
+    .password-strength {
+        margin-top: 0.5rem;
+        height: 4px;
+        background-color: var(--jlt-gray-light);
+        border-radius: 2px;
+        overflow: hidden;
+    }
+    
+    .password-strength-bar {
+        height: 100%;
+        transition: width 0.3s ease, background-color 0.3s ease;
+        width: 0%;
+    }
+    
+    .password-strength-bar.weak {
+        width: 33%;
+        background-color: #dc3545;
+    }
+    
+    .password-strength-bar.medium {
+        width: 66%;
+        background-color: var(--jlt-yellow);
+    }
+    
+    .password-strength-bar.strong {
+        width: 100%;
+        background-color: var(--jlt-green);
+    }
+    
+    .form-check {
+        margin-bottom: 1rem;
+    }
+    
+    .form-check-input:checked {
+        background-color: var(--jlt-yellow);
+        border-color: var(--jlt-yellow);
+    }
+    
+    .terms-text {
+        font-size: 0.9rem;
+        color: var(--jlt-gray);
+    }
+    
+    .terms-text a {
+        color: var(--jlt-yellow);
+        text-decoration: none;
+    }
+    
+    .terms-text a:hover {
+        text-decoration: underline;
+    }
+    
+    .btn-signup {
+        width: 100%;
+        height: 50px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        background-color: var(--jlt-yellow);
+        border: none;
+        color: var(--jlt-black);
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        margin-top: 1rem;
+    }
+    
+    .btn-signup:hover {
+        background-color: var(--jlt-yellow-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(244, 200, 67, 0.4);
+    }
+    
+    .divider {
+        text-align: center;
+        margin: 1.5rem 0;
+        position: relative;
+    }
+    
+    .divider::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background-color: var(--jlt-gray-light);
+    }
+    
+    .divider span {
+        background-color: white;
+        padding: 0 1rem;
+        position: relative;
+        color: var(--jlt-gray);
+        font-size: 0.9rem;
+    }
+    
+    .social-login {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .social-btn {
+        flex: 1;
+        padding: 10px;
+        border: 2px solid var(--jlt-gray-light);
+        border-radius: 8px;
+        background-color: white;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        text-decoration: none;
+        color: var(--jlt-black);
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+    
+    .social-btn:hover {
+        border-color: var(--jlt-yellow);
+        background-color: var(--jlt-beige-light);
+        transform: translateY(-2px);
+    }
+    
+    .auth-footer {
+        text-align: center;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--jlt-gray-light);
+    }
+    
+    .auth-footer a {
+        color: var(--jlt-yellow);
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .auth-footer a:hover {
+        color: var(--jlt-yellow-hover);
+        text-decoration: underline;
+    }
+    
+    .error-text {
+        color: #dc3545;
+        font-size: 0.85rem;
+        margin-top: 0.25rem;
+    }
+    
+    /* Custom scrollbar for form */
+    .auth-right::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .auth-right::-webkit-scrollbar-track {
+        background: var(--jlt-gray-light);
+        border-radius: 4px;
+    }
+    
+    .auth-right::-webkit-scrollbar-thumb {
+        background: var(--jlt-yellow);
+        border-radius: 4px;
+    }
+    
+    /* Responsive */
+    @media (max-width: 992px) {
+        .auth-left {
+            display: none;
+        }
+        
+        .auth-card {
+            margin: 0 1rem;
+            max-width: 600px;
+        }
+        
+        .form-row {
+            flex-direction: column;
+            gap: 0;
+        }
+        
+        .form-row .form-group {
+            margin-bottom: 1.5rem;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .auth-right {
+            padding: 2rem 1.5rem;
+        }
+        
+        .social-login {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-11">
+                <div class="auth-card fade-in">
+                    <div class="row g-0">
+                        <!-- Left Side - Branding -->
+                        <div class="col-lg-4">
+                            <div class="auth-left h-100">
+                                <h2>Rejoignez-nous!</h2>
+                                <p>Créez votre compte et découvrez une expérience culinaire exceptionnelle.</p>
+                                
+                                <ul class="benefits">
+                                    <li>
+                                        <i class="fas fa-check"></i>
+                                        Service traiteur haut de gamme
+                                    </li>
+                                    <li>
+                                        <i class="fas fa-check"></i>
+                                        Menus personnalisés selon vos goûts
+                                    </li>
+                                    <li>
+                                        <i class="fas fa-check"></i>
+                                        Livraison rapide et professionnelle
+                                    </li>
+                                    <li>
+                                        <i class="fas fa-check"></i>
+                                        Événements corporatifs et privés
+                                    </li>
+                                    <li>
+                                        <i class="fas fa-check"></i>
+                                        Offres exclusives pour les membres
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <!-- Right Side - Signup Form -->
+                        <div class="col-lg-8">
+                            <div class="auth-right">
+                                <div class="auth-header">
+                                    <h3>Créer un compte</h3>
+                                    <p>Remplissez le formulaire pour commencer</p>
+                                </div>
+                                
+                                <form method="POST" action="{% url 'signup' %}" id="signupForm">
+                                    {% csrf_token %}
+                                    
+                                    {% if form.non_field_errors %}
+                                        <div class="alert alert-danger">
+                                            {{ form.non_field_errors }}
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <!-- Nom et Prénom -->
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                                                Prénom <span class="required">*</span>
+                                            </label>
+                                            {{ form.first_name }}
+                                            {% if form.first_name.errors %}
+                                                <div class="error-text">{{ form.first_name.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                                                Nom <span class="required">*</span>
+                                            </label>
+                                            {{ form.last_name }}
+                                            {% if form.last_name.errors %}
+                                                <div class="error-text">{{ form.last_name.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Email et Téléphone -->
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="{{ form.email.id_for_label }}" class="form-label">
+                                                Email <span class="required">*</span>
+                                            </label>
+                                            {{ form.email }}
+                                            {% if form.email.errors %}
+                                                <div class="error-text">{{ form.email.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="{{ form.phone.id_for_label }}" class="form-label">
+                                                Téléphone <span class="required">*</span>
+                                            </label>
+                                            {{ form.phone }}
+                                            {% if form.phone.errors %}
+                                                <div class="error-text">{{ form.phone.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Nom d'utilisateur et Entreprise -->
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="{{ form.username.id_for_label }}" class="form-label">
+                                                Nom d'utilisateur <span class="required">*</span>
+                                            </label>
+                                            {{ form.username }}
+                                            <div class="form-text">Ce nom sera utilisé pour vous connecter</div>
+                                            {% if form.username.errors %}
+                                                <div class="error-text">{{ form.username.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="{{ form.company.id_for_label }}" class="form-label">
+                                                Entreprise <span style="color: var(--jlt-gray);">(optionnel)</span>
+                                            </label>
+                                            {{ form.company }}
+                                            {% if form.company.errors %}
+                                                <div class="error-text">{{ form.company.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Mots de passe -->
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="{{ form.password1.id_for_label }}" class="form-label">
+                                                Mot de passe <span class="required">*</span>
+                                            </label>
+                                            {{ form.password1 }}
+                                            <div class="password-strength">
+                                                <div class="password-strength-bar" id="passwordStrength"></div>
+                                            </div>
+                                            <div class="form-text">Au moins 8 caractères</div>
+                                            {% if form.password1.errors %}
+                                                <div class="error-text">{{ form.password1.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="{{ form.password2.id_for_label }}" class="form-label">
+                                                Confirmer le mot de passe <span class="required">*</span>
+                                            </label>
+                                            {{ form.password2 }}
+                                            {% if form.password2.errors %}
+                                                <div class="error-text">{{ form.password2.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Newsletter -->
+                                    <div class="form-check">
+                                        {{ form.newsletter }}
+                                        <label class="form-check-label" for="{{ form.newsletter.id_for_label }}">
+                                            Je souhaite recevoir les offres spéciales et les nouveautés par email
+                                        </label>
+                                    </div>
+                                    
+                                    <!-- Conditions -->
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="acceptTerms" required>
+                                        <label class="form-check-label terms-text" for="acceptTerms">
+                                            J'accepte les <a href="#">conditions d'utilisation</a> et la <a href="#">politique de confidentialité</a> <span class="required">*</span>
+                                        </label>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-signup">
+                                        Créer mon compte
+                                    </button>
+                                </form>
+                                
+                                
+                                <div class="auth-footer">
+                                    <p>
+                                        Vous avez déjà un compte? 
+                                        <a href="{% url 'login' %}">Se connecter</a>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Password strength indicator
+    document.getElementById('id_password1').addEventListener('input', function(e) {
+        const password = e.target.value;
+        const strengthBar = document.getElementById('passwordStrength');
+        
+        let strength = 0;
+        if (password.length >= 8) strength++;
+        if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
+        if (password.match(/[0-9]/)) strength++;
+        if (password.match(/[^a-zA-Z0-9]/)) strength++;
+        
+        strengthBar.className = 'password-strength-bar';
+        if (password.length > 0) {
+            if (strength <= 1) {
+                strengthBar.classList.add('weak');
+            } else if (strength === 2) {
+                strengthBar.classList.add('medium');
+            } else {
+                strengthBar.classList.add('strong');
+            }
+        }
+    });
+    
+    // Phone number formatting
+    document.getElementById('id_phone').addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length >= 6) {
+            value = value.slice(0, 3) + '-' + value.slice(3, 6) + '-' + value.slice(6, 10);
+        } else if (value.length >= 3) {
+            value = value.slice(0, 3) + '-' + value.slice(3);
+        }
+        e.target.value = value;
+    });
+</script>
+{% endblock %}

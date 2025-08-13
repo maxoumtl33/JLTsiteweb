@@ -1,0 +1,1179 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Finaliser ma commande - Julien-Leblanc Traiteur{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Checkout Header */
+    .checkout-header {
+        background: linear-gradient(135deg, var(--jlt-green) 0%, var(--jlt-green-dark) 100%);
+        padding: 3rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .checkout-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -10%;
+        width: 60%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(244, 200, 67, 0.1) 0%, transparent 70%);
+        animation: float 20s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(10deg); }
+    }
+    
+    .checkout-header h1 {
+        color: white;
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .checkout-header p {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1.1rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Progress Steps */
+    .progress-steps {
+        background: white;
+        padding: 2rem 0;
+        border-bottom: 1px solid var(--jlt-gray-light);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .steps-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .step {
+        flex: 1;
+        text-align: center;
+        position: relative;
+    }
+    
+    .step:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        width: 100%;
+        height: 2px;
+        background: var(--jlt-gray-light);
+        z-index: 0;
+    }
+    
+    .step.completed:not(:last-child)::after,
+    .step.active:not(:last-child)::after {
+        background: var(--jlt-yellow);
+    }
+    
+    .step-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: white;
+        border: 2px solid var(--jlt-gray-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 0.5rem;
+        position: relative;
+        z-index: 1;
+        transition: all 0.3s ease;
+    }
+    
+    .step.active .step-circle {
+        background: var(--jlt-yellow);
+        border-color: var(--jlt-yellow);
+    }
+    
+    .step.completed .step-circle {
+        background: var(--jlt-green);
+        border-color: var(--jlt-green);
+        color: white;
+    }
+    
+    .step-label {
+        font-size: 0.9rem;
+        color: var(--jlt-gray);
+        font-weight: 500;
+    }
+    
+    .step.active .step-label,
+    .step.completed .step-label {
+        color: var(--jlt-black);
+        font-weight: 600;
+    }
+    
+    /* Checkout Content */
+    .checkout-content {
+        padding: 3rem 0;
+        background: var(--jlt-beige);
+        min-height: 500px;
+    }
+    
+    /* Form Sections */
+    .form-section {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+    }
+    
+    .form-section-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--jlt-gray-light);
+    }
+    
+    .form-section-icon {
+        width: 45px;
+        height: 45px;
+        background: var(--jlt-yellow);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        color: var(--jlt-black);
+    }
+    
+    .form-section-title {
+        flex: 1;
+    }
+    
+    .form-section-title h3 {
+        margin: 0;
+        font-size: 1.4rem;
+        color: var(--jlt-black);
+    }
+    
+    .form-section-title p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--jlt-gray);
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--jlt-black);
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+        display: block;
+    }
+    
+    .form-label .required {
+        color: var(--jlt-yellow);
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid var(--jlt-gray-light);
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: var(--jlt-yellow);
+        box-shadow: 0 0 0 3px rgba(244, 200, 67, 0.1);
+    }
+    
+    .form-control.error {
+        border-color: #dc3545;
+    }
+    
+    .form-text {
+        font-size: 0.85rem;
+        color: var(--jlt-gray);
+        margin-top: 0.25rem;
+    }
+    
+    .error-text {
+        color: #dc3545;
+        font-size: 0.85rem;
+        margin-top: 0.25rem;
+    }
+    
+    /* Delivery Type Selection */
+    .delivery-options {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .delivery-option {
+        position: relative;
+        cursor: pointer;
+    }
+    
+    .delivery-option input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+    }
+    
+    .delivery-option-label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1.5rem;
+        border: 2px solid var(--jlt-gray-light);
+        border-radius: 10px;
+        background: white;
+        transition: all 0.3s ease;
+    }
+    
+    .delivery-option:hover .delivery-option-label {
+        border-color: var(--jlt-yellow);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .delivery-option input[type="radio"]:checked + .delivery-option-label {
+        border-color: var(--jlt-yellow);
+        background: var(--jlt-beige-light);
+    }
+    
+    .delivery-option-icon {
+        font-size: 2rem;
+        color: var(--jlt-gray);
+        margin-bottom: 0.75rem;
+    }
+    
+    .delivery-option input[type="radio"]:checked + .delivery-option-label .delivery-option-icon {
+        color: var(--jlt-yellow);
+    }
+    
+    .delivery-option-title {
+        font-weight: 600;
+        color: var(--jlt-black);
+        margin-bottom: 0.25rem;
+    }
+    
+    .delivery-option-desc {
+        font-size: 0.85rem;
+        color: var(--jlt-gray);
+        text-align: center;
+    }
+    
+    /* Date and Time Selection */
+    .datetime-selection {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    
+    .date-input-wrapper {
+        position: relative;
+    }
+    
+    .date-input-wrapper i {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--jlt-gray);
+        pointer-events: none;
+    }
+    
+    /* Address Autocomplete */
+    .address-suggestions {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid var(--jlt-gray-light);
+        border-radius: 0 0 8px 8px;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 10;
+        display: none;
+    }
+    
+    .address-suggestions.active {
+        display: block;
+    }
+    
+    .address-suggestion {
+        padding: 10px 15px;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+    
+    .address-suggestion:hover {
+        background: var(--jlt-beige);
+    }
+    
+    /* Order Summary Sidebar */
+    .order-summary {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        position: sticky;
+        top: 100px;
+    }
+    
+    .summary-header {
+        background: var(--jlt-green);
+        color: white;
+        padding: 1.5rem;
+    }
+    
+    .summary-header h3 {
+        margin: 0;
+        font-size: 1.3rem;
+        color: white;
+    }
+    
+    .summary-body {
+        padding: 1.5rem;
+    }
+    
+    .summary-items {
+        max-height: 300px;
+        overflow-y: auto;
+        margin-bottom: 1.5rem;
+        padding-right: 0.5rem;
+    }
+    
+    .summary-item {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--jlt-gray-light);
+    }
+    
+    .summary-item:last-child {
+        border-bottom: none;
+    }
+    
+    .summary-item-image {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+    
+    .summary-item-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .summary-item-details {
+        flex: 1;
+    }
+    
+    .summary-item-name {
+        font-weight: 600;
+        color: var(--jlt-black);
+        font-size: 0.95rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .summary-item-qty {
+        color: var(--jlt-gray);
+        font-size: 0.85rem;
+    }
+    
+    .summary-item-price {
+        font-weight: 600;
+        color: var(--jlt-black);
+    }
+    
+    .summary-totals {
+        padding-top: 1rem;
+        border-top: 2px solid var(--jlt-gray-light);
+    }
+    
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+    }
+    
+    .summary-row.total {
+        border-top: 2px solid var(--jlt-gray-light);
+        margin-top: 0.5rem;
+        padding-top: 1rem;
+    }
+    
+    .summary-label {
+        color: var(--jlt-gray);
+        font-size: 0.95rem;
+    }
+    
+    .summary-value {
+        font-weight: 600;
+        color: var(--jlt-black);
+    }
+    
+    .summary-row.total .summary-label {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--jlt-black);
+    }
+    
+    .summary-row.total .summary-value {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--jlt-yellow);
+    }
+    
+    /* Payment Methods */
+    .payment-methods {
+        display: grid;
+        gap: 1rem;
+    }
+    
+    .payment-method {
+        position: relative;
+    }
+    
+    .payment-method input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+    }
+    
+    .payment-method-label {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.25rem;
+        border: 2px solid var(--jlt-gray-light);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .payment-method:hover .payment-method-label {
+        border-color: var(--jlt-yellow);
+        background: var(--jlt-beige-light);
+    }
+    
+    .payment-method input[type="radio"]:checked + .payment-method-label {
+        border-color: var(--jlt-yellow);
+        background: var(--jlt-beige-light);
+    }
+    
+    .payment-method-icon {
+        font-size: 1.5rem;
+        color: var(--jlt-gray);
+    }
+    
+    .payment-method input[type="radio"]:checked + .payment-method-label .payment-method-icon {
+        color: var(--jlt-yellow);
+    }
+    
+    .payment-method-info {
+        flex: 1;
+    }
+    
+    .payment-method-title {
+        font-weight: 600;
+        color: var(--jlt-black);
+        margin-bottom: 0.25rem;
+    }
+    
+    .payment-method-desc {
+        font-size: 0.85rem;
+        color: var(--jlt-gray);
+    }
+    
+    /* Terms and Submit */
+    .form-check {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-check-input {
+        width: 20px;
+        height: 20px;
+        margin-right: 0.75rem;
+        cursor: pointer;
+    }
+    
+    .form-check-input:checked {
+        background-color: var(--jlt-yellow);
+        border-color: var(--jlt-yellow);
+    }
+    
+    .form-check-label {
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    .form-check-label a {
+        color: var(--jlt-yellow);
+        text-decoration: none;
+    }
+    
+    .form-check-label a:hover {
+        text-decoration: underline;
+    }
+    
+    .submit-section {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+    }
+    
+    .btn-submit-order {
+        width: 100%;
+        background: var(--jlt-yellow);
+        color: var(--jlt-black);
+        border: none;
+        padding: 18px 30px;
+        border-radius: 8px;
+        font-size: 1.2rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+    }
+    
+    .btn-submit-order:hover {
+        background: var(--jlt-yellow-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(244, 200, 67, 0.4);
+    }
+    
+    .btn-submit-order:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .security-badges {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--jlt-gray-light);
+    }
+    
+    .security-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--jlt-gray);
+        font-size: 0.9rem;
+    }
+    
+    .security-badge i {
+        color: var(--jlt-green);
+        font-size: 1.1rem;
+    }
+    
+    /* Loading State */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.95);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+    
+    .loading-overlay.active {
+        display: flex;
+    }
+    
+    .loading-content {
+        text-align: center;
+    }
+    
+    .spinner {
+        border: 4px solid var(--jlt-gray-light);
+        border-top: 4px solid var(--jlt-yellow);
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+        font-size: 1.1rem;
+        color: var(--jlt-gray);
+        font-weight: 500;
+    }
+    
+    /* Responsive */
+    @media (max-width: 992px) {
+        .datetime-selection {
+            grid-template-columns: 1fr;
+        }
+        
+        .delivery-options {
+            grid-template-columns: 1fr;
+        }
+        
+        .order-summary {
+            position: static;
+            margin-top: 2rem;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .checkout-header h1 {
+            font-size: 1.8rem;
+        }
+        
+        .form-section {
+            padding: 1.5rem;
+        }
+        
+        .security-badges {
+            flex-direction: column;
+            gap: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Checkout Header -->
+<section class="checkout-header">
+    <div class="container">
+        <h1><i class="fas fa-credit-card"></i> Finaliser ma commande</h1>
+        <p>Plus que quelques étapes avant de recevoir vos délicieux repas</p>
+    </div>
+</section>
+
+<!-- Progress Steps -->
+<section class="progress-steps">
+    <div class="container">
+        <div class="steps-container">
+            <div class="step completed">
+                <div class="step-circle">
+                    <i class="fas fa-check"></i>
+                </div>
+                <div class="step-label">Panier</div>
+            </div>
+            <div class="step active">
+                <div class="step-circle">
+                    <i class="fas fa-truck"></i>
+                </div>
+                <div class="step-label">Livraison</div>
+            </div>
+            <div class="step">
+                <div class="step-circle">
+                    <i class="fas fa-credit-card"></i>
+                </div>
+                <div class="step-label">Paiement</div>
+            </div>
+            <div class="step">
+                <div class="step-circle">
+                    <i class="fas fa-check"></i>
+                </div>
+                <div class="step-label">Confirmation</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Checkout Content -->
+<section class="checkout-content">
+    <div class="container">
+        <form method="POST" action="{% url 'checkout' %}" id="checkoutForm">
+            {% csrf_token %}
+            
+            <div class="row">
+                <!-- Left Column - Form Fields -->
+                <div class="col-lg-8">
+                    <!-- Contact Information -->
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <div class="form-section-icon">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="form-section-title">
+                                <h3>Informations de contact</h3>
+                                <p>Comment pouvons-nous vous joindre?</p>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                                        Prénom <span class="required">*</span>
+                                    </label>
+                                    {{ form.first_name }}
+                                    {% if form.first_name.errors %}
+                                        <div class="error-text">{{ form.first_name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                                        Nom <span class="required">*</span>
+                                    </label>
+                                    {{ form.last_name }}
+                                    {% if form.last_name.errors %}
+                                        <div class="error-text">{{ form.last_name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.email.id_for_label }}" class="form-label">
+                                        Email <span class="required">*</span>
+                                    </label>
+                                    {{ form.email }}
+                                    <div class="form-text">Nous enverrons la confirmation à cette adresse</div>
+                                    {% if form.email.errors %}
+                                        <div class="error-text">{{ form.email.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.phone.id_for_label }}" class="form-label">
+                                        Téléphone <span class="required">*</span>
+                                    </label>
+                                    {{ form.phone }}
+                                    <div class="form-text">Pour vous contacter en cas de besoin</div>
+                                    {% if form.phone.errors %}
+                                        <div class="error-text">{{ form.phone.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.company.id_for_label }}" class="form-label">
+                                Entreprise <span style="color: var(--jlt-gray);">(optionnel)</span>
+                            </label>
+                            {{ form.company }}
+                            {% if form.company.errors %}
+                                <div class="error-text">{{ form.company.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Delivery Information -->
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <div class="form-section-icon">
+                                <i class="fas fa-truck"></i>
+                            </div>
+                            <div class="form-section-title">
+                                <h3>Informations de livraison</h3>
+                                <p>Où et quand souhaitez-vous recevoir votre commande?</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Delivery Type -->
+                        <div class="form-group">
+                            <label class="form-label">Type de livraison <span class="required">*</span></label>
+                            <div class="delivery-options">
+                                <div class="delivery-option">
+                                    <input type="radio" 
+                                           name="delivery_type" 
+                                           id="delivery" 
+                                           value="delivery" 
+                                           checked>
+                                    <label for="delivery" class="delivery-option-label">
+                                        <i class="fas fa-truck delivery-option-icon"></i>
+                                        <div class="delivery-option-title">Livraison</div>
+                                        <div class="delivery-option-desc">Recevez votre commande à l'adresse de votre choix</div>
+                                    </label>
+                                </div>
+                                <div class="delivery-option">
+                                    <input type="radio" 
+                                           name="delivery_type" 
+                                           id="pickup" 
+                                           value="pickup">
+                                    <label for="pickup" class="delivery-option-label">
+                                        <i class="fas fa-store delivery-option-icon"></i>
+                                        <div class="delivery-option-title">Ramassage</div>
+                                        <div class="delivery-option-desc">Récupérez votre commande à notre cuisine</div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Delivery Address -->
+                        <div id="deliveryAddress">
+                            <div class="form-group">
+                                <label for="{{ form.delivery_address.id_for_label }}" class="form-label">
+                                    Adresse de livraison <span class="required">*</span>
+                                </label>
+                                {{ form.delivery_address }}
+                                <div class="address-suggestions"></div>
+                                {% if form.delivery_address.errors %}
+                                    <div class="error-text">{{ form.delivery_address.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="{{ form.delivery_postal_code.id_for_label }}" class="form-label">
+                                            Code postal <span class="required">*</span>
+                                        </label>
+                                        {{ form.delivery_postal_code }}
+                                        {% if form.delivery_postal_code.errors %}
+                                            <div class="error-text">{{ form.delivery_postal_code.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="{{ form.delivery_city.id_for_label }}" class="form-label">
+                                            Ville <span class="required">*</span>
+                                        </label>
+                                        {{ form.delivery_city }}
+                                        {% if form.delivery_city.errors %}
+                                            <div class="error-text">{{ form.delivery_city.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Pickup Address (Hidden by default) -->
+                        <div id="pickupAddress" style="display: none;">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Adresse de ramassage:</strong><br>
+                                Julien-Leblanc Traiteur<br>
+                                123 Rue Example, Montréal, QC H2X 1Y6<br>
+                                <small>Heures: Lun-Ven 8h-18h, Sam 9h-16h</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Date and Time -->
+                        <div class="datetime-selection">
+                            <div class="form-group">
+                                <label for="{{ form.delivery_date.id_for_label }}" class="form-label">
+                                    Date de livraison <span class="required">*</span>
+                                </label>
+                                <div class="date-input-wrapper">
+                                    {{ form.delivery_date }}
+                                    <i class="fas fa-calendar"></i>
+                                </div>
+                                <div class="form-text">Minimum 24h de préparation</div>
+                                {% if form.delivery_date.errors %}
+                                    <div class="error-text">{{ form.delivery_date.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="{{ form.delivery_time.id_for_label }}" class="form-label">
+                                    Heure de livraison <span class="required">*</span>
+                                </label>
+                                {{ form.delivery_time }}
+                                <div class="form-text">Plage horaire souhaitée</div>
+                                {% if form.delivery_time.errors %}
+                                    <div class="error-text">{{ form.delivery_time.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Special Instructions -->
+                        <div class="form-group">
+                            <label for="{{ form.delivery_notes.id_for_label }}" class="form-label">
+                                Instructions spéciales <span style="color: var(--jlt-gray);">(optionnel)</span>
+                            </label>
+                            {{ form.delivery_notes }}
+                            <div class="form-text">Code d'entrée, étage, instructions particulières...</div>
+                            {% if form.delivery_notes.errors %}
+                                <div class="error-text">{{ form.delivery_notes.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Method -->
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <div class="form-section-icon">
+                                <i class="fas fa-credit-card"></i>
+                            </div>
+                            <div class="form-section-title">
+                                <h3>Mode de paiement</h3>
+                                <p>Choisissez votre méthode de paiement préférée</p>
+                            </div>
+                        </div>
+                        
+                        <div class="payment-methods">
+                            <div class="payment-method">
+                                <input type="radio" 
+                                       name="payment_method" 
+                                       id="payment_card" 
+                                       value="card" 
+                                       checked>
+                                <label for="payment_card" class="payment-method-label">
+                                    <i class="fas fa-credit-card payment-method-icon"></i>
+                                    <div class="payment-method-info">
+                                        <div class="payment-method-title">Carte de crédit</div>
+                                        <div class="payment-method-desc">Paiement sécurisé par Stripe</div>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <div class="payment-method">
+                                <input type="radio" 
+                                       name="payment_method" 
+                                       id="payment_transfer" 
+                                       value="transfer">
+                                <label for="payment_transfer" class="payment-method-label">
+                                    <i class="fas fa-university payment-method-icon"></i>
+                                    <div class="payment-method-info">
+                                        <div class="payment-method-title">Virement Interac</div>
+                                        <div class="payment-method-desc">Transfert bancaire électronique</div>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <div class="payment-method">
+                                <input type="radio" 
+                                       name="payment_method" 
+                                       id="payment_cash" 
+                                       value="cash">
+                                <label for="payment_cash" class="payment-method-label">
+                                    <i class="fas fa-money-bill payment-method-icon"></i>
+                                    <div class="payment-method-info">
+                                        <div class="payment-method-title">Comptant à la livraison</div>
+                                        <div class="payment-method-desc">Payez en espèces lors de la réception</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Terms and Submit -->
+                    <div class="submit-section">
+                        <div class="form-check">
+                            {{ form.accept_terms }}
+                            <label class="form-check-label" for="{{ form.accept_terms.id_for_label }}">
+                                J'accepte les <a href="#" target="_blank">conditions générales de vente</a> 
+                                et la <a href="#" target="_blank">politique de confidentialité</a> <span class="required">*</span>
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn-submit-order" id="submitBtn">
+                            <i class="fas fa-lock"></i>
+                            Confirmer ma commande
+                        </button>
+                        
+                        <div class="security-badges">
+                            <div class="security-badge">
+                                <i class="fas fa-shield-alt"></i>
+                                Paiement sécurisé
+                            </div>
+                            <div class="security-badge">
+                                <i class="fas fa-lock"></i>
+                                SSL 256-bit
+                            </div>
+                            <div class="security-badge">
+                                <i class="fas fa-check-circle"></i>
+                                Satisfaction garantie
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Column - Order Summary -->
+                <div class="col-lg-4">
+                    <div class="order-summary">
+                        <div class="summary-header">
+                            <h3>Résumé de la commande</h3>
+                        </div>
+                        <div class="summary-body">
+                            <div class="summary-items">
+                                {% for item in cart.items.all %}
+                                <div class="summary-item">
+                                    <div class="summary-item-image">
+                                        {% if item.product.image %}
+                                        <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+                                        {% else %}
+                                        <img src="https://via.placeholder.com/60x60/F5F2E8/6B7652?text=JL" alt="{{ item.product.name }}">
+                                        {% endif %}
+                                    </div>
+                                    <div class="summary-item-details">
+                                        <div class="summary-item-name">{{ item.product.name }}</div>
+                                        <div class="summary-item-qty">Quantité: {{ item.quantity }}</div>
+                                    </div>
+                                    <div class="summary-item-price">
+                                        ${{ item.get_subtotal|floatformat:2 }}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="summary-totals">
+                                <div class="summary-row">
+                                    <span class="summary-label">Sous-total</span>
+                                    <span class="summary-value">${{ subtotal|floatformat:2 }}</span>
+                                </div>
+                                <div class="summary-row">
+                                    <span class="summary-label">TPS/TVQ</span>
+                                    <span class="summary-value">${{ tax_amount|floatformat:2 }}</span>
+                                </div>
+                                <div class="summary-row">
+                                    <span class="summary-label">Livraison</span>
+                                    <span class="summary-value">
+                                        {% if delivery_fee > 0 %}
+                                            ${{ delivery_fee|floatformat:2 }}
+                                        {% else %}
+                                            <span style="color: var(--jlt-green);">GRATUIT</span>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <div class="summary-row total">
+                                    <span class="summary-label">Total</span>
+                                    <span class="summary-value">${{ total|floatformat:2 }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</section>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay">
+    <div class="loading-content">
+        <div class="spinner"></div>
+        <div class="loading-text">Traitement de votre commande...</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Toggle delivery/pickup address
+    document.querySelectorAll('input[name="delivery_type"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const deliveryAddress = document.getElementById('deliveryAddress');
+            const pickupAddress = document.getElementById('pickupAddress');
+            
+            if (this.value === 'delivery') {
+                deliveryAddress.style.display = 'block';
+                pickupAddress.style.display = 'none';
+                // Make delivery fields required
+                document.querySelectorAll('#deliveryAddress input, #deliveryAddress textarea').forEach(field => {
+                    field.required = true;
+                });
+            } else {
+                deliveryAddress.style.display = 'none';
+                pickupAddress.style.display = 'block';
+                // Remove required from delivery fields
+                document.querySelectorAll('#deliveryAddress input, #deliveryAddress textarea').forEach(field => {
+                    field.required = false;
+                });
+            }
+        });
+    });
+    
+    // Form validation
+    document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Check if terms are accepted
+        const termsAccepted = document.getElementById('id_accept_terms').checked;
+        if (!termsAccepted) {
+            alert('Veuillez accepter les conditions générales de vente');
+            return;
+        }
+        
+        // Show loading overlay
+        document.querySelector('.loading-overlay').classList.add('active');
+        
+        // Submit form
+        setTimeout(() => {
+            this.submit();
+        }, 500);
+    });
+    
+    // Phone formatting
+    document.getElementById('id_phone').addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length >= 6) {
+            value = value.slice(0, 3) + '-' + value.slice(3, 6) + '-' + value.slice(6, 10);
+        } else if (value.length >= 3) {
+            value = value.slice(0, 3) + '-' + value.slice(3);
+        }
+        e.target.value = value;
+    });
+    
+    // Postal code formatting
+    document.getElementById('id_delivery_postal_code').addEventListener('input', function(e) {
+        let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        if (value.length > 3) {
+            value = value.slice(0, 3) + ' ' + value.slice(3, 6);
+        }
+        e.target.value = value;
+    });
+    
+    // Set minimum date to tomorrow
+    const dateInput = document.getElementById('id_delivery_date');
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    dateInput.min = tomorrow.toISOString().split('T')[0];
+    
+    // Disable Sundays
+    dateInput.addEventListener('change', function() {
+        const selectedDate = new Date(this.value);
+        if (selectedDate.getDay() === 0) {
+            alert('Nous ne livrons pas le dimanche. Veuillez choisir une autre date.');
+            this.value = '';
+        }
+    });
+</script>
+{% endblock %}

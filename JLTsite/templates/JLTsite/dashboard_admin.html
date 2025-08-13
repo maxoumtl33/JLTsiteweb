@@ -1,0 +1,1005 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Dashboard Admin - Julien-Leblanc Traiteur{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Admin Header */
+    .admin-header {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        padding: 2rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .admin-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 60%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(244, 200, 67, 0.1) 0%, transparent 70%);
+        animation: float 20s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(10deg); }
+    }
+    
+    .admin-title {
+        color: white;
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .admin-badge {
+        background: var(--jlt-yellow);
+        color: var(--jlt-black);
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .admin-subtitle {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Admin Navigation */
+    .admin-nav {
+        background: #34495e;
+        border-bottom: 3px solid var(--jlt-yellow);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+    
+    .admin-nav-tabs {
+        display: flex;
+        gap: 0;
+        margin: 0;
+        padding: 0;
+        overflow-x: auto;
+    }
+    
+    .admin-nav-tab {
+        padding: 1rem 1.5rem;
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        border-bottom: 3px solid transparent;
+    }
+    
+    .admin-nav-tab:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+    }
+    
+    .admin-nav-tab.active {
+        background: rgba(244, 200, 67, 0.1);
+        color: var(--jlt-yellow);
+        border-bottom-color: var(--jlt-yellow);
+    }
+    
+    /* Period Selector */
+    .period-selector {
+        background: white;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--jlt-gray-light);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    
+    .period-buttons {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+    }
+    
+    .period-btn {
+        padding: 8px 20px;
+        border: 2px solid var(--jlt-gray-light);
+        background: white;
+        border-radius: 20px;
+        color: var(--jlt-gray);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .period-btn:hover {
+        border-color: var(--jlt-yellow);
+        color: var(--jlt-black);
+    }
+    
+    .period-btn.active {
+        background: var(--jlt-yellow);
+        border-color: var(--jlt-yellow);
+        color: var(--jlt-black);
+    }
+    
+    /* Dashboard Content */
+    .admin-content {
+        background: var(--jlt-beige);
+        padding: 2rem 0;
+        min-height: calc(100vh - 300px);
+    }
+    
+    /* Alerts Section */
+    .alerts-section {
+        margin-bottom: 2rem;
+    }
+    
+    .alert-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border-left: 4px solid;
+        transition: all 0.3s ease;
+    }
+    
+    .alert-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    
+    .alert-card.warning {
+        border-left-color: #ffc107;
+    }
+    
+    .alert-card.danger {
+        border-left-color: #dc3545;
+    }
+    
+    .alert-card.info {
+        border-left-color: #17a2b8;
+    }
+    
+    .alert-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+    
+    .alert-card.warning .alert-icon {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .alert-card.danger .alert-icon {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .alert-card.info .alert-icon {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .alert-content {
+        flex: 1;
+    }
+    
+    .alert-message {
+        font-weight: 600;
+        color: var(--jlt-black);
+        margin-bottom: 0.25rem;
+    }
+    
+    .alert-link {
+        color: var(--jlt-yellow);
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .alert-link:hover {
+        text-decoration: underline;
+    }
+    
+    /* Statistics Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--jlt-yellow);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+    
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        background: var(--jlt-beige);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: var(--jlt-yellow);
+    }
+    
+    .stat-trend {
+        font-size: 0.85rem;
+        font-weight: 600;
+        padding: 4px 8px;
+        border-radius: 15px;
+    }
+    
+    .stat-trend.up {
+        background: #d4f4dd;
+        color: #28a745;
+    }
+    
+    .stat-trend.down {
+        background: #f8d7da;
+        color: #dc3545;
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--jlt-black);
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: var(--jlt-gray);
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+    
+    .stat-comparison {
+        font-size: 0.85rem;
+        color: var(--jlt-gray);
+        margin-top: 0.5rem;
+    }
+    
+    /* Charts Section */
+    .charts-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .chart-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+    }
+    
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--jlt-gray-light);
+    }
+    
+    .chart-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--jlt-black);
+    }
+    
+    .chart-options {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .chart-option {
+        padding: 5px 10px;
+        border: 1px solid var(--jlt-gray-light);
+        background: white;
+        border-radius: 5px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .chart-option:hover {
+        background: var(--jlt-beige);
+    }
+    
+    .chart-option.active {
+        background: var(--jlt-yellow);
+        border-color: var(--jlt-yellow);
+        color: var(--jlt-black);
+    }
+    
+    .chart-container {
+        height: 300px;
+        position: relative;
+    }
+    
+    /* Recent Orders Table */
+    .orders-table-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+    
+    .table-header {
+        background: linear-gradient(135deg, var(--jlt-beige) 0%, var(--jlt-beige-light) 100%);
+        padding: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .table-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--jlt-black);
+    }
+    
+    .btn-view-all {
+        background: var(--jlt-yellow);
+        color: var(--jlt-black);
+        padding: 8px 20px;
+        border-radius: 20px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-view-all:hover {
+        background: var(--jlt-yellow-hover);
+        transform: translateY(-2px);
+    }
+    
+    .orders-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .orders-table thead {
+        background: var(--jlt-beige-light);
+    }
+    
+    .orders-table th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--jlt-black);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .orders-table tbody tr {
+        border-bottom: 1px solid var(--jlt-gray-light);
+        transition: all 0.3s ease;
+    }
+    
+    .orders-table tbody tr:hover {
+        background: var(--jlt-beige-light);
+    }
+    
+    .orders-table td {
+        padding: 1rem;
+        color: var(--jlt-gray);
+    }
+    
+    .order-number {
+        font-weight: 600;
+        color: var(--jlt-black);
+    }
+    
+    .order-status {
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        display: inline-block;
+    }
+    
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .status-confirmed {
+        background: #d4f4dd;
+        color: #28a745;
+    }
+    
+    .status-preparing {
+        background: #cce5ff;
+        color: #004085;
+    }
+    
+    .status-delivered {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .order-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .btn-action {
+        padding: 5px 10px;
+        border: 1px solid var(--jlt-gray-light);
+        background: white;
+        border-radius: 5px;
+        color: var(--jlt-gray);
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-action:hover {
+        background: var(--jlt-yellow);
+        border-color: var(--jlt-yellow);
+        color: var(--jlt-black);
+    }
+    
+    /* Quick Actions */
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .quick-action {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        text-align: center;
+        text-decoration: none;
+        color: var(--jlt-black);
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border: 2px solid transparent;
+    }
+    
+    .quick-action:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        border-color: var(--jlt-yellow);
+    }
+    
+    .quick-action-icon {
+        width: 50px;
+        height: 50px;
+        background: var(--jlt-yellow);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 1.3rem;
+        color: var(--jlt-black);
+    }
+    
+    .quick-action-title {
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+    
+    /* Responsive */
+    @media (max-width: 1200px) {
+        .charts-row {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .admin-nav-tabs {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .period-buttons {
+            overflow-x: auto;
+            justify-content: flex-start;
+        }
+        
+        .table-responsive {
+            overflow-x: auto;
+        }
+        
+        .quick-actions {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<!-- Admin Header -->
+<section class="admin-header">
+    <div class="container">
+        <h1 class="admin-title">
+            <i class="fas fa-tachometer-alt"></i> 
+            Dashboard Administrateur
+            <span class="admin-badge">Admin</span>
+        </h1>
+        <p class="admin-subtitle">Bienvenue {{ user.first_name }}, voici un aperçu de votre activité</p>
+    </div>
+</section>
+
+<!-- Admin Navigation -->
+<nav class="admin-nav">
+    <div class="container">
+        <div class="admin-nav-tabs">
+            <a href="{% url 'admin_dashboard' %}" class="admin-nav-tab active">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </a>
+            <a href="{% url 'admin_orders_list' %}" class="admin-nav-tab">
+                <i class="fas fa-shopping-cart"></i> Commandes
+            </a>
+            <a href="{% url 'admin_products_list' %}" class="admin-nav-tab">
+                <i class="fas fa-utensils"></i> Produits
+            </a>
+            <a href="{% url 'admin_customers_list' %}" class="admin-nav-tab">
+                <i class="fas fa-users"></i> Clients
+            </a>
+            <a href="{% url 'admin_reports' %}" class="admin-nav-tab">
+                <i class="fas fa-chart-bar"></i> Rapports
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- Period Selector -->
+<section class="period-selector">
+    <div class="container">
+        <div class="period-buttons">
+            <a href="?period=7" class="period-btn {% if period == '7' %}active{% endif %}">7 jours</a>
+            <a href="?period=30" class="period-btn {% if period == '30' %}active{% endif %}">30 jours</a>
+            <a href="?period=90" class="period-btn {% if period == '90' %}active{% endif %}">90 jours</a>
+        </div>
+    </div>
+</section>
+
+<!-- Dashboard Content -->
+<section class="admin-content">
+    <div class="container">
+        <!-- Alerts -->
+        {% if alerts %}
+        <div class="alerts-section">
+            {% for alert in alerts %}
+            <div class="alert-card {{ alert.type }}">
+                <div class="alert-icon">
+                    {% if alert.type == 'warning' %}
+                        <i class="fas fa-exclamation-triangle"></i>
+                    {% elif alert.type == 'danger' %}
+                        <i class="fas fa-exclamation-circle"></i>
+                    {% else %}
+                        <i class="fas fa-info-circle"></i>
+                    {% endif %}
+                </div>
+                <div class="alert-content">
+                    <div class="alert-message">{{ alert.message }}</div>
+                    {% if alert.link %}
+                    <a href="{{ alert.link }}" class="alert-link">Voir détails →</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    {% if stats.total_orders > 10 %}
+                    <span class="stat-trend up">
+                        <i class="fas fa-arrow-up"></i> +15%
+                    </span>
+                    {% endif %}
+                </div>
+                <div class="stat-value">{{ stats.total_orders }}</div>
+                <div class="stat-label">Commandes</div>
+                <div class="stat-comparison">
+                    <strong>{{ stats.pending_orders }}</strong> en attente
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <span class="stat-trend up">
+                        <i class="fas fa-arrow-up"></i> +23%
+                    </span>
+                </div>
+                <div class="stat-value">${{ stats.total_revenue|floatformat:0|intcomma }}</div>
+                <div class="stat-label">Revenus</div>
+                <div class="stat-comparison">
+                    Moyenne: <strong>${{ stats.avg_order_value|floatformat:0 }}</strong>/commande
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+                <div class="stat-value">{{ stats.new_customers }}</div>
+                <div class="stat-label">Nouveaux clients</div>
+                <div class="stat-comparison">
+                    Total: <strong>{{ stats.total_customers }}</strong> clients
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    {% if stats.low_stock_products > 0 %}
+                    <span class="stat-trend down">
+                        <i class="fas fa-exclamation"></i>
+                    </span>
+                    {% endif %}
+                </div>
+                <div class="stat-value">{{ stats.low_stock_products }}</div>
+                <div class="stat-label">Stock faible</div>
+                <div class="stat-comparison">
+                    À réapprovisionner
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <a href="{% url 'admin_orders_list' %}?status=pending" class="quick-action">
+                <div class="quick-action-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="quick-action-title">Commandes en attente</div>
+            </a>
+            <a href="{% url 'admin_products_list' %}?stock=low" class="quick-action">
+                <div class="quick-action-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="quick-action-title">Stock faible</div>
+            </a>
+            <a href="{% url 'shop_boites_lunch' %}" class="quick-action">
+                <div class="quick-action-icon">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="quick-action-title">Nouvelle commande</div>
+            </a>
+            <a href="{% url 'admin_reports' %}" class="quick-action">
+                <div class="quick-action-icon">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <div class="quick-action-title">Rapports</div>
+            </a>
+            <a href="{% url 'admin_export_data' %}" class="quick-action">
+                <div class="quick-action-icon">
+                    <i class="fas fa-download"></i>
+                </div>
+                <div class="quick-action-title">Exporter</div>
+            </a>
+            <a href="#" class="quick-action">
+                <div class="quick-action-icon">
+                    <i class="fas fa-cog"></i>
+                </div>
+                <div class="quick-action-title">Paramètres</div>
+            </a>
+        </div>
+        
+        <!-- Charts -->
+        <div class="charts-row">
+            <!-- Sales Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Évolution des ventes</h3>
+                    <div class="chart-options">
+                        <button class="chart-option active" onclick="updateChart('revenue')">Revenus</button>
+                        <button class="chart-option" onclick="updateChart('orders')">Commandes</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Category Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Répartition par catégorie</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Top Products -->
+        <div class="charts-row">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Top 10 produits</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="topProductsChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Order Status -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Statut des commandes</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Orders -->
+        <div class="orders-table-card">
+            <div class="table-header">
+                <h3 class="table-title">Commandes récentes</h3>
+                <a href="{% url 'admin_orders_list' %}" class="btn-view-all">
+                    Voir tout →
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>N° Commande</th>
+                            <th>Client</th>
+                            <th>Date</th>
+                            <th>Statut</th>
+                            <th>Total</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in recent_orders %}
+                        <tr>
+                            <td class="order-number">#{{ order.order_number }}</td>
+                            <td>{{ order.first_name }} {{ order.last_name }}</td>
+                            <td>{{ order.created_at|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                <span class="order-status status-{{ order.status }}">
+                                    {{ order.get_status_display }}
+                                </span>
+                            </td>
+                            <td><strong>${{ order.total|floatformat:2 }}</strong></td>
+                            <td>
+                                <div class="order-actions">
+                                    <a href="{% url 'admin_order_detail' order.order_number %}" class="btn-action">
+                                        Voir
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Sales Chart
+    const salesCtx = document.getElementById('salesChart').getContext('2d');
+    const salesChart = new Chart(salesCtx, {
+        type: 'line',
+        data: {
+            labels: {{ charts.sales.labels|safe }},
+            datasets: [{
+                label: 'Revenus',
+                data: {{ charts.sales.revenue|safe }},
+                borderColor: '#F4C843',
+                backgroundColor: 'rgba(244, 200, 67, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Category Chart
+    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+    const categoryChart = new Chart(categoryCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ charts.categories.names|safe }},
+            datasets: [{
+                data: {{ charts.categories.values|safe }},
+                backgroundColor: [
+                    '#F4C843',
+                    '#6B7652',
+                    '#34495e',
+                    '#e74c3c',
+                    '#3498db'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+    
+    // Top Products Chart
+    const topProductsCtx = document.getElementById('topProductsChart').getContext('2d');
+    const topProductsChart = new Chart(topProductsCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ charts.top_products.names|safe }},
+            datasets: [{
+                label: 'Quantité vendue',
+                data: {{ charts.top_products.quantities|safe }},
+                backgroundColor: '#6B7652'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+    
+    // Status Chart
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    const statusChart = new Chart(statusCtx, {
+        type: 'pie',
+        data: {
+            labels: {{ charts.status.labels|safe }},
+            datasets: [{
+                data: {{ charts.status.counts|safe }},
+                backgroundColor: [
+                    '#fff3cd',
+                    '#d4f4dd',
+                    '#cce5ff',
+                    '#e2e3e5',
+                    '#d1ecf1',
+                    '#f8d7da'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+    
+    // Update chart function
+    function updateChart(type) {
+        // Update sales chart based on type
+        const buttons = document.querySelectorAll('.chart-option');
+        buttons.forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        
+        if (type === 'orders') {
+            salesChart.data.datasets[0].label = 'Commandes';
+            salesChart.data.datasets[0].data = {{ charts.sales.count|safe }};
+            salesChart.options.scales.y.ticks.callback = function(value) {
+                return value;
+            };
+        } else {
+            salesChart.data.datasets[0].label = 'Revenus';
+            salesChart.data.datasets[0].data = {{ charts.sales.revenue|safe }};
+            salesChart.options.scales.y.ticks.callback = function(value) {
+                return '$' + value;
+            };
+        }
+        salesChart.update();
+    }
+</script>
+{% endblock %}
