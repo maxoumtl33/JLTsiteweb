@@ -47,12 +47,23 @@ urlpatterns = [
     path('admin-dashboard/orders/', admin_views.admin_orders_list, name='admin_orders_list'),
     path('admin-dashboard/order/<str:order_number>/', admin_views.admin_order_detail, name='admin_order_detail'),
     path('admin-dashboard/order/<str:order_number>/invoice/', admin_views.admin_order_invoice, name='admin_order_invoice'),
+
+    path('admin-dashboard/orders/update-status/', admin_views.admin_order_update_status, name='admin_order_update_status'),
+    path('admin-dashboard/orders/bulk-update/', admin_views.admin_orders_bulk_update, name='admin_orders_bulk_update'),
+    path('admin-dashboard/order/<str:order_number>/duplicate/', admin_views.admin_order_duplicate, name='admin_order_duplicate'),
+    path('admin-dashboard/order/<str:order_number>/cancel/', admin_views.admin_order_cancel, name='admin_order_cancel'),
+    path('admin-dashboard/orders/send-email/', admin_views.admin_order_send_email, name='admin_order_send_email'),
     
     path('admin-dashboard/products/', admin_views.admin_products_list, name='admin_products_list'),
+    path('admin-dashboard/products/create/', admin_views.admin_product_create, name='admin_product_create'),
+    path('admin-dashboard/products/<int:product_id>/edit/', admin_views.admin_product_edit, name='admin_product_edit'),
+    path('admin-dashboard/products/<int:product_id>/delete/', admin_views.admin_product_delete, name='admin_product_delete'),
     path('admin-dashboard/products/update-stock/', admin_views.admin_product_update_stock, name='admin_product_update_stock'),
     
     path('admin-dashboard/customers/', admin_views.admin_customers_list, name='admin_customers_list'),
     path('admin-dashboard/customer/<int:user_id>/', admin_views.admin_customer_detail, name='admin_customer_detail'),
+    path('admin-dashboard/customers/send-email/', admin_views.admin_send_customer_email, name='admin_send_customer_email'),
+path('admin-dashboard/customers/send-bulk-email/', admin_views.admin_send_bulk_email, name='admin_send_bulk_email'),
     
     path('admin-dashboard/reports/', admin_views.admin_reports, name='admin_reports'),
     path('admin-dashboard/export/', admin_views.admin_export_data, name='admin_export_data'),

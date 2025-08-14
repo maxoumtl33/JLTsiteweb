@@ -1,0 +1,888 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Rapports et analyses - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --jlt-yellow: #F4C843;
+        --jlt-yellow-hover: #e6b835;
+        --jlt-green: #6B7652;
+        --jlt-black: #1a1a1a;
+        --jlt-gray: #6c757d;
+        --jlt-gray-light: #e9ecef;
+        --jlt-beige: #f8f9fa;
+        --jlt-beige-light: #fafbfc;
+    }
+    
+    /* Admin styles */
+    .admin-header {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        padding: 2rem 0;
+        color: white;
+    }
+    
+    .admin-nav {
+        background: #34495e;
+        border-bottom: 3px solid var(--jlt-yellow);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+    
+    .admin-nav-tabs {
+        display: flex;
+        gap: 0;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .admin-nav-tab {
+        padding: 1rem 1.5rem;
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .admin-nav-tab:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+    }
+    
+    .admin-nav-tab.active {
+        background: rgba(244, 200, 67, 0.1);
+        color: var(--jlt-yellow);
+        border-bottom: 3px solid var(--jlt-yellow);
+    }
+    
+    .admin-content {
+        background: var(--jlt-beige);
+        padding: 2rem 0;
+        min-height: calc(100vh - 200px);
+    }
+    
+    /* Period Selector */
+    .period-selector {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .period-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .period-btn {
+        padding: 10px 20px;
+        border: 2px solid var(--jlt-gray-light);
+        background: white;
+        border-radius: 10px;
+        color: var(--jlt-gray);
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .period-btn:hover {
+        border-color: var(--jlt-yellow);
+        color: var(--jlt-black);
+    }
+    
+    .period-btn.active {
+        background: var(--jlt-yellow);
+        border-color: var(--jlt-yellow);
+        color: var(--jlt-black);
+    }
+    
+    .export-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .btn-export {
+        padding: 10px 20px;
+        background: white;
+        border: 2px solid var(--jlt-gray-light);
+        border-radius: 10px;
+        color: var(--jlt-gray);
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .btn-export:hover {
+        background: var(--jlt-green);
+        border-color: var(--jlt-green);
+        color: white;
+    }
+    
+    /* KPI Cards */
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .kpi-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .kpi-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+    
+    .kpi-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--jlt-yellow);
+    }
+    
+    .kpi-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+    
+    .kpi-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--jlt-beige);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--jlt-yellow);
+    }
+    
+    .kpi-trend {
+        font-size: 0.85rem;
+        font-weight: 600;
+        padding: 4px 8px;
+        border-radius: 15px;
+    }
+    
+    .trend-up {
+        background: #d4f4dd;
+        color: #28a745;
+    }
+    
+    .trend-down {
+        background: #f8d7da;
+        color: #dc3545;
+    }
+    
+    .trend-neutral {
+        background: #e2e3e5;
+        color: #6c757d;
+    }
+    
+    .kpi-value {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: var(--jlt-black);
+        margin-bottom: 0.5rem;
+    }
+    
+    .kpi-label {
+        color: var(--jlt-gray);
+        font-size: 0.95rem;
+    }
+    
+    .kpi-comparison {
+        font-size: 0.85rem;
+        color: var(--jlt-gray);
+        margin-top: 0.5rem;
+    }
+    
+    /* Chart Cards */
+    .chart-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+    }
+    
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--jlt-gray-light);
+    }
+    
+    .chart-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--jlt-black);
+    }
+    
+    .chart-container {
+        height: 350px;
+        position: relative;
+    }
+    
+    /* Tables */
+    .report-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .report-table thead {
+        background: var(--jlt-green);
+        color: white;
+    }
+    
+    .report-table th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+    }
+    
+    .report-table tbody tr {
+        border-bottom: 1px solid var(--jlt-gray-light);
+        transition: all 0.3s ease;
+    }
+    
+    .report-table tbody tr:hover {
+        background: var(--jlt-beige-light);
+    }
+    
+    .report-table td {
+        padding: 1rem;
+        color: var(--jlt-gray);
+    }
+    
+    .rank-number {
+        width: 30px;
+        height: 30px;
+        background: var(--jlt-yellow);
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: var(--jlt-black);
+        font-size: 0.9rem;
+    }
+    
+    .rank-gold { 
+        background: linear-gradient(135deg, #FFD700, #FFA500); 
+        color: white; 
+    }
+    .rank-silver { 
+        background: linear-gradient(135deg, #C0C0C0, #808080); 
+        color: white; 
+    }
+    .rank-bronze { 
+        background: linear-gradient(135deg, #CD7F32, #8B4513); 
+        color: white; 
+    }
+    
+    /* Performance Metrics */
+    .performance-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .performance-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+    }
+    
+    .performance-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--jlt-black);
+        margin-bottom: 1rem;
+    }
+    
+    .performance-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--jlt-gray-light);
+    }
+    
+    .performance-item:last-child {
+        border-bottom: none;
+    }
+    
+    .performance-label {
+        color: var(--jlt-gray);
+        font-size: 0.95rem;
+    }
+    
+    .performance-value {
+        font-weight: 600;
+        color: var(--jlt-black);
+    }
+    
+    /* Progress Bars */
+    .progress-bar-container {
+        margin-top: 0.5rem;
+    }
+    
+    .progress-bar-bg {
+        width: 100%;
+        height: 8px;
+        background: var(--jlt-gray-light);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--jlt-yellow) 0%, var(--jlt-green) 100%);
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        padding: 3rem;
+        text-align: center;
+        color: var(--jlt-gray);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .period-selector {
+            flex-direction: column;
+        }
+        
+        .kpi-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .performance-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<!-- Admin Header -->
+<section class="admin-header">
+    <div class="container">
+        <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">
+            <i class="fas fa-chart-bar"></i> Rapports et analyses
+        </h1>
+        <p style="margin: 0; opacity: 0.9;">
+            Analysez vos performances et tendances
+        </p>
+    </div>
+</section>
+
+<!-- Admin Navigation -->
+<nav class="admin-nav">
+    <div class="container">
+        <div class="admin-nav-tabs">
+            <a href="{% url 'admin_dashboard' %}" class="admin-nav-tab">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </a>
+            <a href="{% url 'admin_orders_list' %}" class="admin-nav-tab">
+                <i class="fas fa-shopping-cart"></i> Commandes
+            </a>
+            <a href="{% url 'admin_products_list' %}" class="admin-nav-tab">
+                <i class="fas fa-utensils"></i> Produits
+            </a>
+            <a href="{% url 'admin_customers_list' %}" class="admin-nav-tab">
+                <i class="fas fa-users"></i> Clients
+            </a>
+            <a href="{% url 'admin_reports' %}" class="admin-nav-tab active">
+                <i class="fas fa-chart-bar"></i> Rapports
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- Reports Content -->
+<section class="admin-content">
+    <div class="container">
+        <!-- Period Selector -->
+        <div class="period-selector">
+            <div class="period-buttons">
+                <a href="?period=week" class="period-btn {% if period == 'week' %}active{% endif %}">Cette semaine</a>
+                <a href="?period=month" class="period-btn {% if period == 'month' or not period %}active{% endif %}">Ce mois</a>
+                <a href="?period=year" class="period-btn {% if period == 'year' %}active{% endif %}">Cette année</a>
+                <a href="?period=custom" class="period-btn {% if period == 'custom' %}active{% endif %}">Personnalisé</a>
+            </div>
+            
+            <div class="export-buttons">
+                <button onclick="printReport()" class="btn-export">
+                    <i class="fas fa-print"></i> Imprimer
+                </button>
+                <button onclick="exportReport('pdf')" class="btn-export">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </button>
+                <button onclick="exportReport('excel')" class="btn-export">
+                    <i class="fas fa-file-excel"></i> Excel
+                </button>
+            </div>
+        </div>
+        
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <div class="kpi-icon">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <span class="kpi-trend {% if revenue_trend >= 0 %}trend-up{% else %}trend-down{% endif %}">
+                        <i class="fas fa-arrow-{% if revenue_trend >= 0 %}up{% else %}down{% endif %}"></i> 
+                        {{ revenue_trend|default:"0"|floatformat:1 }}%
+                    </span>
+                </div>
+                <div class="kpi-value">
+                    ${{ total_revenue|default:"0"|floatformat:0 }}
+                </div>
+                <div class="kpi-label">Revenus totaux</div>
+                <div class="kpi-comparison">
+                    vs période précédente: 
+                    {% if revenue_change >= 0 %}+{% endif %}${{ revenue_change|default:"0"|floatformat:0 }}
+                </div>
+            </div>
+            
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <div class="kpi-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <span class="kpi-trend {% if orders_trend >= 0 %}trend-up{% else %}trend-down{% endif %}">
+                        <i class="fas fa-arrow-{% if orders_trend >= 0 %}up{% else %}down{% endif %}"></i> 
+                        {{ orders_trend|default:"0"|floatformat:1 }}%
+                    </span>
+                </div>
+                <div class="kpi-value">
+                    {{ total_orders|default:"0" }}
+                </div>
+                <div class="kpi-label">Commandes totales</div>
+                <div class="kpi-comparison">
+                    Moyenne par jour: {{ avg_orders_per_day|default:"0"|floatformat:0 }}
+                </div>
+            </div>
+            
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <div class="kpi-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <span class="kpi-trend {% if conversion_trend >= 0 %}trend-up{% else %}trend-down{% endif %}">
+                        <i class="fas fa-arrow-{% if conversion_trend >= 0 %}up{% else %}down{% endif %}"></i> 
+                        {{ conversion_trend|default:"0"|floatformat:1 }}%
+                    </span>
+                </div>
+                <div class="kpi-value">
+                    {{ conversion_rate|default:"0"|floatformat:1 }}%
+                </div>
+                <div class="kpi-label">Taux de conversion</div>
+                <div class="kpi-comparison">
+                    Objectif: 15% | Paniers: {{ total_carts|default:"0" }}
+                </div>
+            </div>
+            
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <div class="kpi-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <span class="kpi-trend {% if customers_trend >= 0 %}trend-up{% else %}trend-down{% endif %}">
+                        <i class="fas fa-arrow-{% if customers_trend >= 0 %}up{% else %}down{% endif %}"></i> 
+                        {{ customers_trend|default:"0"|floatformat:1 }}%
+                    </span>
+                </div>
+                <div class="kpi-value">
+                    {{ active_customers|default:"0" }}
+                </div>
+                <div class="kpi-label">Clients actifs</div>
+                <div class="kpi-comparison">
+                    Nouveaux: +{{ new_customers|default:"0" }} | Total: {{ total_customers|default:"0" }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sales Evolution Chart -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3 class="chart-title">Évolution des ventes</h3>
+            </div>
+            <div class="chart-container">
+                <canvas id="salesEvolutionChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- Two Column Layout -->
+        <div class="row">
+            <div class="col-lg-6">
+                <!-- Top Products -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Produits les plus rentables</h3>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="report-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">Rang</th>
+                                    <th>Produit</th>
+                                    <th>Quantité</th>
+                                    <th>Revenus</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in profitable_products|slice:":10" %}
+                                <tr>
+                                    <td>
+                                        <span class="rank-number {% if forloop.counter == 1 %}rank-gold{% elif forloop.counter == 2 %}rank-silver{% elif forloop.counter == 3 %}rank-bronze{% endif %}">
+                                            {{ forloop.counter }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <strong>{{ product.product__name|default:"Produit" }}</strong><br>
+                                        <small style="color: var(--jlt-gray);">{{ product.product__category__name|default:"" }}</small>
+                                    </td>
+                                    <td>{{ product.quantity_sold|default:"0" }}</td>
+                                    <td><strong>${{ product.revenue|default:"0"|floatformat:0 }}</strong></td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="empty-state">
+                                        Aucune donnée disponible pour cette période
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Orders by Hour -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Commandes par heure</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="ordersByHourChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <!-- Top Customers -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Meilleurs clients</h3>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="report-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">Rang</th>
+                                    <th>Client</th>
+                                    <th>Commandes</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for customer in top_customers|slice:":10" %}
+                                <tr>
+                                    <td>
+                                        <span class="rank-number {% if forloop.counter == 1 %}rank-gold{% elif forloop.counter == 2 %}rank-silver{% elif forloop.counter == 3 %}rank-bronze{% endif %}">
+                                            {{ forloop.counter }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <strong>
+                                            {{ customer.first_name|default:"" }} {{ customer.last_name|default:"" }}
+                                            {% if not customer.first_name and not customer.last_name %}
+                                            {{ customer.username }}
+                                            {% endif %}
+                                        </strong><br>
+                                        <small style="color: var(--jlt-gray);">{{ customer.email }}</small>
+                                    </td>
+                                    <td>{{ customer.orders_count|default:"0" }}</td>
+                                    <td><strong>${{ customer.total_spent|default:"0"|floatformat:0 }}</strong></td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="empty-state">
+                                        Aucun client pour cette période
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Orders by Day of Week -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Commandes par jour de la semaine</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="ordersByDayChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Category Performance -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3 class="chart-title">Performance par catégorie</h3>
+            </div>
+            <div class="performance-grid">
+                {% for category in category_performance %}
+                <div class="performance-card">
+                    <h4 class="performance-title">{{ category.name|default:"Catégorie" }}</h4>
+                    <div class="performance-item">
+                        <span class="performance-label">Revenus</span>
+                        <span class="performance-value">${{ category.revenue|default:"0"|floatformat:0 }}</span>
+                    </div>
+                    {% if category_performance.0.revenue and category.revenue %}
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" style="width: {% widthratio category.revenue category_performance.0.revenue 100 %}%"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="performance-item">
+                        <span class="performance-label">Articles vendus</span>
+                        <span class="performance-value">{{ category.items_sold|default:"0" }}</span>
+                    </div>
+                    <div class="performance-item">
+                        <span class="performance-label">Commandes</span>
+                        <span class="performance-value">{{ category.orders|default:"0" }}</span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state" style="grid-column: 1 / -1;">
+                    <i class="fas fa-chart-pie" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                    <p>Aucune donnée de catégorie disponible</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Données pour les graphiques avec valeurs par défaut
+    const monthlyLabels = [
+        {% for sale in monthly_sales %}'{{ sale.month|date:"M Y" }}'{% if not forloop.last %},{% endif %}{% empty %}'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'{% endfor %}
+    ];
+    const monthlyRevenue = [
+        {% for sale in monthly_sales %}{{ sale.revenue|default:"0" }}{% if not forloop.last %},{% endif %}{% empty %}1200, 1900, 1500, 2100, 2300, 2800{% endfor %}
+    ];
+    const monthlyOrders = [
+        {% for sale in monthly_sales %}{{ sale.orders|default:"0" }}{% if not forloop.last %},{% endif %}{% empty %}8, 12, 10, 14, 15, 18{% endfor %}
+    ];
+    
+    // Sales Evolution Chart
+    const salesCtx = document.getElementById('salesEvolutionChart').getContext('2d');
+    const salesChart = new Chart(salesCtx, {
+        type: 'line',
+        data: {
+            labels: monthlyLabels,
+            datasets: [{
+                label: 'Revenus ($)',
+                data: monthlyRevenue,
+                borderColor: '#F4C843',
+                backgroundColor: 'rgba(244, 200, 67, 0.1)',
+                tension: 0.4,
+                fill: true,
+                yAxisID: 'y'
+            }, {
+                label: 'Commandes',
+                data: monthlyOrders,
+                borderColor: '#6B7652',
+                backgroundColor: 'rgba(107, 118, 82, 0.1)',
+                tension: 0.4,
+                fill: true,
+                yAxisID: 'y1'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                if (context.datasetIndex === 0) {
+                                    label += '$' + context.parsed.y.toLocaleString();
+                                } else {
+                                    label += context.parsed.y;
+                                }
+                            }
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    grid: {
+                        drawOnChartArea: false,
+                    }
+                }
+            }
+        }
+    });
+    
+    // Orders by Hour Chart
+    const hourLabels = [
+        {% for hour in orders_by_hour %}'{{ hour.hour }}h'{% if not forloop.last %},{% endif %}{% empty %}{% for h in "8,9,10,11,12,13,14,15,16,17,18,19,20" %}'{{ h }}h'{% if not forloop.last %},{% endif %}{% endfor %}{% endfor %}
+    ];
+    const hourData = [
+        {% for hour in orders_by_hour %}{{ hour.count }}{% if not forloop.last %},{% endif %}{% empty %}2, 3, 5, 8, 12, 15, 14, 11, 9, 7, 5, 3, 2{% endfor %}
+    ];
+    
+    const hourCtx = document.getElementById('ordersByHourChart').getContext('2d');
+    const hourChart = new Chart(hourCtx, {
+        type: 'bar',
+        data: {
+            labels: hourLabels,
+            datasets: [{
+                label: 'Commandes',
+                data: hourData,
+                backgroundColor: '#6B7652'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+    
+    // Orders by Day of Week Chart
+    const dayLabels = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+    const dayData = [
+        {% for day in orders_by_weekday %}{{ day.count }}{% if not forloop.last %},{% endif %}{% empty %}5, 12, 14, 15, 18, 22, 8{% endfor %}
+    ];
+    
+    const dayCtx = document.getElementById('ordersByDayChart').getContext('2d');
+    const dayChart = new Chart(dayCtx, {
+        type: 'doughnut',
+        data: {
+            labels: dayLabels,
+            datasets: [{
+                data: dayData,
+                backgroundColor: [
+                    '#F4C843',
+                    '#6B7652',
+                    '#34495e',
+                    '#e74c3c',
+                    '#3498db',
+                    '#9b59b6',
+                    '#1abc9c'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+    
+    // Export functions
+    function printReport() {
+        window.print();
+    }
+    
+    function exportReport(format) {
+        const period = '{{ period|default:"month" }}';
+        window.location.href = `{% url 'admin_export_data' %}?type=report&format=${format}&period=${period}`;
+    }
+</script>
+{% endblock %}

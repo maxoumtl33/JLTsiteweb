@@ -6,6 +6,17 @@
 
 {% block extra_css %}
 <style>
+    /* Variables CSS */
+    :root {
+        --jlt-yellow: #F4C843;
+        --jlt-yellow-hover: #e6b835;
+        --jlt-black: #1a1a1a;
+        --jlt-gray: #6c757d;
+        --jlt-gray-light: #e9ecef;
+        --jlt-beige: #f8f9fa;
+        --jlt-beige-light: #fafbfc;
+    }
+
     /* Admin Header */
     .admin-header {
         background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
@@ -588,7 +599,7 @@
             Dashboard Administrateur
             <span class="admin-badge">Admin</span>
         </h1>
-        <p class="admin-subtitle">Bienvenue {{ user.first_name }}, voici un aperçu de votre activité</p>
+        <p class="admin-subtitle">Bienvenue {{ user.first_name|default:"Admin" }}, voici un aperçu de votre activité</p>
     </div>
 </section>
 
@@ -620,7 +631,7 @@
     <div class="container">
         <div class="period-buttons">
             <a href="?period=7" class="period-btn {% if period == '7' %}active{% endif %}">7 jours</a>
-            <a href="?period=30" class="period-btn {% if period == '30' %}active{% endif %}">30 jours</a>
+            <a href="?period=30" class="period-btn {% if period == '30' or not period %}active{% endif %}">30 jours</a>
             <a href="?period=90" class="period-btn {% if period == '90' %}active{% endif %}">90 jours</a>
         </div>
     </div>
@@ -667,10 +678,10 @@
                     </span>
                     {% endif %}
                 </div>
-                <div class="stat-value">{{ stats.total_orders }}</div>
+                <div class="stat-value">{{ stats.total_orders|default:"0" }}</div>
                 <div class="stat-label">Commandes</div>
                 <div class="stat-comparison">
-                    <strong>{{ stats.pending_orders }}</strong> en attente
+                    <strong>{{ stats.pending_orders|default:"0" }}</strong> en attente
                 </div>
             </div>
             
@@ -679,14 +690,11 @@
                     <div class="stat-icon">
                         <i class="fas fa-dollar-sign"></i>
                     </div>
-                    <span class="stat-trend up">
-                        <i class="fas fa-arrow-up"></i> +23%
-                    </span>
                 </div>
-                <div class="stat-value">${{ stats.total_revenue|floatformat:0|intcomma }}</div>
+                <div class="stat-value">${{ stats.total_revenue|default:"0"|floatformat:0 }}</div>
                 <div class="stat-label">Revenus</div>
                 <div class="stat-comparison">
-                    Moyenne: <strong>${{ stats.avg_order_value|floatformat:0 }}</strong>/commande
+                    Moyenne: <strong>${{ stats.avg_order_value|default:"0"|floatformat:0 }}</strong>/commande
                 </div>
             </div>
             
@@ -696,10 +704,10 @@
                         <i class="fas fa-users"></i>
                     </div>
                 </div>
-                <div class="stat-value">{{ stats.new_customers }}</div>
+                <div class="stat-value">{{ stats.new_customers|default:"0" }}</div>
                 <div class="stat-label">Nouveaux clients</div>
                 <div class="stat-comparison">
-                    Total: <strong>{{ stats.total_customers }}</strong> clients
+                    Total: <strong>{{ stats.total_customers|default:"0" }}</strong> clients
                 </div>
             </div>
             
@@ -714,7 +722,7 @@
                     </span>
                     {% endif %}
                 </div>
-                <div class="stat-value">{{ stats.low_stock_products }}</div>
+                <div class="stat-value">{{ stats.low_stock_products|default:"0" }}</div>
                 <div class="stat-label">Stock faible</div>
                 <div class="stat-comparison">
                     À réapprovisionner
@@ -851,6 +859,12 @@
                                 </div>
                             </td>
                         </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 2rem; color: #6c757d;">
+                                Aucune commande récente
+                            </td>
+                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -862,15 +876,26 @@
 
 {% block extra_js %}
 <script>
+    // Données par défaut si aucune donnée n'est fournie
+    const salesLabels = {{ charts.sales.labels|default:"['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']"|safe }};
+    const salesRevenue = {{ charts.sales.revenue|default:"[1200, 1900, 1500, 2100, 2300, 1800, 2500]"|safe }};
+    const salesCount = {{ charts.sales.count|default:"[8, 12, 10, 14, 15, 11, 16]"|safe }};
+    const categoryNames = {{ charts.categories.names|default:"['Boîtes lunch', 'Salades', 'Desserts', 'Boissons']"|safe }};
+    const categoryValues = {{ charts.categories.values|default:"[45, 25, 20, 10]"|safe }};
+    const topProductsNames = {{ charts.top_products.names|default:"['Poulet grillé', 'Saumon teriyaki', 'Salade césar', 'Wrap végé', 'Poke bowl']"|safe }};
+    const topProductsQuantities = {{ charts.top_products.quantities|default:"[45, 38, 32, 28, 25]"|safe }};
+    const statusLabels = {{ charts.status.labels|default:"['En attente', 'Confirmée', 'En préparation', 'Prête', 'Livrée']"|safe }};
+    const statusCounts = {{ charts.status.counts|default:"[5, 12, 8, 3, 25]"|safe }};
+
     // Sales Chart
     const salesCtx = document.getElementById('salesChart').getContext('2d');
     const salesChart = new Chart(salesCtx, {
         type: 'line',
         data: {
-            labels: {{ charts.sales.labels|safe }},
+            labels: salesLabels,
             datasets: [{
                 label: 'Revenus',
-                data: {{ charts.sales.revenue|safe }},
+                data: salesRevenue,
                 borderColor: '#F4C843',
                 backgroundColor: 'rgba(244, 200, 67, 0.1)',
                 tension: 0.4,
@@ -903,9 +928,9 @@
     const categoryChart = new Chart(categoryCtx, {
         type: 'doughnut',
         data: {
-            labels: {{ charts.categories.names|safe }},
+            labels: categoryNames,
             datasets: [{
-                data: {{ charts.categories.values|safe }},
+                data: categoryValues,
                 backgroundColor: [
                     '#F4C843',
                     '#6B7652',
@@ -931,10 +956,10 @@
     const topProductsChart = new Chart(topProductsCtx, {
         type: 'bar',
         data: {
-            labels: {{ charts.top_products.names|safe }},
+            labels: topProductsNames,
             datasets: [{
                 label: 'Quantité vendue',
-                data: {{ charts.top_products.quantities|safe }},
+                data: topProductsQuantities,
                 backgroundColor: '#6B7652'
             }]
         },
@@ -955,9 +980,9 @@
     const statusChart = new Chart(statusCtx, {
         type: 'pie',
         data: {
-            labels: {{ charts.status.labels|safe }},
+            labels: statusLabels,
             datasets: [{
-                data: {{ charts.status.counts|safe }},
+                data: statusCounts,
                 backgroundColor: [
                     '#fff3cd',
                     '#d4f4dd',
@@ -988,13 +1013,13 @@
         
         if (type === 'orders') {
             salesChart.data.datasets[0].label = 'Commandes';
-            salesChart.data.datasets[0].data = {{ charts.sales.count|safe }};
+            salesChart.data.datasets[0].data = salesCount;
             salesChart.options.scales.y.ticks.callback = function(value) {
                 return value;
             };
         } else {
             salesChart.data.datasets[0].label = 'Revenus';
-            salesChart.data.datasets[0].data = {{ charts.sales.revenue|safe }};
+            salesChart.data.datasets[0].data = salesRevenue;
             salesChart.options.scales.y.ticks.callback = function(value) {
                 return '$' + value;
             };

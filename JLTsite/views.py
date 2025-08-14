@@ -226,7 +226,7 @@ def signup_view(request):
             transfer_cart_to_user(request, user)
             
             messages.success(request, 'Bienvenue! Votre compte a été créé avec succès.')
-            return redirect('shop')
+            return redirect('shop_boites_lunch')
     else:
         form = SignUpForm()
     
@@ -267,7 +267,7 @@ def logout_view(request):
 # ========================================
 # 2. VUES BOUTIQUE
 # ========================================
-
+@login_required(login_url='login')
 def shop_view(request):
     """Page principale de la boutique"""
     # Filtres
