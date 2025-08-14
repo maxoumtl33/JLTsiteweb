@@ -157,8 +157,8 @@ class Product(models.Model):
     promo_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name='Prix promo')
     
     image = models.ImageField(upload_to='images/', verbose_name='Image principale')
-    image_2 = models.ImageField(upload_to='products/', blank=True, null=True)
-    image_3 = models.ImageField(upload_to='products/', blank=True, null=True)
+    image_2 = models.ImageField(upload_to='images/', blank=True, null=True)
+    image_3 = models.ImageField(upload_to='images/', blank=True, null=True)
     
     calories = models.IntegerField(null=True, blank=True)
     preparation_time = models.IntegerField(help_text='En minutes', null=True, blank=True)
