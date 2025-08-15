@@ -63,9 +63,25 @@ urlpatterns = [
     path('admin-dashboard/customers/', admin_views.admin_customers_list, name='admin_customers_list'),
     path('admin-dashboard/customer/<int:user_id>/', admin_views.admin_customer_detail, name='admin_customer_detail'),
     path('admin-dashboard/customers/send-email/', admin_views.admin_send_customer_email, name='admin_send_customer_email'),
-path('admin-dashboard/customers/send-bulk-email/', admin_views.admin_send_bulk_email, name='admin_send_bulk_email'),
+    path('admin-dashboard/customers/send-bulk-email/', admin_views.admin_send_bulk_email, name='admin_send_bulk_email'),
     
     path('admin-dashboard/reports/', admin_views.admin_reports, name='admin_reports'),
     path('admin-dashboard/export/', admin_views.admin_export_data, name='admin_export_data'),
+
+
+    path('admin-dashboard/orders/create/', admin_views.admin_create_manual_order, name='admin_create_manual_order'),
+    path('admin-dashboard/orders/create-for/<int:customer_id>/', admin_views.admin_create_order_for_customer, name='admin_create_order_for_customer'),
+    
+    # Calendrier des commandes
+    path('admin-dashboard/calendar/', admin_views.admin_orders_calendar, name='admin_orders_calendar'),
+    path('admin-dashboard/calendar/<str:date_str>/', admin_views.admin_orders_by_date, name='admin_orders_by_date'),
+    
+    # Dispatch cuisine
+    path('admin-dashboard/kitchen/dispatch/', admin_views.admin_kitchen_dispatch, name='admin_kitchen_dispatch'),
+    path('admin-dashboard/kitchen/print/<str:department>/', admin_views.admin_print_department_list, name='admin_print_department'),
+    
+    # API endpoints
+    path('admin-dashboard/api/quick-status/', admin_views.admin_quick_order_status, name='admin_quick_order_status'),
+    path('admin-dashboard/api/customer-info/', admin_views.admin_get_customer_info, name='admin_get_customer_info'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

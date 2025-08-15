@@ -326,6 +326,32 @@ class Order(models.Model):
     
     # Notes internes
     admin_notes = models.TextField(blank=True)
+
+    ORDER_SOURCE_CHOICES = [
+        ('online', 'En ligne'),
+        ('manual', 'Manuelle (téléphone/sur place)'),
+        ('admin', 'Créée par admin'),
+    ]
+    
+    order_source = models.CharField(
+        max_length=20, 
+        choices=ORDER_SOURCE_CHOICES, 
+        default='online',
+        verbose_name='Source de la commande'
+    )
+    
+    # NOUVEAU : Qui a créé la commande manuellement
+    created_by = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='orders_created',
+        verbose_name='Créée par'
+    )
+    
+    # NOUVEAU : Pour les commandes téléphoniques
+    is_phone_order = models.BooleanField(default=False, verbose_name='Commande téléphonique')
     
     class Meta:
         verbose_name = 'Commande'
@@ -362,6 +388,36 @@ class OrderItem(models.Model):
     quantity = models.PositiveIntegerField()
     notes = models.TextField(blank=True)
     subtotal = models.DecimalField(max_digits=10, decimal_places=2)
+    # NOUVEAU : Département de cuisine
+    DEPARTMENT_CHOICES = [
+        ('patisserie', 'Pâtisserie'),
+        ('chaud', 'Cuisine Chaude'),
+        ('sandwichs', 'Sandwichs'),
+        ('boites', 'Boîtes à lunch'),
+        ('salades', 'Salades'),
+        ('dejeuners', 'Déjeuners'),
+        ('bouchees', 'Bouchées'),
+        ('autres', 'Autres'),
+    ]
+    
+    department = models.CharField(
+        max_length=20, 
+        choices=DEPARTMENT_CHOICES,
+        blank=True,
+        verbose_name='Département'
+    )
+    
+    # NOUVEAU : Pour tracking de préparation
+    is_prepared = models.BooleanField(default=False, verbose_name='Préparé')
+    prepared_at = models.DateTimeField(null=True, blank=True, verbose_name='Préparé le')
+    prepared_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='items_prepared',
+        verbose_name='Préparé par'
+    )
     
     class Meta:
         verbose_name = 'Article de commande'
@@ -373,6 +429,33 @@ class OrderItem(models.Model):
     def save(self, *args, **kwargs):
         self.subtotal = self.product_price * self.quantity
         super().save(*args, **kwargs)
+
+
+class KitchenProductionNote(models.Model):
+    """Notes de production pour la cuisine"""
+    
+    date = models.DateField(verbose_name='Date de production')
+    department = models.CharField(
+        max_length=20,
+        choices=OrderItem.DEPARTMENT_CHOICES,
+        verbose_name='Département'
+    )
+    notes = models.TextField(verbose_name='Notes')
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='kitchen_notes'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Note de production'
+        verbose_name_plural = 'Notes de production'
+        ordering = ['-date', 'department']
+    
+    def __str__(self):
+        return f"Notes {self.department} - {self.date}"
 
 # ========================================
 # 5. MODÈLES POUR PROMOTIONS ET COUPONS

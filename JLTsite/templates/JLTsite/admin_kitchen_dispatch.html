@@ -1,0 +1,1023 @@
+<!-- templates/JLTsite/admin_kitchen_dispatch.html -->
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Dispatch Cuisine - {{ dispatch_date|date:"d F Y" }} - Julien-Leblanc Traiteur{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Variables CSS */
+    :root {
+        --jlt-yellow: #F4C843;
+        --jlt-yellow-hover: #e6b835;
+        --jlt-black: #1a1a1a;
+        --jlt-gray: #6c757d;
+        --jlt-gray-light: #e9ecef;
+        --jlt-beige: #f8f9fa;
+        --jlt-beige-light: #fafbfc;
+    }
+
+    /* Admin Header */
+    .admin-header {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        padding: 2rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .admin-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 60%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(244, 200, 67, 0.1) 0%, transparent 70%);
+        animation: float 20s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(10deg); }
+    }
+    
+    .admin-title {
+        color: white;
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .admin-subtitle {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Admin Navigation */
+    .admin-nav {
+        background: #34495e;
+        border-bottom: 3px solid var(--jlt-yellow);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+    
+    .admin-nav-tabs {
+        display: flex;
+        gap: 0;
+        margin: 0;
+        padding: 0;
+        overflow-x: auto;
+    }
+    
+    .admin-nav-tab {
+        padding: 1rem 1.5rem;
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        border-bottom: 3px solid transparent;
+    }
+    
+    .admin-nav-tab:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+    }
+    
+    .admin-nav-tab.active {
+        background: rgba(244, 200, 67, 0.1);
+        color: var(--jlt-yellow);
+        border-bottom-color: var(--jlt-yellow);
+    }
+    
+    /* Dispatch Header */
+    .dispatch-header {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .dispatch-info h2 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--jlt-black);
+        margin-bottom: 0.5rem;
+    }
+    
+    .dispatch-meta {
+        color: var(--jlt-gray);
+        font-size: 1rem;
+    }
+    
+    .dispatch-actions {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .btn-action {
+        background: var(--jlt-yellow);
+        color: var(--jlt-black);
+        padding: 10px 20px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .btn-action:hover {
+        background: var(--jlt-yellow-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .btn-action.secondary {
+        background: white;
+        border: 2px solid var(--jlt-gray-light);
+    }
+    
+    .btn-action.secondary:hover {
+        background: var(--jlt-beige);
+        border-color: var(--jlt-yellow);
+    }
+    
+    /* Print Controls */
+    .print-controls {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+    
+    .controls-row {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 2rem;
+        align-items: center;
+    }
+    
+    .control-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .control-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--jlt-gray);
+    }
+    
+    .date-input {
+        padding: 10px;
+        border: 2px solid var(--jlt-gray-light);
+        border-radius: 10px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .date-input:focus {
+        outline: none;
+        border-color: var(--jlt-yellow);
+        box-shadow: 0 0 0 3px rgba(244, 200, 67, 0.1);
+    }
+    
+    .dept-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .dept-btn {
+        padding: 8px 15px;
+        border: 2px solid var(--jlt-gray-light);
+        background: white;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .dept-btn:hover {
+        background: var(--jlt-beige);
+        border-color: var(--jlt-yellow);
+        transform: translateY(-2px);
+    }
+    
+    /* Department Cards */
+    .departments-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .department-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .department-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 5px;
+        height: 100%;
+    }
+    
+    .dept-patisserie::before { background: #FF69B4; }
+    .dept-chaud::before { background: #FF4500; }
+    .dept-sandwichs::before { background: #FFA500; }
+    .dept-boites::before { background: #4169E1; }
+    .dept-salades::before { background: #32CD32; }
+    .dept-dejeuners::before { background: #FFD700; }
+    .dept-bouchees::before { background: #9370DB; }
+    
+    .department-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+    
+    .department-header {
+        background: linear-gradient(135deg, var(--jlt-beige) 0%, var(--jlt-beige-light) 100%);
+        padding: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .department-header:hover {
+        background: linear-gradient(135deg, var(--jlt-beige-light) 0%, white 100%);
+    }
+    
+    .dept-title {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .dept-icon {
+        font-size: 1.8rem;
+    }
+    
+    .dept-name {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--jlt-black);
+    }
+    
+    .dept-count {
+        background: var(--jlt-yellow);
+        color: var(--jlt-black);
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+    
+    .dept-actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .btn-print-dept {
+        padding: 8px 12px;
+        background: white;
+        border: 2px solid var(--jlt-gray-light);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        color: var(--jlt-gray);
+    }
+    
+    .btn-print-dept:hover {
+        background: var(--jlt-yellow);
+        border-color: var(--jlt-yellow);
+        color: var(--jlt-black);
+    }
+    
+    .chevron {
+        transition: transform 0.3s ease;
+        color: var(--jlt-gray);
+    }
+    
+    .chevron.up {
+        transform: rotate(180deg);
+    }
+    
+    .department-body {
+        padding: 1.5rem;
+        display: block;
+    }
+    
+    .department-body.collapsed {
+        display: none;
+    }
+    
+    /* Product Summary */
+    .product-summary {
+        background: var(--jlt-beige-light);
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .summary-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--jlt-black);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 0.75rem;
+    }
+    
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem;
+        background: white;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .summary-item:hover {
+        background: var(--jlt-yellow);
+        transform: translateX(5px);
+    }
+    
+    .summary-product {
+        font-weight: 500;
+        color: var(--jlt-black);
+    }
+    
+    .summary-quantity {
+        font-weight: 700;
+        color: var(--jlt-black);
+        background: var(--jlt-beige);
+        padding: 2px 8px;
+        border-radius: 5px;
+    }
+    
+    /* Items List */
+    .items-list {
+        max-height: 500px;
+        overflow-y: auto;
+        padding-right: 0.5rem;
+    }
+    
+    .items-list::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .items-list::-webkit-scrollbar-track {
+        background: var(--jlt-beige-light);
+        border-radius: 10px;
+    }
+    
+    .items-list::-webkit-scrollbar-thumb {
+        background: var(--jlt-gray-light);
+        border-radius: 10px;
+    }
+    
+    .items-list::-webkit-scrollbar-thumb:hover {
+        background: var(--jlt-gray);
+    }
+    
+    .list-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--jlt-black);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .dispatch-item {
+        background: white;
+        border: 1px solid var(--jlt-gray-light);
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .dispatch-item:hover {
+        background: var(--jlt-beige-light);
+        border-color: var(--jlt-yellow);
+        transform: translateX(5px);
+    }
+    
+    .dispatch-item.completed {
+        background: #d4f4dd;
+        opacity: 0.7;
+    }
+    
+    .dispatch-item.completed::after {
+        content: '✓';
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 30px;
+        height: 30px;
+        background: #28a745;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+    
+    .item-row {
+        display: grid;
+        grid-template-columns: auto auto 1fr 2fr 1fr auto;
+        gap: 1rem;
+        align-items: center;
+    }
+    
+    .item-checkbox {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+    }
+    
+    .time-badge {
+        padding: 5px 12px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 700;
+    }
+    
+    .time-morning { background: #fff3cd; color: #856404; }
+    .time-afternoon { background: #cce5ff; color: #004085; }
+    .time-evening { background: #f8d7da; color: #721c24; }
+    
+    .order-info {
+        font-size: 0.9rem;
+    }
+    
+    .order-number {
+        font-weight: 700;
+        color: var(--jlt-black);
+    }
+    
+    .customer-name {
+        color: var(--jlt-gray);
+        font-size: 0.85rem;
+    }
+    
+    .product-info {
+        font-weight: 500;
+        color: var(--jlt-black);
+    }
+    
+    .product-quantity {
+        font-weight: 700;
+        color: var(--jlt-black);
+        margin-right: 0.5rem;
+    }
+    
+    .allergen-badge {
+        background: #dc3545;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 5px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-left: 0.5rem;
+    }
+    
+    .delivery-badge {
+        padding: 5px 10px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    
+    .badge-delivery {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .badge-pickup {
+        background: var(--jlt-beige);
+        color: var(--jlt-gray);
+    }
+    
+    .notes-box {
+        background: #fff3cd;
+        border-left: 3px solid #ffc107;
+        padding: 0.75rem;
+        margin-top: 0.75rem;
+        border-radius: 5px;
+        font-size: 0.9rem;
+        color: #856404;
+    }
+    
+    /* Production Notes */
+    .notes-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        margin-top: 2rem;
+    }
+    
+    .notes-header {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffe8a1 100%);
+        margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+        padding: 1rem 1.5rem;
+        border-radius: 15px 15px 0 0;
+    }
+    
+    .notes-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #856404;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .notes-textarea {
+        width: 100%;
+        min-height: 120px;
+        padding: 1rem;
+        border: 2px solid var(--jlt-gray-light);
+        border-radius: 10px;
+        font-size: 1rem;
+        resize: vertical;
+        transition: all 0.3s ease;
+    }
+    
+    .notes-textarea:focus {
+        outline: none;
+        border-color: var(--jlt-yellow);
+        box-shadow: 0 0 0 3px rgba(244, 200, 67, 0.1);
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+    }
+    
+    .empty-icon {
+        font-size: 4rem;
+        color: var(--jlt-gray-light);
+        margin-bottom: 1rem;
+    }
+    
+    .empty-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--jlt-black);
+        margin-bottom: 0.5rem;
+    }
+    
+    .empty-message {
+        color: var(--jlt-gray);
+        margin-bottom: 2rem;
+    }
+    
+    /* Print Styles */
+    @media print {
+        .no-print { display: none !important; }
+        .department-card { page-break-inside: avoid; }
+        body { font-size: 12pt; }
+        .department-body { display: block !important; }
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .dispatch-header {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .controls-row {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        
+        .departments-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .item-row {
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Admin Header -->
+<section class="admin-header">
+    <div class="container">
+        <h1 class="admin-title">
+            <i class="fas fa-utensils"></i> 
+            Dispatch Cuisine
+        </h1>
+        <p class="admin-subtitle">Organisation de la production par département</p>
+    </div>
+</section>
+
+<!-- Admin Navigation -->
+<nav class="admin-nav">
+    <div class="container">
+        <div class="admin-nav-tabs">
+            <a href="{% url 'admin_dashboard' %}" class="admin-nav-tab">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </a>
+            <a href="{% url 'admin_orders_calendar' %}" class="admin-nav-tab">
+                <i class="fas fa-calendar-alt"></i> Calendrier
+            </a>
+            <a href="{% url 'admin_orders_list' %}" class="admin-nav-tab">
+                <i class="fas fa-shopping-cart"></i> Commandes
+            </a>
+            <a href="{% url 'admin_products_list' %}" class="admin-nav-tab">
+                <i class="fas fa-utensils"></i> Produits
+            </a>
+            <a href="{% url 'admin_customers_list' %}" class="admin-nav-tab">
+                <i class="fas fa-users"></i> Clients
+            </a>
+            <a href="{% url 'admin_reports' %}" class="admin-nav-tab">
+                <i class="fas fa-chart-bar"></i> Rapports
+            </a>
+            <a href="{% url 'admin_kitchen_dispatch' %}" class="admin-nav-tab active">
+                <i class="fas fa-clipboard-list"></i> Dispatch
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- Content -->
+<section class="admin-content" style="background: var(--jlt-beige); padding: 2rem 0; min-height: calc(100vh - 300px);">
+    <div class="container">
+        <!-- Dispatch Header -->
+        <div class="dispatch-header no-print">
+            <div class="dispatch-info">
+                <h2>{{ dispatch_date|date:"l d F Y" }}</h2>
+                <p class="dispatch-meta">{{ total_orders }} commandes à préparer</p>
+            </div>
+            <div class="dispatch-actions">
+                <button class="btn-action" onclick="window.print()">
+                    <i class="fas fa-print"></i> Imprimer Tout
+                </button>
+                <a href="{% url 'admin_orders_by_date' dispatch_date|date:'Y-m-d' %}" class="btn-action secondary">
+                    <i class="fas fa-list"></i> Voir Commandes
+                </a>
+            </div>
+        </div>
+        
+        <!-- Print Controls -->
+        <div class="print-controls no-print">
+            <div class="controls-row">
+                <div class="control-group">
+                    <label class="control-label">Date de production</label>
+                    <input type="date" class="date-input" id="dispatchDate" 
+                           value="{{ dispatch_date|date:'Y-m-d' }}"
+                           onchange="changeDate(this.value)">
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">Imprimer par département</label>
+                    <div class="dept-buttons">
+                        <button class="dept-btn" onclick="printDepartment('patisserie')">
+                            🍰 Pâtisserie
+                        </button>
+                        <button class="dept-btn" onclick="printDepartment('chaud')">
+                            🔥 Chaud
+                        </button>
+                        <button class="dept-btn" onclick="printDepartment('sandwichs')">
+                            🥪 Sandwichs
+                        </button>
+                        <button class="dept-btn" onclick="printDepartment('boites')">
+                            📦 Boîtes
+                        </button>
+                        <button class="dept-btn" onclick="printDepartment('salades')">
+                            🥗 Salades
+                        </button>
+                        <button class="dept-btn" onclick="printDepartment('dejeuners')">
+                            ☕ Déjeuners
+                        </button>
+                        <button class="dept-btn" onclick="printDepartment('bouchees')">
+                            🍡 Bouchées
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">&nbsp;</label>
+                    <button class="btn-action" onclick="markAllPrepared()" style="width: 100%;">
+                        <i class="fas fa-check-double"></i> Tout Marquer Préparé
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Departments Grid -->
+        <div class="departments-grid">
+            {% for dept_key, dept in departments.items %}
+            {% if dept.items %}
+            <div class="department-card dept-{{ dept_key }}">
+                <div class="department-header" onclick="toggleDepartment('{{ dept_key }}')">
+                    <div class="dept-title">
+                        <span class="dept-icon">
+                            {% if dept_key == 'patisserie' %}🍰
+                            {% elif dept_key == 'chaud' %}🔥
+                            {% elif dept_key == 'sandwichs' %}🥪
+                            {% elif dept_key == 'boites' %}📦
+                            {% elif dept_key == 'salades' %}🥗
+                            {% elif dept_key == 'dejeuners' %}☕
+                            {% elif dept_key == 'bouchees' %}🍡
+                            {% endif %}
+                        </span>
+                        <span class="dept-name">{{ dept.name }}</span>
+                        <span class="dept-count">{{ dept.items|length }} items</span>
+                    </div>
+                    <div class="dept-actions">
+                        <button class="btn-print-dept no-print" 
+                                onclick="printDepartment('{{ dept_key }}'); event.stopPropagation();">
+                            <i class="fas fa-print"></i>
+                        </button>
+                        <i class="fas fa-chevron-down chevron" id="chevron-{{ dept_key }}"></i>
+                    </div>
+                </div>
+                
+                <div class="department-body" id="dept-content-{{ dept_key }}">
+                    <!-- Product Summary -->
+                    <div class="product-summary">
+                        <h4 class="summary-title">
+                            <i class="fas fa-chart-bar"></i> Résumé de production
+                        </h4>
+                        <div class="summary-grid">
+                            {% for product, total in dept.product_totals.items %}
+                            <div class="summary-item">
+                                <span class="summary-product">{{ product }}</span>
+                                <span class="summary-quantity">{{ total }}x</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- Items List -->
+                    <div class="items-list">
+                        <h4 class="list-title">
+                            <i class="fas fa-clipboard-list"></i> Détails par commande
+                        </h4>
+                        {% for item in dept.items %}
+                        <div class="dispatch-item" id="item-{{ forloop.counter }}-{{ dept_key }}">
+                            <div class="item-row">
+                                <input type="checkbox" class="item-checkbox no-print" 
+                                       onchange="toggleItem('item-{{ forloop.counter }}-{{ dept_key }}')">
+                                
+                                <span class="time-badge 
+                                    {% if item.delivery_time.hour < 12 %}time-morning
+                                    {% elif item.delivery_time.hour < 17 %}time-afternoon
+                                    {% else %}time-evening{% endif %}">
+                                    {{ item.delivery_time|time:"H:i" }}
+                                </span>
+                                
+                                <div class="order-info">
+                                    <div class="order-number">#{{ item.order_number|slice:"-6:" }}</div>
+                                    <div class="customer-name">{{ item.customer }}</div>
+                                </div>
+                                
+                                <div class="product-info">
+                                    <span class="product-quantity">{{ item.quantity }}x</span>
+                                    {{ item.product }}
+                                    {% if item.allergens %}
+                                    <span class="allergen-badge">
+                                        ⚠️ {{ item.allergens }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                
+                                <span class="delivery-badge {% if item.delivery_type == 'delivery' %}badge-delivery{% else %}badge-pickup{% endif %}">
+                                    {% if item.delivery_type == 'delivery' %}
+                                    <i class="fas fa-truck"></i> Livraison
+                                    {% else %}
+                                    <i class="fas fa-store"></i> Ramassage
+                                    {% endif %}
+                                </span>
+                            </div>
+                            
+                            {% if item.notes %}
+                            <div class="notes-box">
+                                <i class="fas fa-sticky-note"></i> {{ item.notes }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% empty %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-clipboard-list"></i>
+                </div>
+                <h3 class="empty-title">Aucune commande à préparer</h3>
+                <p class="empty-message">Il n'y a aucune commande pour le {{ dispatch_date|date:"d F Y" }}</p>
+                <a href="{% url 'admin_create_manual_order' %}?date={{ dispatch_date|date:'Y-m-d' }}" class="btn-action">
+                    <i class="fas fa-plus"></i> Créer une commande
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Production Notes -->
+        <div class="notes-card no-print">
+            <div class="notes-header">
+                <h3 class="notes-title">
+                    <i class="fas fa-sticky-note"></i> Notes de Production
+                </h3>
+            </div>
+            <textarea class="notes-textarea" id="productionNotes" 
+                      placeholder="Ajoutez des notes spéciales pour la production du jour..."></textarea>
+            <button class="btn-action" onclick="saveProductionNotes()" style="margin-top: 1rem;">
+                <i class="fas fa-save"></i> Enregistrer les notes
+            </button>
+        </div>
+    </div>
+</section>
+
+<script>
+// Toggle département
+function toggleDepartment(dept) {
+    const content = document.getElementById(`dept-content-${dept}`);
+    const chevron = document.getElementById(`chevron-${dept}`);
+    
+    if (content.classList.contains('collapsed')) {
+        content.classList.remove('collapsed');
+        chevron.classList.remove('up');
+    } else {
+        content.classList.add('collapsed');
+        chevron.classList.add('up');
+    }
+}
+
+// Marquer un item comme préparé
+function toggleItem(itemId) {
+    const item = document.getElementById(itemId);
+    item.classList.toggle('completed');
+    
+    // Sauvegarder l'état
+    const completedItems = JSON.parse(localStorage.getItem('completedItems') || '[]');
+    if (item.classList.contains('completed')) {
+        completedItems.push(itemId);
+    } else {
+        const index = completedItems.indexOf(itemId);
+        if (index > -1) completedItems.splice(index, 1);
+    }
+    localStorage.setItem('completedItems', JSON.stringify(completedItems));
+}
+
+// Charger les états sauvegardés
+document.addEventListener('DOMContentLoaded', function() {
+    const completedItems = JSON.parse(localStorage.getItem('completedItems') || '[]');
+    completedItems.forEach(itemId => {
+        const item = document.getElementById(itemId);
+        if (item) {
+            item.classList.add('completed');
+            item.querySelector('input[type="checkbox"]').checked = true;
+        }
+    });
+    
+    // Charger les notes
+    const date = '{{ dispatch_date|date:"Y-m-d" }}';
+    const savedNotes = localStorage.getItem(`production_notes_${date}`);
+    if (savedNotes) {
+        document.getElementById('productionNotes').value = savedNotes;
+    }
+});
+
+// Imprimer un département
+function printDepartment(dept) {
+    const url = `{% url 'admin_print_department' 'DEPT' %}?date={{ dispatch_date|date:'Y-m-d' }}`
+        .replace('DEPT', dept);
+    window.open(url, '_blank');
+}
+
+// Changer la date
+function changeDate(newDate) {
+    window.location.href = `{% url 'admin_kitchen_dispatch' %}?date=${newDate}`;
+}
+
+// Marquer tout comme préparé
+function markAllPrepared() {
+    if (confirm('Marquer toutes les commandes comme préparées ?')) {
+        document.querySelectorAll('.dispatch-item').forEach(item => {
+            item.classList.add('completed');
+            const checkbox = item.querySelector('input[type="checkbox"]');
+            if (checkbox) checkbox.checked = true;
+        });
+        
+        // Sauvegarder tous les IDs
+        const allItems = Array.from(document.querySelectorAll('.dispatch-item'))
+            .map(item => item.id);
+        localStorage.setItem('completedItems', JSON.stringify(allItems));
+        
+        showNotification('success', 'Toutes les commandes ont été marquées comme préparées!');
+    }
+}
+
+// Sauvegarder les notes
+function saveProductionNotes() {
+    const notes = document.getElementById('productionNotes').value;
+    const date = '{{ dispatch_date|date:"Y-m-d" }}';
+    
+    localStorage.setItem(`production_notes_${date}`, notes);
+    showNotification('success', 'Notes sauvegardées avec succès!');
+}
+
+// Notification
+function showNotification(type, message) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        background: ${type === 'success' ? '#d4f4dd' : '#f8d7da'};
+        color: ${type === 'success' ? '#28a745' : '#dc3545'};
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        z-index: 9999;
+        animation: slideIn 0.3s ease;
+        font-weight: 600;
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => notification.remove(), 3000);
+}
+
+// Raccourcis clavier
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+        switch(e.key) {
+            case 'p': // Ctrl+P : Imprimer
+                e.preventDefault();
+                window.print();
+                break;
+            case 'd': // Ctrl+D : Date suivante
+                e.preventDefault();
+                const currentDate = new Date('{{ dispatch_date|date:"Y-m-d" }}');
+                currentDate.setDate(currentDate.getDate() + 1);
+                changeDate(currentDate.toISOString().split('T')[0]);
+                break;
+        }
+    }
+});
+</script>
+{% endblock %}

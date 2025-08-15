@@ -1520,3 +1520,628 @@ def admin_send_bulk_email(request):
         
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import user_passes_test
+from django.http import JsonResponse, HttpResponse
+from django.db.models import Q, Sum, Count, Prefetch
+from django.utils import timezone
+from django.contrib import messages
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
+from datetime import datetime, timedelta, date
+from decimal import Decimal
+import json
+import calendar
+
+from .models import (
+    User, Product, Order, OrderItem, Category, Cart, CartItem
+)
+from .forms import CheckoutForm
+
+def admin_required(user):
+    """Vérifier si l'utilisateur est admin ou staff"""
+    return user.is_authenticated and user.role in ['admin', 'staff']
+
+# ========================================
+# 1. CRÉATION DE COMMANDE MANUELLE
+# ========================================
+
+@user_passes_test(admin_required)
+def admin_create_manual_order(request):
+    """Créer une commande manuellement (téléphone/sur place)"""
+    
+    # Récupérer tous les produits actifs organisés par catégorie
+    categories = Category.objects.filter(is_active=True).prefetch_related(
+        Prefetch('products', queryset=Product.objects.filter(is_active=True, stock__gt=0))
+    ).order_by('order', 'name')
+    
+    # Récupérer les clients existants pour l'autocomplétion
+    customers = User.objects.filter(role='customer').order_by('last_name', 'first_name')
+    
+    if request.method == 'POST':
+        try:
+            # Déterminer si c'est pour un client existant ou nouveau
+            customer_type = request.POST.get('customer_type')
+            
+            if customer_type == 'existing':
+                # Client existant
+                customer_id = request.POST.get('customer_id')
+                customer = get_object_or_404(User, id=customer_id, role='customer')
+                
+                # Utiliser les infos du client
+                first_name = customer.first_name
+                last_name = customer.last_name
+                email = customer.email
+                phone = customer.phone or request.POST.get('phone')
+                company = customer.company or request.POST.get('company', '')
+                
+            else:
+                # Nouveau client ou commande anonyme
+                first_name = request.POST.get('first_name')
+                last_name = request.POST.get('last_name')
+                email = request.POST.get('email')
+                phone = request.POST.get('phone')
+                company = request.POST.get('company', '')
+                
+                # Créer un compte client si demandé
+                create_account = request.POST.get('create_account') == 'on'
+                if create_account and email:
+                    # Vérifier si le client existe déjà
+                    existing_customer = User.objects.filter(email=email).first()
+                    if existing_customer:
+                        customer = existing_customer
+                    else:
+                        # Créer un nouveau client
+                        username = email.split('@')[0] + '_' + str(timezone.now().timestamp())[:5]
+                        customer = User.objects.create(
+                            username=username,
+                            email=email,
+                            first_name=first_name,
+                            last_name=last_name,
+                            phone=phone,
+                            company=company,
+                            role='customer',
+                            # Mot de passe temporaire - envoyer par email
+                            password='temp_' + str(timezone.now().timestamp())[:8]
+                        )
+                else:
+                    customer = None
+            
+            # Créer la commande
+            order = Order.objects.create(
+                user=customer,
+                status='confirmed',  # Commandes manuelles sont automatiquement confirmées
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                phone=phone,
+                company=company,
+                delivery_type=request.POST.get('delivery_type', 'pickup'),
+                delivery_address=request.POST.get('delivery_address', ''),
+                delivery_postal_code=request.POST.get('delivery_postal_code', ''),
+                delivery_city=request.POST.get('delivery_city', 'Montréal'),
+                delivery_date=request.POST.get('delivery_date'),
+                delivery_time=request.POST.get('delivery_time'),
+                delivery_notes=request.POST.get('delivery_notes', ''),
+                subtotal=Decimal('0.00'),
+                tax_rate=Decimal('14.975'),
+                tax_amount=Decimal('0.00'),
+                delivery_fee=Decimal('0.00'),
+                total=Decimal('0.00'),
+                payment_method=request.POST.get('payment_method', 'cash'),
+                payment_status='pending',
+                admin_notes=f"Commande créée manuellement par {request.user.username} le {timezone.now().strftime('%d/%m/%Y %H:%M')}",
+                # Nouveau champ pour identifier la source
+                order_source='manual'  # À ajouter dans le modèle
+            )
+            
+            # Traiter les produits sélectionnés
+            products_data = json.loads(request.POST.get('products_data', '[]'))
+            subtotal = Decimal('0.00')
+            
+            for item_data in products_data:
+                product = Product.objects.get(id=item_data['product_id'])
+                quantity = int(item_data['quantity'])
+                notes = item_data.get('notes', '')
+                
+                # Créer l'article de commande
+                order_item = OrderItem.objects.create(
+                    order=order,
+                    product=product,
+                    product_name=product.name,
+                    product_price=product.get_price(),
+                    quantity=quantity,
+                    notes=notes,
+                    subtotal=product.get_price() * quantity,
+                    # Nouveau champ pour le département
+                    department=get_product_department(product)  # Fonction à créer
+                )
+                
+                subtotal += order_item.subtotal
+                
+                # Mettre à jour le stock
+                product.stock -= quantity
+                product.sales_count += quantity
+                product.save()
+            
+            # Calculer les totaux
+            order.subtotal = subtotal
+            order.tax_amount = subtotal * (order.tax_rate / 100)
+            
+            # Frais de livraison
+            if order.delivery_type == 'delivery':
+                order.delivery_fee = Decimal('5.00') if subtotal < 50 else Decimal('0.00')
+            
+            order.total = order.subtotal + order.tax_amount + order.delivery_fee
+            order.save()
+            
+            # Marquer comme payée si paiement immédiat
+            if request.POST.get('mark_as_paid') == 'on':
+                order.payment_status = 'paid'
+                order.save()
+            
+            messages.success(request, f'Commande #{order.order_number} créée avec succès!')
+            
+            # Rediriger selon l'action
+            if request.POST.get('action') == 'save_and_new':
+                return redirect('admin_create_manual_order')
+            else:
+                return redirect('admin_order_detail', order_number=order.order_number)
+                
+        except Exception as e:
+            messages.error(request, f'Erreur lors de la création: {str(e)}')
+    
+    context = {
+        'categories': categories,
+        'customers': customers,
+        'delivery_dates': get_available_delivery_dates(),  # Fonction helper
+        'delivery_times': get_delivery_time_slots(),  # Fonction helper
+    }
+    
+    return render(request, 'JLTsite/admin_manual_order.html', context)
+
+@user_passes_test(admin_required)
+def admin_create_order_for_customer(request, customer_id):
+    """Créer une commande en se faisant passer pour un client"""
+    customer = get_object_or_404(User, id=customer_id, role='customer')
+    
+    # Récupérer ou créer le panier du client
+    cart, created = Cart.objects.get_or_create(user=customer)
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'add_to_cart':
+            # Ajouter des produits au panier du client
+            product_id = request.POST.get('product_id')
+            quantity = int(request.POST.get('quantity', 1))
+            
+            product = get_object_or_404(Product, id=product_id)
+            
+            cart_item, created = CartItem.objects.get_or_create(
+                cart=cart,
+                product=product,
+                defaults={'quantity': quantity}
+            )
+            
+            if not created:
+                cart_item.quantity += quantity
+                cart_item.save()
+            
+            messages.success(request, f'{product.name} ajouté au panier de {customer.get_full_name()}')
+            
+        elif action == 'checkout':
+            # Procéder à la commande
+            return redirect('admin_checkout_for_customer', customer_id=customer.id)
+    
+    # Récupérer les produits
+    categories = Category.objects.filter(is_active=True).prefetch_related(
+        Prefetch('products', queryset=Product.objects.filter(is_active=True))
+    )
+    
+    context = {
+        'customer': customer,
+        'cart': cart,
+        'categories': categories,
+        'cart_total': cart.get_total() if cart else 0,
+    }
+    
+    return render(request, 'JLTsite/admin_order_for_customer.html', context)
+
+# ========================================
+# 2. CALENDRIER DES COMMANDES
+# ========================================
+
+@user_passes_test(admin_required)
+def admin_orders_calendar(request):
+    """Vue calendrier des commandes"""
+    
+    # Récupérer le mois et l'année depuis les paramètres
+    year = int(request.GET.get('year', timezone.now().year))
+    month = int(request.GET.get('month', timezone.now().month))
+    
+    # Créer le calendrier
+    cal = calendar.monthcalendar(year, month)
+    
+    # Récupérer toutes les commandes du mois
+    start_date = date(year, month, 1)
+    if month == 12:
+        end_date = date(year + 1, 1, 1) - timedelta(days=1)
+    else:
+        end_date = date(year, month + 1, 1) - timedelta(days=1)
+    
+    orders = Order.objects.filter(
+        delivery_date__gte=start_date,
+        delivery_date__lte=end_date
+    ).values('delivery_date').annotate(
+        total_orders=Count('id'),
+        confirmed_orders=Count('id', filter=Q(status='confirmed')),
+        pending_orders=Count('id', filter=Q(status='pending')),
+        total_revenue=Sum('total', filter=Q(status__in=['confirmed', 'delivered']))
+    )
+    
+    # Créer un dictionnaire pour accès rapide
+    orders_by_date = {
+        order['delivery_date']: order for order in orders
+    }
+    
+    # Construire les données du calendrier
+    calendar_data = []
+    for week in cal:
+        week_data = []
+        for day in week:
+            if day == 0:
+                week_data.append(None)
+            else:
+                current_date = date(year, month, day)
+                day_data = {
+                    'day': day,
+                    'date': current_date,
+                    'is_today': current_date == timezone.now().date(),
+                    'is_past': current_date < timezone.now().date(),
+                    'orders': orders_by_date.get(current_date, {
+                        'total_orders': 0,
+                        'confirmed_orders': 0,
+                        'pending_orders': 0,
+                        'total_revenue': 0
+                    })
+                }
+                week_data.append(day_data)
+        calendar_data.append(week_data)
+    
+    # Navigation
+    prev_month = month - 1 if month > 1 else 12
+    prev_year = year if month > 1 else year - 1
+    next_month = month + 1 if month < 12 else 1
+    next_year = year if month < 12 else year + 1
+    
+    context = {
+        'calendar_data': calendar_data,
+        'current_month': month,
+        'current_year': year,
+        'month_name': calendar.month_name[month],
+        'prev_month': prev_month,
+        'prev_year': prev_year,
+        'next_month': next_month,
+        'next_year': next_year,
+        'weekdays': ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
+    }
+    
+    return render(request, 'JLTsite/admin_orders_calendar.html', context)
+
+@user_passes_test(admin_required)
+def admin_orders_by_date(request, date_str):
+    """Afficher les commandes d'une date spécifique"""
+    
+    try:
+        selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+    except ValueError:
+        messages.error(request, 'Date invalide')
+        return redirect('admin_orders_calendar')
+    
+    # Récupérer les commandes de cette date
+    orders = Order.objects.filter(delivery_date=selected_date).select_related('user').prefetch_related('items__product')
+    
+    # Séparer par source et statut
+    online_orders = orders.filter(order_source='online')
+    manual_orders = orders.filter(order_source='manual')
+    
+    # Statistiques du jour
+    stats = {
+        'total_orders': orders.count(),
+        'online_orders': online_orders.count(),
+        'manual_orders': manual_orders.count(),
+        'pending': orders.filter(status='pending').count(),
+        'confirmed': orders.filter(status='confirmed').count(),
+        'total_revenue': orders.filter(
+            status__in=['confirmed', 'preparing', 'ready', 'delivered']
+        ).aggregate(Sum('total'))['total__sum'] or 0,
+        'pickup_orders': orders.filter(delivery_type='pickup').count(),
+        'delivery_orders': orders.filter(delivery_type='delivery').count(),
+    }
+    
+    context = {
+        'selected_date': selected_date,
+        'orders': orders,
+        'online_orders': online_orders,
+        'manual_orders': manual_orders,
+        'stats': stats,
+    }
+    
+    return render(request, 'JLTsite/admin_orders_by_date.html', context)
+
+# ========================================
+# 3. DISPATCH CUISINE (IMPRESSION)
+# ========================================
+
+@user_passes_test(admin_required)
+def admin_kitchen_dispatch(request):
+    """Vue pour le dispatch en cuisine"""
+    
+    # Date pour le dispatch (par défaut demain)
+    dispatch_date = request.GET.get('date')
+    if dispatch_date:
+        dispatch_date = datetime.strptime(dispatch_date, '%Y-%m-%d').date()
+    else:
+        dispatch_date = timezone.now().date() + timedelta(days=1)
+    
+    # Récupérer toutes les commandes confirmées pour cette date
+    orders = Order.objects.filter(
+        delivery_date=dispatch_date,
+        status__in=['confirmed', 'preparing']
+    ).prefetch_related('items__product__category')
+    
+    # Définir les départements
+    DEPARTMENTS = {
+        'patisserie': {'name': 'Pâtisserie', 'categories': ['desserts', 'patisseries'], 'items': []},
+        'chaud': {'name': 'Cuisine Chaude', 'categories': ['plats-chauds', 'soupes'], 'items': []},
+        'sandwichs': {'name': 'Sandwichs', 'categories': ['sandwichs', 'wraps'], 'items': []},
+        'boites': {'name': 'Boîtes à lunch', 'categories': ['boites-lunch'], 'items': []},
+        'salades': {'name': 'Salades', 'categories': ['salades'], 'items': []},
+        'dejeuners': {'name': 'Déjeuners', 'categories': ['dejeuners', 'brunchs'], 'items': []},
+        'bouchees': {'name': 'Bouchées', 'categories': ['bouchees', 'canapes'], 'items': []},
+    }
+    
+    # Organiser les items par département
+    for order in orders:
+        for item in order.items.all():
+            dept = get_item_department(item)
+            if dept in DEPARTMENTS:
+                DEPARTMENTS[dept]['items'].append({
+                    'order_number': order.order_number,
+                    'customer': f"{order.first_name} {order.last_name}",
+                    'delivery_time': order.delivery_time,
+                    'product': item.product_name,
+                    'quantity': item.quantity,
+                    'notes': item.notes,
+                    'allergens': item.product.allergens if item.product else '',
+                })
+    
+    # Trier les items par heure de livraison
+    for dept in DEPARTMENTS.values():
+        dept['items'].sort(key=lambda x: x['delivery_time'])
+        
+        # Calculer les totaux par produit
+        product_totals = {}
+        for item in dept['items']:
+            key = item['product']
+            if key not in product_totals:
+                product_totals[key] = 0
+            product_totals[key] += item['quantity']
+        dept['product_totals'] = product_totals
+    
+    context = {
+        'dispatch_date': dispatch_date,
+        'departments': DEPARTMENTS,
+        'total_orders': orders.count(),
+        'print_time': timezone.now(),
+    }
+    
+    # Si demande d'impression
+    if request.GET.get('print') == '1':
+        return render(request, 'JLTsite/admin_kitchen_dispatch_print.html', context)
+    
+    return render(request, 'JLTsite/admin_kitchen_dispatch.html', context)
+
+@user_passes_test(admin_required)
+def admin_print_department_list(request, department):
+    """Imprimer la liste pour un département spécifique"""
+    
+    dispatch_date = request.GET.get('date', timezone.now().date() + timedelta(days=1))
+    if isinstance(dispatch_date, str):
+        dispatch_date = datetime.strptime(dispatch_date, '%Y-%m-%d').date()
+    
+    # Récupérer les commandes
+    orders = Order.objects.filter(
+        delivery_date=dispatch_date,
+        status__in=['confirmed', 'preparing']
+    ).prefetch_related('items__product__category')
+    
+    # Filtrer par département
+    department_items = []
+    department_name = ''
+    
+    # Mapping des départements
+    dept_mapping = {
+        'patisserie': {'name': 'Pâtisserie', 'categories': ['desserts', 'patisseries']},
+        'chaud': {'name': 'Cuisine Chaude', 'categories': ['plats-chauds', 'soupes']},
+        'sandwichs': {'name': 'Sandwichs', 'categories': ['sandwichs', 'wraps']},
+        'boites': {'name': 'Boîtes à lunch', 'categories': ['boites-lunch']},
+        'salades': {'name': 'Salades', 'categories': ['salades']},
+        'dejeuners': {'name': 'Déjeuners', 'categories': ['dejeuners', 'brunchs']},
+        'bouchees': {'name': 'Bouchées', 'categories': ['bouchees', 'canapes']},
+    }
+    
+    if department in dept_mapping:
+        department_name = dept_mapping[department]['name']
+        categories = dept_mapping[department]['categories']
+        
+        for order in orders:
+            for item in order.items.all():
+                if item.product and item.product.category.slug in categories:
+                    department_items.append({
+                        'order_number': order.order_number,
+                        'customer': f"{order.first_name} {order.last_name}",
+                        'delivery_time': order.delivery_time,
+                        'delivery_type': order.get_delivery_type_display(),
+                        'product': item.product_name,
+                        'quantity': item.quantity,
+                        'notes': item.notes,
+                        'ingredients': item.product.ingredients if item.product else '',
+                    })
+    
+    # Trier par heure
+    department_items.sort(key=lambda x: x['delivery_time'])
+    
+    # Calculer les totaux
+    product_totals = {}
+    for item in department_items:
+        if item['product'] not in product_totals:
+            product_totals[item['product']] = {'quantity': 0, 'orders': []}
+        product_totals[item['product']]['quantity'] += item['quantity']
+        product_totals[item['product']]['orders'].append(item['order_number'])
+    
+    context = {
+        'department': department,
+        'department_name': department_name,
+        'dispatch_date': dispatch_date,
+        'items': department_items,
+        'product_totals': product_totals,
+        'print_time': timezone.now(),
+    }
+    
+    response = render(request, 'JLTsite/admin_department_print.html', context)
+    response['Content-Type'] = 'text/html; charset=utf-8'
+    
+    return response
+
+# ========================================
+# 4. FONCTIONS HELPERS
+# ========================================
+
+def get_product_department(product):
+    """Déterminer le département d'un produit selon sa catégorie"""
+    if not product.category:
+        return 'autres'
+    
+    category_slug = product.category.slug.lower()
+    
+    # Mapping des catégories vers les départements
+    dept_mapping = {
+        'patisserie': ['desserts', 'patisseries', 'gateaux'],
+        'chaud': ['plats-chauds', 'soupes', 'plats-principaux'],
+        'sandwichs': ['sandwichs', 'wraps', 'paninis'],
+        'boites': ['boites-lunch', 'lunch-box'],
+        'salades': ['salades', 'salades-repas'],
+        'dejeuners': ['dejeuners', 'brunchs', 'petits-dejeuners'],
+        'bouchees': ['bouchees', 'canapes', 'hors-doeuvres'],
+    }
+    
+    for dept, categories in dept_mapping.items():
+        if category_slug in categories:
+            return dept
+    
+    return 'autres'
+
+def get_item_department(order_item):
+    """Déterminer le département d'un article de commande"""
+    if order_item.product:
+        return get_product_department(order_item.product)
+    return 'autres'
+
+def get_available_delivery_dates():
+    """Retourner les dates de livraison disponibles (7 prochains jours)"""
+    dates = []
+    start = timezone.now().date() + timedelta(days=1)  # Commencer demain
+    
+    for i in range(7):
+        current_date = start + timedelta(days=i)
+        # Exclure les dimanches
+        if current_date.weekday() != 6:
+            dates.append({
+                'date': current_date,
+                'display': current_date.strftime('%A %d %B'),
+                'value': current_date.strftime('%Y-%m-%d')
+            })
+    
+    return dates
+
+def get_delivery_time_slots():
+    """Retourner les créneaux horaires disponibles"""
+    slots = []
+    start_hour = 8
+    end_hour = 18
+    
+    for hour in range(start_hour, end_hour):
+        slots.append({
+            'value': f"{hour:02d}:00",
+            'display': f"{hour:02d}h00 - {hour+1:02d}h00"
+        })
+        slots.append({
+            'value': f"{hour:02d}:30",
+            'display': f"{hour:02d}h30 - {hour+1:02d}h30"
+        })
+    
+    return slots
+
+# ========================================
+# 5. API ENDPOINTS AJAX
+# ========================================
+
+@user_passes_test(admin_required)
+@require_POST
+def admin_quick_order_status(request):
+    """Changement rapide du statut depuis le calendrier"""
+    try:
+        data = json.loads(request.body)
+        order_id = data.get('order_id')
+        new_status = data.get('status')
+        
+        order = Order.objects.get(id=order_id)
+        order.status = new_status
+        
+        if new_status == 'confirmed':
+            order.confirmed_at = timezone.now()
+        
+        order.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Commande {order.order_number} mise à jour'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        }, status=500)
+
+@user_passes_test(admin_required)
+def admin_get_customer_info(request):
+    """Récupérer les infos d'un client pour pré-remplir le formulaire"""
+    customer_id = request.GET.get('customer_id')
+    
+    try:
+        customer = User.objects.get(id=customer_id, role='customer')
+        
+        return JsonResponse({
+            'success': True,
+            'data': {
+                'first_name': customer.first_name,
+                'last_name': customer.last_name,
+                'email': customer.email,
+                'phone': customer.phone,
+                'company': customer.company,
+                'address': customer.address,
+                'postal_code': customer.postal_code,
+                'city': customer.city,
+            }
+        })
+        
+    except User.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': 'Client introuvable'
+        }, status=404)

@@ -1,0 +1,635 @@
+<!-- templates/JLTsite/admin_orders_calendar.html -->
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Calendrier des Commandes - Julien-Leblanc Traiteur{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Variables CSS */
+    :root {
+        --jlt-yellow: #F4C843;
+        --jlt-yellow-hover: #e6b835;
+        --jlt-black: #1a1a1a;
+        --jlt-gray: #6c757d;
+        --jlt-gray-light: #e9ecef;
+        --jlt-beige: #f8f9fa;
+        --jlt-beige-light: #fafbfc;
+    }
+
+    /* Admin Header */
+    .admin-header {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        padding: 2rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .admin-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 60%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(244, 200, 67, 0.1) 0%, transparent 70%);
+        animation: float 20s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(10deg); }
+    }
+    
+    .admin-title {
+        color: white;
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .admin-subtitle {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Admin Navigation */
+    .admin-nav {
+        background: #34495e;
+        border-bottom: 3px solid var(--jlt-yellow);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+    
+    .admin-nav-tabs {
+        display: flex;
+        gap: 0;
+        margin: 0;
+        padding: 0;
+        overflow-x: auto;
+    }
+    
+    .admin-nav-tab {
+        padding: 1rem 1.5rem;
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        border-bottom: 3px solid transparent;
+    }
+    
+    .admin-nav-tab:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+    }
+    
+    .admin-nav-tab.active {
+        background: rgba(244, 200, 67, 0.1);
+        color: var(--jlt-yellow);
+        border-bottom-color: var(--jlt-yellow);
+    }
+    
+    /* Calendar Navigation */
+    .calendar-navigation {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+    
+    .calendar-nav-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .nav-button {
+        background: var(--jlt-beige);
+        border: 2px solid var(--jlt-gray-light);
+        padding: 10px 20px;
+        border-radius: 10px;
+        color: var(--jlt-black);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .nav-button:hover {
+        background: var(--jlt-yellow);
+        border-color: var(--jlt-yellow);
+        transform: translateY(-2px);
+    }
+    
+    .current-month {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--jlt-black);
+    }
+    
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--jlt-yellow);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        background: var(--jlt-beige);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: var(--jlt-yellow);
+        margin-bottom: 1rem;
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--jlt-black);
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: var(--jlt-gray);
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+    
+    /* Calendar */
+    .calendar-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+    
+    .calendar-legend {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--jlt-gray-light);
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--jlt-gray);
+    }
+    
+    .legend-color {
+        width: 20px;
+        height: 20px;
+        border-radius: 5px;
+    }
+    
+    .calendar-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .calendar-table th {
+        background: var(--jlt-beige-light);
+        padding: 1rem;
+        text-align: center;
+        font-weight: 600;
+        color: var(--jlt-black);
+        text-transform: uppercase;
+        font-size: 0.9rem;
+        letter-spacing: 0.5px;
+    }
+    
+    .calendar-table td {
+        height: 120px;
+        width: 14.28%;
+        border: 1px solid var(--jlt-gray-light);
+        padding: 0.5rem;
+        vertical-align: top;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .calendar-table td:hover {
+        background: var(--jlt-beige-light);
+        transform: scale(1.02);
+        z-index: 10;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .calendar-day-number {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--jlt-black);
+        margin-bottom: 0.5rem;
+    }
+    
+    .calendar-day-today {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffe8a1 100%);
+    }
+    
+    .calendar-day-today .calendar-day-number {
+        color: #856404;
+    }
+    
+    .calendar-day-past {
+        background: var(--jlt-beige-light);
+        opacity: 0.7;
+    }
+    
+    .calendar-day-content {
+        font-size: 0.85rem;
+    }
+    
+    .order-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        margin: 2px;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .badge-total {
+        background: var(--jlt-yellow);
+        color: var(--jlt-black);
+    }
+    
+    .badge-confirmed {
+        background: #d4f4dd;
+        color: #28a745;
+    }
+    
+    .badge-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .revenue-amount {
+        color: #28a745;
+        font-weight: 700;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+    
+    /* Quick Actions */
+    .quick-actions-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+    }
+    
+    .quick-actions-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--jlt-black);
+        margin-bottom: 1rem;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .action-btn {
+        background: var(--jlt-yellow);
+        color: var(--jlt-black);
+        padding: 10px 20px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .action-btn:hover {
+        background: var(--jlt-yellow-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .action-btn.secondary {
+        background: white;
+        border: 2px solid var(--jlt-gray-light);
+    }
+    
+    .action-btn.secondary:hover {
+        background: var(--jlt-beige);
+        border-color: var(--jlt-yellow);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .calendar-nav-content {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .calendar-table {
+            font-size: 0.8rem;
+        }
+        
+        .calendar-table td {
+            height: 80px;
+            padding: 0.25rem;
+        }
+        
+        .order-badge {
+            font-size: 0.65rem;
+            padding: 2px 4px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Admin Header -->
+<section class="admin-header">
+    <div class="container">
+        <h1 class="admin-title">
+            <i class="fas fa-calendar-alt"></i> 
+            Calendrier des Commandes
+        </h1>
+        <p class="admin-subtitle">Vue mensuelle de toutes les commandes</p>
+    </div>
+</section>
+
+<!-- Admin Navigation -->
+<nav class="admin-nav">
+    <div class="container">
+        <div class="admin-nav-tabs">
+            <a href="{% url 'admin_dashboard' %}" class="admin-nav-tab">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </a>
+            <a href="{% url 'admin_orders_calendar' %}" class="admin-nav-tab active">
+                <i class="fas fa-calendar-alt"></i> Calendrier
+            </a>
+            <a href="{% url 'admin_orders_list' %}" class="admin-nav-tab">
+                <i class="fas fa-shopping-cart"></i> Commandes
+            </a>
+            <a href="{% url 'admin_products_list' %}" class="admin-nav-tab">
+                <i class="fas fa-utensils"></i> Produits
+            </a>
+            <a href="{% url 'admin_customers_list' %}" class="admin-nav-tab">
+                <i class="fas fa-users"></i> Clients
+            </a>
+            <a href="{% url 'admin_reports' %}" class="admin-nav-tab">
+                <i class="fas fa-chart-bar"></i> Rapports
+            </a>
+            <a href="{% url 'admin_kitchen_dispatch' %}" class="admin-nav-tab">
+                <i class="fas fa-clipboard-list"></i> Dispatch
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- Content -->
+<section class="admin-content" style="background: var(--jlt-beige); padding: 2rem 0; min-height: calc(100vh - 300px);">
+    <div class="container">
+        <!-- Calendar Navigation -->
+        <div class="calendar-navigation">
+            <div class="calendar-nav-content">
+                <a href="?year={{ prev_year }}&month={{ prev_month }}" class="nav-button">
+                    <i class="fas fa-chevron-left"></i> Mois précédent
+                </a>
+                
+                <h2 class="current-month">{{ month_name }} {{ current_year }}</h2>
+                
+                <a href="?year={{ next_year }}&month={{ next_month }}" class="nav-button">
+                    Mois suivant <i class="fas fa-chevron-right"></i>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <div class="stat-value" id="total-orders">0</div>
+                <div class="stat-label">Total Commandes</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="stat-value" id="total-revenue">0$</div>
+                <div class="stat-label">Revenus du Mois</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-globe"></i>
+                </div>
+                <div class="stat-value" id="online-orders">0</div>
+                <div class="stat-label">Commandes En Ligne</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-phone"></i>
+                </div>
+                <div class="stat-value" id="manual-orders">0</div>
+                <div class="stat-label">Commandes Manuelles</div>
+            </div>
+        </div>
+        
+        <!-- Calendar -->
+        <div class="calendar-card">
+            <div class="calendar-legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--jlt-yellow);"></div>
+                    <span>Total commandes</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #d4f4dd;"></div>
+                    <span>Confirmées</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #fff3cd;"></div>
+                    <span>En attente</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #fff3cd 0%, #ffe8a1 100%);"></div>
+                    <span>Aujourd'hui</span>
+                </div>
+            </div>
+            
+            <table class="calendar-table">
+                <thead>
+                    <tr>
+                        {% for day in weekdays %}
+                        <th>{{ day }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for week in calendar_data %}
+                    <tr>
+                        {% for day_data in week %}
+                        {% if day_data %}
+                        <td class="{% if day_data.is_today %}calendar-day-today{% endif %} 
+                                   {% if day_data.is_past %}calendar-day-past{% endif %}"
+                            onclick="viewDayOrders('{{ day_data.date|date:'Y-m-d' }}')">
+                            <div class="calendar-day-number">{{ day_data.day }}</div>
+                            <div class="calendar-day-content">
+                                {% if day_data.orders.total_orders > 0 %}
+                                    <div>
+                                        <span class="order-badge badge-total">
+                                            <i class="fas fa-shopping-cart"></i> {{ day_data.orders.total_orders }}
+                                        </span>
+                                    </div>
+                                    
+                                    {% if day_data.orders.confirmed_orders > 0 %}
+                                    <span class="order-badge badge-confirmed">
+                                        ✓ {{ day_data.orders.confirmed_orders }}
+                                    </span>
+                                    {% endif %}
+                                    
+                                    {% if day_data.orders.pending_orders > 0 %}
+                                    <span class="order-badge badge-pending">
+                                        ⏳ {{ day_data.orders.pending_orders }}
+                                    </span>
+                                    {% endif %}
+                                    
+                                    {% if day_data.orders.total_revenue > 0 %}
+                                    <div class="revenue-amount">
+                                        {{ day_data.orders.total_revenue|floatformat:0 }}$
+                                    </div>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </td>
+                        {% else %}
+                        <td style="background: var(--jlt-beige-light);"></td>
+                        {% endif %}
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="quick-actions-card">
+            <h3 class="quick-actions-title">Actions Rapides</h3>
+            <div class="action-buttons">
+                <a href="{% url 'admin_create_manual_order' %}" class="action-btn">
+                    <i class="fas fa-plus"></i> Nouvelle Commande
+                </a>
+                <a href="{% url 'admin_kitchen_dispatch' %}?date={% now 'Y-m-d' %}" class="action-btn secondary">
+                    <i class="fas fa-print"></i> Dispatch Aujourd'hui
+                </a>
+                <a href="{% url 'admin_orders_list' %}?date=today" class="action-btn secondary">
+                    <i class="fas fa-list"></i> Commandes du Jour
+                </a>
+                <a href="{% url 'admin_export_data' %}?type=calendar&year={{ current_year }}&month={{ current_month }}" class="action-btn secondary">
+                    <i class="fas fa-download"></i> Exporter
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Calculer les totaux du mois
+    let totalOrders = 0;
+    let totalRevenue = 0;
+    let onlineOrders = 0;
+    let manualOrders = 0;
+    
+    {% for week in calendar_data %}
+        {% for day_data in week %}
+            {% if day_data and day_data.orders.total_orders > 0 %}
+                totalOrders += {{ day_data.orders.total_orders }};
+                totalRevenue += {{ day_data.orders.total_revenue|default:0 }};
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+    
+    document.getElementById('total-orders').textContent = totalOrders;
+    document.getElementById('total-revenue').textContent = totalRevenue.toFixed(0) + '$';
+});
+
+function viewDayOrders(date) {
+    window.location.href = "{% url 'admin_orders_by_date' 'DATE' %}".replace('DATE', date);
+}
+
+// Raccourcis clavier
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+        switch(e.key) {
+            case 'n':
+                e.preventDefault();
+                window.location.href = "{% url 'admin_create_manual_order' %}";
+                break;
+            case 'p':
+                e.preventDefault();
+                window.location.href = "{% url 'admin_kitchen_dispatch' %}";
+                break;
+        }
+    }
+});
+</script>
+{% endblock %}
