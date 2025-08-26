@@ -509,6 +509,32 @@
         border-color: var(--jlt-yellow);
         color: var(--jlt-black);
     }
+    .nav-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #e74c3c;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    animation: bounce 2s infinite;
+}
+
+.admin-nav-tab {
+    position: relative;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-5px); }
+    60% { transform: translateY(-3px); }
+}
     
     /* Quick Actions */
     .quick-actions {
@@ -615,6 +641,12 @@
             </a>
             <a href="{% url 'admin_orders_list' %}" class="admin-nav-tab">
                 <i class="fas fa-shopping-cart"></i> Commandes
+            </a>
+            <a href="{% url 'admin_events_list' %}" class="admin-nav-tab">
+                <i class="fas fa-crown"></i> Événements
+                {% if pending_events_count > 0 %}
+                <span class="nav-badge">{{ pending_events_count }}</span>
+                {% endif %}
             </a>
             <a href="{% url 'admin_products_list' %}" class="admin-nav-tab">
                 <i class="fas fa-utensils"></i> Produits
@@ -750,7 +782,7 @@
                 </div>
                 <div class="quick-action-title">Stock faible</div>
             </a>
-            <a href="{% url 'shop_boites_lunch' %}" class="quick-action">
+            <a href="{% url 'admin_create_manual_order' %}" class="quick-action">
                 <div class="quick-action-icon">
                     <i class="fas fa-plus"></i>
                 </div>

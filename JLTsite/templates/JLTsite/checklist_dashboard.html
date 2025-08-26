@@ -1,0 +1,607 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Dashboard Checklist - Julien-Leblanc Traiteur{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Variables CSS pour le thème Checklist (Bleu) */
+    :root {
+        --checklist-primary: #3498db;
+        --checklist-primary-hover: #2980b9;
+        --checklist-secondary: #5dade2;
+        --checklist-accent: #85c1e9;
+        --checklist-dark: #1a5276;
+        --checklist-light: #ebf5fb;
+        --checklist-success: #27ae60;
+        --checklist-warning: #f39c12;
+        --checklist-danger: #e74c3c;
+        --checklist-gray: #7f8c8d;
+        --checklist-gray-light: #ecf0f1;
+    }
+
+    /* Header Checklist */
+    .checklist-header {
+        background: linear-gradient(135deg, var(--checklist-dark) 0%, var(--checklist-primary) 100%);
+        padding: 2rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .checklist-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 60%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(133, 193, 233, 0.2) 0%, transparent 70%);
+        animation: float 20s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(10deg); }
+    }
+    
+    .checklist-title {
+        color: white;
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .checklist-badge {
+        background: var(--checklist-accent);
+        color: var(--checklist-dark);
+        padding: 8px 20px;
+        border-radius: 25px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    /* Navigation Checklist */
+    .checklist-nav {
+        background: var(--checklist-primary);
+        border-bottom: 4px solid var(--checklist-accent);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .checklist-filters {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem 0;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .filter-btn {
+        padding: 10px 20px;
+        background: rgba(255,255,255,0.1);
+        border: 2px solid rgba(255,255,255,0.2);
+        color: white;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+    }
+    
+    .filter-btn:hover {
+        background: rgba(255,255,255,0.2);
+        transform: translateY(-2px);
+    }
+    
+    .filter-btn.active {
+        background: white;
+        color: var(--checklist-primary);
+        border-color: white;
+    }
+    
+    /* Stats Cards pour tablette */
+    .stats-container {
+        padding: 2rem 0;
+        background: var(--checklist-light);
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        border-left: 4px solid var(--checklist-primary);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--checklist-primary);
+    }
+    
+    .stat-label {
+        color: var(--checklist-gray);
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+    
+    /* Liste des Checklists - Optimisée tablette */
+    .checklists-container {
+        padding: 2rem 0;
+    }
+    
+    .checklist-card {
+        background: white;
+        border-radius: 15px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .checklist-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+    }
+    
+    .checklist-card.priority-high {
+        border-left: 5px solid var(--checklist-danger);
+    }
+    
+    .checklist-card.priority-normal {
+        border-left: 5px solid var(--checklist-primary);
+    }
+    
+    .checklist-header-card {
+        padding: 1.5rem;
+        background: linear-gradient(to right, var(--checklist-light), white);
+        border-bottom: 1px solid var(--checklist-gray-light);
+    }
+    
+    .checklist-header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+    
+    .checklist-order-info {
+        flex: 1;
+    }
+    
+    .order-number {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--checklist-dark);
+        margin-bottom: 0.3rem;
+    }
+    
+    .delivery-info {
+        color: var(--checklist-gray);
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .delivery-info i {
+        color: var(--checklist-primary);
+    }
+    
+    .checklist-status {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .status-pending {
+        background: var(--checklist-gray-light);
+        color: var(--checklist-gray);
+    }
+    
+    .status-in_progress {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .status-completed {
+        background: #d4f4dd;
+        color: #28a745;
+    }
+    
+    /* Progress Bar */
+    .checklist-progress {
+        padding: 1rem 1.5rem;
+        background: white;
+    }
+    
+    .progress-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+    }
+    
+    .progress-label {
+        font-weight: 600;
+        color: var(--checklist-dark);
+    }
+    
+    .progress-value {
+        color: var(--checklist-primary);
+        font-weight: 700;
+    }
+    
+    .progress-bar-container {
+        height: 12px;
+        background: var(--checklist-gray-light);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(to right, var(--checklist-primary), var(--checklist-secondary));
+        transition: width 0.5s ease;
+        border-radius: 10px;
+    }
+    
+    /* Action Buttons - Gros pour tablette */
+    .checklist-actions {
+        padding: 1rem 1.5rem;
+        background: var(--checklist-light);
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .btn-checklist {
+        flex: 1;
+        padding: 15px 20px;
+        border-radius: 10px;
+        text-align: center;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .btn-checklist-primary {
+        background: var(--checklist-primary);
+        color: white;
+    }
+    
+    .btn-checklist-primary:hover {
+        background: var(--checklist-primary-hover);
+        transform: translateY(-2px);
+    }
+    
+    .btn-checklist-secondary {
+        background: white;
+        color: var(--checklist-primary);
+        border: 2px solid var(--checklist-primary);
+    }
+    
+    .btn-checklist-secondary:hover {
+        background: var(--checklist-primary);
+        color: white;
+    }
+    
+    /* Notifications */
+    .notifications-panel {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        width: 350px;
+        max-height: 400px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 30px rgba(0,0,0,0.2);
+        z-index: 1000;
+        overflow: hidden;
+    }
+    
+    .notifications-header {
+        background: var(--checklist-primary);
+        color: white;
+        padding: 1rem;
+        font-weight: 600;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .notification-item {
+        padding: 1rem;
+        border-bottom: 1px solid var(--checklist-gray-light);
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+    
+    .notification-item:hover {
+        background: var(--checklist-light);
+    }
+    
+    .notification-issue {
+        border-left: 3px solid var(--checklist-danger);
+    }
+    
+    .notification-completed {
+        border-left: 3px solid var(--checklist-success);
+    }
+    
+    /* Responsive pour tablette */
+    @media (max-width: 1024px) {
+        .checklist-title {
+            font-size: 2rem;
+        }
+        
+        .stats-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        
+        .btn-checklist {
+            font-size: 1.2rem;
+            padding: 18px 25px;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .checklist-filters {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .checklist-actions {
+            flex-direction: column;
+        }
+        
+        .notifications-panel {
+            width: calc(100% - 40px);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header Checklist -->
+<section class="checklist-header">
+    <div class="container">
+        <h1 class="checklist-title">
+            <i class="fas fa-clipboard-check"></i> 
+            Dashboard Checklist
+            <span class="checklist-badge">{{ user.get_full_name }}</span>
+        </h1>
+        <p style="color: rgba(255,255,255,0.9); font-size: 1.1rem;">
+            Gérez et validez les checklists de préparation
+        </p>
+    </div>
+</section>
+
+<!-- Filtres de navigation -->
+<nav class="checklist-nav">
+    <div class="container">
+        <div class="checklist-filters">
+            <a href="?status=" class="filter-btn {% if not current_status %}active{% endif %}">
+                Toutes ({{ stats.total }})
+            </a>
+            <a href="?status=pending" class="filter-btn {% if current_status == 'pending' %}active{% endif %}">
+                <i class="fas fa-clock"></i> En attente ({{ stats.pending }})
+            </a>
+            <a href="?status=in_progress" class="filter-btn {% if current_status == 'in_progress' %}active{% endif %}">
+                <i class="fas fa-spinner"></i> En cours ({{ stats.in_progress }})
+            </a>
+            <a href="?status=completed" class="filter-btn {% if current_status == 'completed' %}active{% endif %}">
+                <i class="fas fa-check-circle"></i> Complétées ({{ stats.completed }})
+            </a>
+            
+            <div style="margin-left: auto; display: flex; gap: 0.5rem;">
+                <a href="?date=today" class="filter-btn {% if current_date == 'today' %}active{% endif %}">
+                    Aujourd'hui ({{ stats.today }})
+                </a>
+                <a href="?date=tomorrow" class="filter-btn {% if current_date == 'tomorrow' %}active{% endif %}">
+                    Demain
+                </a>
+                {% if stats.urgent > 0 %}
+                <a href="?priority=1" class="filter-btn" style="background: var(--checklist-danger); border-color: var(--checklist-danger);">
+                    <i class="fas fa-exclamation-triangle"></i> Urgent ({{ stats.urgent }})
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Statistiques -->
+<section class="stats-container">
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">{{ stats.total }}</div>
+                <div class="stat-label">Total Checklists</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color: var(--checklist-warning);">{{ stats.pending }}</div>
+                <div class="stat-label">En attente</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color: var(--checklist-primary);">{{ stats.in_progress }}</div>
+                <div class="stat-label">En cours</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color: var(--checklist-success);">{{ stats.completed }}</div>
+                <div class="stat-label">Complétées</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color: var(--checklist-danger);">{{ stats.today }}</div>
+                <div class="stat-label">Aujourd'hui</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color: var(--checklist-secondary);">{{ stats.urgent }}</div>
+                <div class="stat-label">Urgentes</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Liste des Checklists -->
+<section class="checklists-container">
+    <div class="container">
+        {% for checklist in checklists %}
+        <div class="checklist-card {% if checklist.priority == 1 %}priority-high{% else %}priority-normal{% endif %}">
+            <div class="checklist-header-card">
+                <div class="checklist-header-top">
+                    <div class="checklist-order-info">
+                        <div class="order-number">
+                            Commande #{{ checklist.order.order_number }}
+                            {% if checklist.priority == 1 %}
+                            <span style="color: var(--checklist-danger); margin-left: 10px;">
+                                <i class="fas fa-exclamation-triangle"></i> URGENT
+                            </span>
+                            {% endif %}
+                        </div>
+                        <div class="delivery-info">
+                            <span><i class="fas fa-calendar"></i> {{ checklist.order.delivery_date|date:"d/m/Y" }}</span>
+                            <span><i class="fas fa-clock"></i> {{ checklist.order.delivery_time|time:"H:i" }}</span>
+                            <span><i class="fas fa-user"></i> {{ checklist.order.first_name }} {{ checklist.order.last_name }}</span>
+                        </div>
+                    </div>
+                    <span class="checklist-status status-{{ checklist.status }}">
+                        {{ checklist.get_status_display }}
+                    </span>
+                </div>
+                
+                {% if checklist.notes %}
+                <div style="margin-top: 1rem; padding: 0.5rem; background: var(--checklist-light); border-radius: 5px;">
+                    <i class="fas fa-sticky-note" style="color: var(--checklist-primary);"></i>
+                    {{ checklist.notes }}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="checklist-progress">
+                <div class="progress-info">
+                    <span class="progress-label">Progression</span>
+                    <span class="progress-value">{{ checklist.completed_items }}/{{ checklist.total_items }} items</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" style="width: {{ checklist.progress_percentage }}%;"></div>
+                </div>
+                <div style="text-align: center; margin-top: 0.5rem; color: var(--checklist-primary); font-weight: 600;">
+                    {{ checklist.progress_percentage }}%
+                </div>
+            </div>
+            
+            <div class="checklist-actions">
+                {% if checklist.status == 'pending' %}
+                <a href="{% url 'checklist_detail' checklist.id %}" class="btn-checklist btn-checklist-primary">
+                    <i class="fas fa-play"></i> Commencer
+                </a>
+                {% elif checklist.status == 'in_progress' %}
+                <a href="{% url 'checklist_detail' checklist.id %}" class="btn-checklist btn-checklist-primary">
+                    <i class="fas fa-tasks"></i> Continuer
+                </a>
+                {% else %}
+                <a href="{% url 'checklist_detail' checklist.id %}" class="btn-checklist btn-checklist-secondary">
+                    <i class="fas fa-eye"></i> Consulter
+                </a>
+                {% endif %}
+                
+                {% if checklist.started_at %}
+                <div style="flex: 0 0 auto; padding: 15px; background: white; border-radius: 10px; text-align: center;">
+                    <small style="color: var(--checklist-gray);">Temps écoulé</small><br>
+                    <strong style="color: var(--checklist-primary);">{{ checklist.get_time_spent }}</strong>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div style="text-align: center; padding: 4rem 2rem;">
+            <i class="fas fa-clipboard-check" style="font-size: 4rem; color: var(--checklist-gray-light); margin-bottom: 1rem;"></i>
+            <h3 style="color: var(--checklist-gray);">Aucune checklist trouvée</h3>
+            <p style="color: var(--checklist-gray);">Aucune checklist ne correspond à vos critères de recherche.</p>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- Panel de notifications -->
+{% if notifications %}
+<div class="notifications-panel" id="notificationsPanel">
+    <div class="notifications-header">
+        <span><i class="fas fa-bell"></i> Notifications</span>
+        <button onclick="closeNotifications()" style="background: none; border: none; color: white; cursor: pointer;">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <div style="max-height: 350px; overflow-y: auto;">
+        {% for notification in notifications %}
+        <div class="notification-item notification-{{ notification.type }}" onclick="markAsRead({{ notification.id }})">
+            <div style="font-weight: 600; margin-bottom: 0.3rem;">
+                {{ notification.get_type_display }}
+            </div>
+            <div style="color: var(--checklist-gray); font-size: 0.9rem;">
+                {{ notification.message }}
+            </div>
+            <div style="color: var(--checklist-gray-light); font-size: 0.8rem; margin-top: 0.3rem;">
+                {{ notification.created_at|timesince }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Fermer les notifications
+    function closeNotifications() {
+        document.getElementById('notificationsPanel').style.display = 'none';
+    }
+    
+    // Marquer comme lu
+    function markAsRead(notificationId) {
+        fetch(`/checklist/notification/${notificationId}/read/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+    }
+    
+    // Actualiser automatiquement toutes les 30 secondes
+    setInterval(function() {
+        if (document.querySelector('.status-in_progress')) {
+            location.reload();
+        }
+    }, 30000);
+</script>
+{% endblock %}

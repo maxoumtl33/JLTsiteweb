@@ -1,0 +1,1112 @@
+{% extends 'JLTsite/base_driver.html' %}
+{% load static %}
+
+{% block title %}Planning - {{ month_name }} {{ current_year }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --driver-primary: #2ecc71;
+        --driver-secondary: #27ae60;
+        --driver-info: #3498db;
+        --driver-warning: #f39c12;
+        --driver-danger: #e74c3c;
+        --driver-dark: #2c3e50;
+        --driver-light: #ecf0f1;
+        --driver-success: #27ae60;
+        --driver-muted: #95a5a6;
+    }
+
+    * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+
+    body {
+        background: var(--driver-light);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+        font-size: 16px; /* Base font size pour éviter le zoom sur iOS */
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Header mobile fixe avec safe area */
+    .mobile-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(135deg, var(--driver-primary), var(--driver-secondary));
+        color: white;
+        padding: max(15px, env(safe-area-inset-top) + 10px) 15px 15px 15px;
+        z-index: 1000;
+        box-shadow: 0 4px 20px rgba(46, 204, 113, 0.3);
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 100%;
+    }
+
+    .mobile-header h1 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .month-navigation {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: rgba(255,255,255,0.15);
+        padding: 6px 12px;
+        border-radius: 25px;
+        backdrop-filter: blur(10px);
+    }
+
+    .nav-btn {
+        background: rgba(255,255,255,0.2);
+        border: none;
+        color: white;
+        font-size: 1.1rem;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        touch-action: manipulation;
+    }
+
+    .nav-btn:active {
+        background: rgba(255,255,255,0.4);
+        transform: scale(0.95);
+    }
+
+    .month-year {
+        font-weight: 600;
+        font-size: 0.95rem;
+        min-width: 100px;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    /* Container principal avec safe area */
+    .mobile-container {
+        padding-top: calc(80px + max(0px, env(safe-area-inset-top)));
+        padding-bottom: calc(90px + max(0px, env(safe-area-inset-bottom)));
+        min-height: 100vh;
+        padding-left: max(10px, env(safe-area-inset-left));
+        padding-right: max(10px, env(safe-area-inset-right));
+    }
+
+    /* Calendrier optimisé mobile */
+    .calendar-container {
+        background: white;
+        margin: 10px;
+        border-radius: 20px;
+        padding: 15px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        backdrop-filter: blur(10px);
+    }
+
+    .calendar-header {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 2px;
+        margin-bottom: 10px;
+        padding: 0 2px;
+    }
+
+    .day-header {
+        text-align: center;
+        font-weight: 700;
+        color: var(--driver-dark);
+        font-size: 0.8rem;
+        padding: 8px 2px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 3px;
+        padding: 2px;
+    }
+
+    .calendar-day {
+        aspect-ratio: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        padding: 4px;
+        min-height: 55px;
+        touch-action: manipulation;
+        border: 2px solid transparent;
+    }
+
+    .calendar-day:active {
+        transform: scale(0.92);
+    }
+
+    .calendar-day.empty {
+        cursor: default;
+        pointer-events: none;
+    }
+
+    .calendar-day.today {
+        background: linear-gradient(135deg, var(--driver-primary), var(--driver-secondary));
+        color: white;
+        font-weight: 700;
+        box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4);
+        border-color: var(--driver-primary);
+    }
+
+    .calendar-day.past {
+        opacity: 0.4;
+        background: #f8f9fa;
+    }
+
+    .calendar-day.available {
+        background: linear-gradient(135deg, #e8f5e8, #f0f9f0);
+        border-color: var(--driver-success);
+        color: var(--driver-dark);
+    }
+
+    .calendar-day.unavailable {
+        background: linear-gradient(135deg, #ffe8e8, #fff0f0);
+        border-color: var(--driver-danger);
+        color: var(--driver-danger);
+    }
+
+    .calendar-day.no-planning {
+        background: linear-gradient(135deg, #f8f9fa, #ffffff);
+        border-color: var(--driver-muted);
+        color: var(--driver-muted);
+    }
+
+    .day-number {
+        font-size: 1rem;
+        font-weight: 700;
+        margin-bottom: 1px;
+        line-height: 1;
+    }
+
+    .day-status {
+        font-size: 0.65rem;
+        text-align: center;
+        line-height: 1.1;
+        font-weight: 500;
+        opacity: 0.9;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+
+    .deliveries-count {
+        position: absolute;
+        top: 1px;
+        right: 1px;
+        background: linear-gradient(135deg, var(--driver-warning), #e67e22);
+        color: white;
+        border-radius: 50%;
+        width: 18px;
+        height: 18px;
+        font-size: 0.7rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        border: 2px solid white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    /* Légende mobile optimisée */
+    .legend {
+        margin: 10px;
+        background: white;
+        border-radius: 20px;
+        padding: 15px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    }
+
+    .legend h3 {
+        margin: 0 0 12px 0;
+        color: var(--driver-dark);
+        font-size: 1rem;
+        font-weight: 700;
+        text-align: center;
+    }
+
+    .legend-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px;
+        border-radius: 10px;
+        background: #f8f9fa;
+    }
+
+    .legend-color {
+        width: 16px;
+        height: 16px;
+        border-radius: 4px;
+        flex-shrink: 0;
+        border: 2px solid transparent;
+    }
+
+    .legend-color.available {
+        background: linear-gradient(135deg, #e8f5e8, #f0f9f0);
+        border-color: var(--driver-success);
+    }
+
+    .legend-color.unavailable {
+        background: linear-gradient(135deg, #ffe8e8, #fff0f0);
+        border-color: var(--driver-danger);
+    }
+
+    .legend-color.no-planning {
+        background: linear-gradient(135deg, #f8f9fa, #ffffff);
+        border-color: var(--driver-muted);
+    }
+
+    .legend-color.today {
+        background: linear-gradient(135deg, var(--driver-primary), var(--driver-secondary));
+    }
+
+    .legend-text {
+        font-size: 0.85rem;
+        color: var(--driver-dark);
+        font-weight: 500;
+    }
+
+    /* Bottom navigation */
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        display: flex;
+        justify-content: space-around;
+        padding: 8px 0;
+        z-index: 999;
+    }
+
+    .nav-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 8px;
+        color: #7f8c8d;
+        text-decoration: none;
+        transition: color 0.2s;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .nav-item.active {
+        color: var(--driver-primary);
+    }
+
+    .nav-item i {
+        font-size: 1.5rem;
+        margin-bottom: 4px;
+    }
+
+    .nav-item span {
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .nav-badge {
+        position: absolute;
+        top: 5px;
+        right: 25%;
+        background: var(--driver-danger);
+        color: white;
+        border-radius: 50%;
+        width: 18px;
+        height: 18px;
+        font-size: 0.7rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+
+    .nav-badge {
+        position: absolute;
+        top: 6px;
+        right: 20%;
+        background: linear-gradient(135deg, var(--driver-danger), #c0392b);
+        color: white;
+        border-radius: 50%;
+        width: 16px;
+        height: 16px;
+        font-size: 0.65rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        border: 2px solid white;
+    }
+
+    /* Modal optimisé mobile */
+    .day-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.8);
+        z-index: 10000;
+        display: none;
+        align-items: flex-end;
+        justify-content: center;
+        backdrop-filter: blur(5px);
+    }
+
+    .day-modal.show {
+        display: flex;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 25px 25px 0 0;
+        padding: 25px;
+        width: 100%;
+        max-height: 80vh;
+        overflow-y: auto;
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+        margin-bottom: max(0px, env(safe-area-inset-bottom));
+    }
+
+    .day-modal.show .modal-content {
+        transform: translateY(0);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid var(--driver-light);
+        position: relative;
+    }
+
+    .modal-header::before {
+        content: '';
+        position: absolute;
+        top: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40px;
+        height: 4px;
+        background: var(--driver-muted);
+        border-radius: 2px;
+    }
+
+    .modal-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--driver-dark);
+        text-transform: capitalize;
+    }
+
+    .close-btn {
+        background: var(--driver-light);
+        border: none;
+        font-size: 1.3rem;
+        color: var(--driver-muted);
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        touch-action: manipulation;
+    }
+
+    .close-btn:active {
+        background: var(--driver-muted);
+        color: white;
+        transform: scale(0.95);
+    }
+
+    .planning-info {
+        margin-bottom: 20px;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 15px;
+        border-left: 4px solid var(--driver-primary);
+    }
+
+    .info-icon {
+        color: var(--driver-primary);
+        font-size: 1.3rem;
+        flex-shrink: 0;
+    }
+
+    .info-text {
+        flex: 1;
+    }
+
+    .info-label {
+        font-weight: 700;
+        color: var(--driver-dark);
+        margin-bottom: 3px;
+        font-size: 0.9rem;
+    }
+
+    .info-value {
+        color: var(--driver-muted);
+        font-size: 0.85rem;
+        line-height: 1.3;
+    }
+
+    .route-info {
+        background: linear-gradient(135deg, #e8f4f8, #f0f8ff);
+        padding: 18px;
+        border-radius: 15px;
+        margin-top: 15px;
+        border-left: 4px solid var(--driver-info);
+    }
+
+    .route-title {
+        font-weight: 700;
+        color: var(--driver-info);
+        margin-bottom: 12px;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* Optimisations pour très petits écrans */
+    @media (max-width: 360px) {
+        .calendar-day {
+            min-height: 50px;
+        }
+        
+        .day-number {
+            font-size: 0.9rem;
+        }
+        
+        .day-status {
+            font-size: 0.6rem;
+        }
+        
+        .month-year {
+            font-size: 0.85rem;
+            min-width: 90px;
+        }
+    }
+
+    /* Optimisations pour écrans plus grands (tablettes en mode portrait) */
+    @media (min-width: 768px) {
+        .mobile-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .calendar-day {
+            min-height: 70px;
+        }
+
+        .day-number {
+            font-size: 1.1rem;
+        }
+        
+        .day-status {
+            font-size: 0.75rem;
+        }
+    }
+
+    /* Animations pour améliorer l'UX */
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    .calendar-day.today {
+        animation: pulse 2s infinite;
+    }
+
+    /* Support du mode sombre */
+    @media (prefers-color-scheme: light) {
+        body {
+            background: #f8f9fa;
+            color: white;
+        }
+        
+        .calendar-container,
+        .legend,
+        .modal-content,
+        .bottom-nav {
+            background: #2d2d2d;
+            color: white;
+        }
+        
+        .day-header {
+            color: #f0f0f0;
+        }
+        
+        .info-item {
+            background: #3a3a3a;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header mobile fixe -->
+<div class="mobile-header">
+    <div class="header-content">
+        <h1>
+            <i class="fas fa-calendar-alt"></i>
+            Planning
+        </h1>
+        <div class="month-navigation">
+            <button class="nav-btn" onclick="changeMonth({{ prev_month }}, {{ prev_year }})" aria-label="Mois précédent">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="month-year">{{ month_name }} {{ current_year }}</div>
+            <button class="nav-btn" onclick="changeMonth({{ next_month }}, {{ next_year }})" aria-label="Mois suivant">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Container principal -->
+<div class="mobile-container">
+    <!-- Calendrier -->
+    <div class="calendar-container">
+        <!-- En-têtes des jours -->
+        <div class="calendar-header">
+            <div class="day-header">Lun</div>
+            <div class="day-header">Mar</div>
+            <div class="day-header">Mer</div>
+            <div class="day-header">Jeu</div>
+            <div class="day-header">Ven</div>
+            <div class="day-header">Sam</div>
+            <div class="day-header">Dim</div>
+        </div>
+
+        <!-- Grille du calendrier -->
+        <div class="calendar-grid">
+            {% for week in calendar_data %}
+                {% for day_data in week %}
+                    {% if day_data %}
+                        <div class="calendar-day 
+                                    {% if day_data.is_today %}today{% endif %}
+                                    {% if day_data.is_past %}past{% endif %}
+                                    {{ day_data.status }}"
+                             onclick="showDayDetails({{ day_data.day }}, '{{ day_data.date|date:"Y-m-d" }}')"
+                             role="button"
+                             tabindex="0"
+                             aria-label="Jour {{ day_data.day }} {{ month_name }}">
+                            
+                            <div class="day-number">{{ day_data.day }}</div>
+                            
+                            {% if day_data.deliveries_count > 0 %}
+                                <div class="deliveries-count" aria-label="{{ day_data.deliveries_count }} livraison(s)">
+                                    {{ day_data.deliveries_count }}
+                                </div>
+                            {% endif %}
+                            
+                            <div class="day-status">
+                                {% if day_data.planning %}
+                                    {% if day_data.planning.is_available %}
+                                        {{ day_data.planning.start_time|time:"H:i" }}-{{ day_data.planning.end_time|time:"H:i" }}
+                                    {% else %}
+                                        Indispo
+                                    {% endif %}
+                                {% else %}
+                                    Non défini
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="calendar-day empty" aria-hidden="true"></div>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Légende -->
+    <div class="legend">
+        <h3>Légende</h3>
+        <div class="legend-grid">
+            <div class="legend-item">
+                <div class="legend-color available"></div>
+                <div class="legend-text">Disponible</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color unavailable"></div>
+                <div class="legend-text">Indisponible</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color no-planning"></div>
+                <div class="legend-text">Non planifié</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color today"></div>
+                <div class="legend-text">Aujourd'hui</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal détails du jour -->
+<div class="day-modal" id="dayModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title" id="modalTitle">Détails du jour</div>
+            <button class="close-btn" onclick="closeDayModal()" aria-label="Fermer">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="planning-info" id="modalContent">
+            <!-- Contenu dynamique -->
+        </div>
+    </div>
+</div>
+
+<!-- Bottom Navigation -->
+<!-- Bottom Navigation -->
+<div class="bottom-nav">
+    <a href="{% url 'driver_dashboard' %}" class="nav-item">
+        <i class="fas fa-home"></i>
+        <span>Accueil</span>
+    </a>
+    <a href="{% url 'driver_planning' %}" class="nav-item active">
+        <i class="fas fa-calendar"></i>
+        <span>Planning</span>
+    </a>
+    <a href="{% url 'driver_notifications' %}" class="nav-item">
+        <i class="fas fa-bell"></i>
+        <span>Notifications</span>
+        {% if notifications_count > 0 %}
+        <span class="nav-badge">{{ notifications_count }}</span>
+        {% endif %}
+    </a>
+    <a href="{% url 'driver_profile' %}" class="nav-item">
+        <i class="fas fa-user"></i>
+        <span>Profil</span>
+    </a>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Données du calendrier pour JavaScript
+    const calendarData = {
+        {% for week in calendar_data %}
+            {% for day_data in week %}
+                {% if day_data %}
+                    '{{ day_data.date|date:"Y-m-d" }}': {
+                        day: {{ day_data.day }},
+                        date: '{{ day_data.date|date:"Y-m-d" }}',
+                        is_today: {{ day_data.is_today|yesno:"true,false" }},
+                        is_past: {{ day_data.is_past|yesno:"true,false" }},
+                        status: '{{ day_data.status }}',
+                        deliveries_count: {{ day_data.deliveries_count }},
+                        planning: {% if day_data.planning %}{
+                            start_time: '{{ day_data.planning.start_time|time:"H:i" }}',
+                            end_time: '{{ day_data.planning.end_time|time:"H:i" }}',
+                            is_available: {{ day_data.planning.is_available|yesno:"true,false" }},
+                            unavailability_reason: '{{ day_data.planning.unavailability_reason|default:""|escapejs }}',
+                            notes: '{{ day_data.planning.notes|default:""|escapejs }}'
+                        }{% else %}null{% endif %},
+                        route: {% if day_data.route %}{
+                            route_number: '{{ day_data.route.route_number }}',
+                            start_time: '{{ day_data.route.start_time|time:"H:i" }}',
+                            status: '{{ day_data.route.status }}',
+                            deliveries_count: {{ day_data.route.route_deliveries.count }}
+                        }{% else %}null{% endif %}
+                    }{% if not forloop.last or not forloop.parentloop.last %},{% endif %}
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
+    };
+
+    // Variables globales
+    let isModalOpen = false;
+    let touchStartY = 0;
+    let touchEndY = 0;
+
+    // Changer de mois avec animation
+    function changeMonth(month, year) {
+        // Vibration feedback
+        vibrate([30]);
+        
+        // Animation de transition
+        document.querySelector('.calendar-container').style.opacity = '0.5';
+        
+        setTimeout(() => {
+            window.location.href = `{% url 'driver_planning' %}?month=${month}&year=${year}`;
+        }, 150);
+    }
+
+    // Afficher les détails d'un jour avec animation améliorée
+    function showDayDetails(day, dateStr) {
+        const dayData = calendarData[dateStr];
+        if (!dayData || isModalOpen) return;
+
+        vibrate([50, 100, 50]);
+        isModalOpen = true;
+
+        const modal = document.getElementById('dayModal');
+        const title = document.getElementById('modalTitle');
+        const content = document.getElementById('modalContent');
+
+        // Titre avec formatting amélioré
+        const date = new Date(dateStr);
+        const formattedDate = date.toLocaleDateString('fr-FR', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+        title.textContent = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
+
+        // Contenu dynamique amélioré
+        let html = '';
+
+        // Badge de statut en haut
+        if (dayData.is_today) {
+            html += `
+                <div class="info-item" style="background: linear-gradient(135deg, var(--driver-primary), var(--driver-secondary)); color: white; border: none;">
+                    <div class="info-icon" style="color: white;">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="info-text">
+                        <div class="info-label" style="color: white;">Aujourd'hui</div>
+                        <div class="info-value" style="color: rgba(255,255,255,0.9);">Jour actuel</div>
+                    </div>
+                </div>
+            `;
+        } else if (dayData.is_past) {
+            html += `
+                <div class="info-item" style="background: #f8f9fa; border-left-color: var(--driver-muted);">
+                    <div class="info-icon" style="color: var(--driver-muted);">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div class="info-text">
+                        <div class="info-label">Statut</div>
+                        <div class="info-value">Jour passé</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Planning avec icônes améliorées
+        if (dayData.planning) {
+            const statusColor = dayData.planning.is_available ? 'var(--driver-success)' : 'var(--driver-danger)';
+            const statusIcon = dayData.planning.is_available ? 'check-circle' : 'times-circle';
+            
+            html += `
+                <div class="info-item" style="border-left-color: ${statusColor};">
+                    <div class="info-icon" style="color: ${statusColor};">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="info-text">
+                        <div class="info-label">Horaires de travail</div>
+                        <div class="info-value">${dayData.planning.start_time} - ${dayData.planning.end_time}</div>
+                    </div>
+                </div>
+
+                <div class="info-item" style="border-left-color: ${statusColor};">
+                    <div class="info-icon" style="color: ${statusColor};">
+                        <i class="fas fa-${statusIcon}"></i>
+                    </div>
+                    <div class="info-text">
+                        <div class="info-label">Disponibilité</div>
+                        <div class="info-value">
+                            ${dayData.planning.is_available ? 
+                                'Disponible pour les livraisons' : 
+                                'Indisponible' + (dayData.planning.unavailability_reason ? ' - ' + dayData.planning.unavailability_reason : '')
+                            }
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (dayData.planning.notes) {
+                html += `
+                    <div class="info-item" style="border-left-color: var(--driver-info);">
+                        <div class="info-icon" style="color: var(--driver-info);">
+                            <i class="fas fa-sticky-note"></i>
+                        </div>
+                        <div class="info-text">
+                            <div class="info-label">Notes</div>
+                            <div class="info-value">${dayData.planning.notes}</div>
+                        </div>
+                    </div>
+                `;
+            }
+        } else {
+            html += `
+                <div class="info-item" style="border-left-color: var(--driver-muted);">
+                    <div class="info-icon" style="color: var(--driver-muted);">
+                        <i class="fas fa-question-circle"></i>
+                    </div>
+                    <div class="info-text">
+                        <div class="info-label">Planning</div>
+                        <div class="info-value">Aucun planning défini pour ce jour</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Route assignée avec détails étendus
+        if (dayData.route) {
+            const routeStatus = dayData.route.status;
+            let statusIcon = 'truck';
+            let statusText = routeStatus;
+            
+            switch(routeStatus) {
+                case 'pending':
+                    statusIcon = 'clock';
+                    statusText = 'En attente';
+                    break;
+                case 'in_progress':
+                    statusIcon = 'shipping-fast';
+                    statusText = 'En cours';
+                    break;
+                case 'completed':
+                    statusIcon = 'check-circle';
+                    statusText = 'Terminée';
+                    break;
+            }
+
+            html += `
+                <div class="route-info">
+                    <div class="route-title">
+                        <i class="fas fa-route"></i> Route assignée
+                    </div>
+                    <div class="info-item" style="background: transparent; padding: 10px 0; border: none;">
+                        <div class="info-icon" style="color: var(--driver-info);">
+                            <i class="fas fa-${statusIcon}"></i>
+                        </div>
+                        <div class="info-text">
+                            <div class="info-label">${dayData.route.route_number}</div>
+                            <div class="info-value">
+                                Départ: ${dayData.route.start_time}<br>
+                                ${dayData.route.deliveries_count} livraison${dayData.route.deliveries_count > 1 ? 's' : ''}<br>
+                                Statut: ${statusText}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else if (dayData.planning && dayData.planning.is_available && !dayData.is_past) {
+            html += `
+                <div class="route-info" style="background: linear-gradient(135deg, #fff3cd, #ffeaa7);">
+                    <div class="route-title" style="color: var(--driver-warning);">
+                        <i class="fas fa-exclamation-triangle"></i> Aucune route
+                    </div>
+                    <div class="info-item" style="background: transparent; padding: 10px 0; border: none;">
+                        <div class="info-icon" style="color: var(--driver-warning);">
+                            <i class="fas fa-calendar-times"></i>
+                        </div>
+                        <div class="info-text">
+                            <div class="info-label">Pas de route assignée</div>
+                            <div class="info-value">Vous êtes disponible mais aucune route n'est encore assignée pour ce jour</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        content.innerHTML = html;
+        modal.classList.add('show');
+        
+        // Focus management pour l'accessibilité
+        document.body.style.overflow = 'hidden';
+        modal.querySelector('.close-btn').focus();
+    }
+
+    // Fermer le modal avec animation
+    function closeDayModal() {
+        if (!isModalOpen) return;
+        
+        const modal = document.getElementById('dayModal');
+        const modalContent = modal.querySelector('.modal-content');
+        
+        modalContent.style.transform = 'translateY(100%)';
+        
+        setTimeout(() => {
+            modal.classList.remove('show');
+            modalContent.style.transform = '';
+            document.body.style.overflow = '';
+            isModalOpen = false;
+        }, 300);
+        
+        vibrate([30]);
+    }
+
+    // Gestion du swipe pour fermer le modal
+    function handleTouchStart(e) {
+        touchStartY = e.touches[0].clientY;
+    }
+
+    function handleTouchMove(e) {
+        if (!touchStartY) return;
+        
+        touchEndY = e.touches[0].clientY;
+        const diffY = touchStartY - touchEndY;
+        
+        // Si on swipe vers le bas et qu'on est dans le modal
+        if (diffY < -50 && isModalOpen) {
+            e.preventDefault();
+        }
+    }
+
+    function handleTouchEnd() {
+        if (!touchStartY || !touchEndY) return;
+        
+        const diffY = touchStartY - touchEndY;
+        
+        // Swipe vers le bas pour fermer
+        if (diffY < -100 && isModalOpen) {
+            closeDayModal();
+        }
+        
+        touchStartY = 0;
+        touchEndY = 0;
+    }
+
+    // Vibration améliorée
+    function vibrate(pattern = [50]) {
+        if ('vibrate' in navigator) {
+            navigator.vibrate(pattern);
+        }
+    }
+
+    // Gestion du clavier pour l'accessibilité
+    function handleKeydown(e) {
+        if (isModalOpen) {
+            if (e.key === 'Escape') {
+                closeDayModal();
+            }
+        }
+        
+        // Navigation au clavier dans le calendrier
+        if (e.target.classList.contains('calendar-day') && e.key === 'Enter') {
+            e.target.click();
+        }
+    }
+
+    // Initialisation améliorée
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Planning mobile optimisé initialisé');
+        
+        // Ajouter les event listeners
+        document.addEventListener('keydown', handleKeydown);
+        
+        // Touch events pour le modal
+        const modal = document.getElementById('dayModal');
+        modal.addEventListener('touchstart', handleTouchStart, { passive: false });
+        modal.addEventListener('touchmove', handleTouchMove, { passive: false });
+        modal.addEventListener('touchend', handleTouchEnd);
+        
+        // Fermer le modal en cliquant à l'extérieur
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeDayModal();
+            }
+        });
+        
+        // Ajouter la vibration aux interactions
+        document.querySelectorAll('.calendar-day:not(.empty)').forEach(day => {
+            day.addEventListener('click', () => vibrate([30]));
+        });
+        
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', () => vibrate([30]));
+        });
+        
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => vibrate([25]));
+        });
+        
+        // Performance: Lazy loading pour les animations
+        if ('IntersectionObserver' in window) {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.calendar-day').forEach(day => {
+                day.style.opacity = '0';
+                day.style.transform = 'translateY(20px)';
+                day.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                observer.observe(day);
+            });
+        }
+        
+        // Amélioration de la réactivité
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                // Recalculer les tailles si nécessaire
+                console.log('Resize handled');
+            }, 150);
+        });
+    });
+</script>
+{% endblock %}

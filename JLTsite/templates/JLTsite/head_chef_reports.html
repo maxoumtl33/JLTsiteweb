@@ -1,0 +1,557 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Rapports - Chef de Cuisine{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --chef-primary: #8B4513;
+        --chef-secondary: #DEB887;
+        --chef-accent: #CD853F;
+        --chef-dark: #654321;
+        --chef-light: #FFF8DC;
+    }
+
+    .reports-header {
+        background: linear-gradient(135deg, var(--chef-primary) 0%, var(--chef-dark) 100%);
+        color: white;
+        padding: 2rem 0;
+    }
+
+    .date-selector {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .date-form {
+        display: flex;
+        gap: 1rem;
+        align-items: end;
+        flex-wrap: wrap;
+    }
+
+    .form-group {
+        flex: 1;
+        min-width: 150px;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--chef-dark);
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+    }
+
+    .btn-generate {
+        padding: 10px 24px;
+        background: var(--chef-primary);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-generate:hover {
+        background: var(--chef-dark);
+        transform: translateY(-2px);
+    }
+
+    .stats-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-box {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .stat-box:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-icon {
+        font-size: 2rem;
+        color: var(--chef-accent);
+        margin-bottom: 1rem;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--chef-dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-title {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .report-section {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--chef-light);
+    }
+
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--chef-dark);
+    }
+
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin: 1.5rem 0;
+    }
+
+    .departments-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+
+    .departments-table th {
+        background: var(--chef-light);
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--chef-dark);
+    }
+
+    .departments-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .progress-cell {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .progress-bar {
+        flex: 1;
+        height: 8px;
+        background: #e9ecef;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--chef-accent) 0%, var(--chef-primary) 100%);
+    }
+
+    .top-products-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .product-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        border-bottom: 1px solid #e9ecef;
+        transition: background 0.3s ease;
+    }
+
+    .product-item:hover {
+        background: var(--chef-light);
+    }
+
+    .product-rank {
+        width: 30px;
+        height: 30px;
+        background: var(--chef-accent);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+    }
+
+    .product-info {
+        flex: 1;
+        margin: 0 1rem;
+    }
+
+    .product-name {
+        font-weight: 600;
+        color: var(--chef-dark);
+    }
+
+    .product-stats {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    .product-revenue {
+        font-weight: 700;
+        color: var(--chef-primary);
+        font-size: 1.1rem;
+    }
+
+    .export-section {
+        background: var(--chef-light);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .export-buttons {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-export {
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-csv {
+        background: #28a745;
+        color: white;
+    }
+
+    .btn-pdf {
+        background: #dc3545;
+        color: white;
+    }
+
+    .btn-print {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-export:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    .quick-links {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .quick-link {
+        padding: 1rem;
+        background: var(--chef-light);
+        border-radius: 8px;
+        text-align: center;
+        text-decoration: none;
+        color: var(--chef-dark);
+        transition: all 0.3s ease;
+    }
+
+    .quick-link:hover {
+        background: var(--chef-accent);
+        color: white;
+        transform: translateY(-3px);
+    }
+
+    .quick-link i {
+        display: block;
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<section class="reports-header">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb" style="background: transparent;">
+                <li class="breadcrumb-item"><a href="{% url 'head_chef_dashboard' %}" style="color: var(--chef-secondary);">Dashboard</a></li>
+                <li class="breadcrumb-item active" style="color: white;">Rapports</li>
+            </ol>
+        </nav>
+        <h1><i class="fas fa-chart-bar"></i> Rapports et analyses</h1>
+        <p class="mb-0">Analysez les performances de votre cuisine</p>
+    </div>
+</section>
+
+<!-- Contenu principal -->
+<section class="py-4" style="background: #f8f9fa;">
+    <div class="container">
+        <!-- Sélection de période -->
+        <div class="date-selector">
+            <form method="get" class="date-form">
+                <div class="form-group">
+                    <label class="form-label">Date de début</label>
+                    <input type="date" name="start_date" class="form-control" value="{{ start_date|date:'Y-m-d' }}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date de fin</label>
+                    <input type="date" name="end_date" class="form-control" value="{{ end_date|date:'Y-m-d' }}" required>
+                </div>
+                <button type="submit" class="btn-generate">
+                    <i class="fas fa-sync"></i> Générer rapport
+                </button>
+            </form>
+        </div>
+
+        <!-- Vue d'ensemble -->
+        <div class="stats-overview">
+            <div class="stat-box">
+                <i class="fas fa-shopping-cart stat-icon"></i>
+                <div class="stat-number">{{ stats.total_orders }}</div>
+                <div class="stat-title">Commandes totales</div>
+            </div>
+            <div class="stat-box">
+                <i class="fas fa-dollar-sign stat-icon"></i>
+                <div class="stat-number">${{ stats.total_revenue|floatformat:0 }}</div>
+                <div class="stat-title">Revenus totaux</div>
+            </div>
+            <div class="stat-box">
+                <i class="fas fa-chart-line stat-icon"></i>
+                <div class="stat-number">${{ stats.avg_order_value|floatformat:0 }}</div>
+                <div class="stat-title">Panier moyen</div>
+            </div>
+            <div class="stat-box">
+                <i class="fas fa-utensils stat-icon"></i>
+                <div class="stat-number">{{ stats.total_items }}</div>
+                <div class="stat-title">Articles produits</div>
+            </div>
+        </div>
+
+        <!-- Performance par département -->
+        <div class="report-section">
+            <div class="section-header">
+                <h3 class="section-title">
+                    <i class="fas fa-building"></i> Performance par département
+                </h3>
+                <span style="color: #6c757d; font-size: 0.9rem;">
+                    Période: {{ start_date|date:"d/m/Y" }} - {{ end_date|date:"d/m/Y" }}
+                </span>
+            </div>
+
+            <table class="departments-table">
+                <thead>
+                    <tr>
+                        <th>Département</th>
+                        <th>Productions</th>
+                        <th>Complétées</th>
+                        <th>Taux de complétion</th>
+                        <th>Progression moyenne</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dept in dept_stats %}
+                    <tr>
+                        <td><strong>{{ dept.name }}</strong></td>
+                        <td>{{ dept.total_productions }}</td>
+                        <td>{{ dept.completed }}</td>
+                        <td>
+                            <div class="progress-cell">
+                                <span>{{ dept.on_time_rate|floatformat:0 }}%</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: {{ dept.on_time_rate }}%;"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="progress-cell">
+                                <span>{{ dept.avg_progress|floatformat:0 }}%</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: {{ dept.avg_progress }}%;"></div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 2rem; color: #6c757d;">
+                            Aucune donnée disponible pour cette période
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Top produits -->
+        <div class="report-section">
+            <div class="section-header">
+                <h3 class="section-title">
+                    <i class="fas fa-trophy"></i> Top 10 produits
+                </h3>
+            </div>
+
+            <ul class="top-products-list">
+                {% for product in top_products %}
+                <li class="product-item">
+                    <span class="product-rank">{{ forloop.counter }}</span>
+                    <div class="product-info">
+                        <div class="product-name">{{ product.product_name }}</div>
+                        <div class="product-stats">
+                            Quantité: {{ product.total_quantity }} unités
+                        </div>
+                    </div>
+                    <div class="product-revenue">
+                        ${{ product.total_revenue|floatformat:2 }}
+                    </div>
+                </li>
+                {% empty %}
+                <li style="text-align: center; padding: 2rem; color: #6c757d;">
+                    Aucun produit vendu durant cette période
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Export -->
+        <div class="export-section">
+            <h4 style="margin-bottom: 1rem;">
+                <i class="fas fa-download"></i> Exporter les rapports
+            </h4>
+            <div class="export-buttons">
+                <a href="{% url 'head_chef_export_reports' %}?type=csv&report=orders&start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" 
+                   class="btn-export btn-csv">
+                    <i class="fas fa-file-csv"></i> Export CSV - Commandes
+                </a>
+                <a href="{% url 'head_chef_export_reports' %}?type=csv&report=production&start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" 
+                   class="btn-export btn-csv">
+                    <i class="fas fa-file-csv"></i> Export CSV - Production
+                </a>
+                <a href="{% url 'head_chef_export_reports' %}?type=pdf&report=orders&start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" 
+                   class="btn-export btn-pdf">
+                    <i class="fas fa-file-pdf"></i> Export PDF - Commandes
+                </a>
+                <button onclick="window.print()" class="btn-export btn-print">
+                    <i class="fas fa-print"></i> Imprimer
+                </button>
+            </div>
+        </div>
+
+        <!-- Liens rapides -->
+        <div class="report-section">
+            <h4><i class="fas fa-link"></i> Accès rapides</h4>
+            <div class="quick-links">
+                <a href="{% url 'head_chef_production_reports' %}" class="quick-link">
+                    <i class="fas fa-industry"></i>
+                    Rapports de production
+                </a>
+                <a href="{% url 'head_chef_inventory' %}?low_stock=1" class="quick-link">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Alertes stock
+                </a>
+                <a href="{% url 'head_chef_orders' %}?status=pending" class="quick-link">
+                    <i class="fas fa-clock"></i>
+                    Commandes en attente
+                </a>
+                <a href="{% url 'head_chef_manage_suppliers' %}" class="quick-link">
+                    <i class="fas fa-truck"></i>
+                    Fournisseurs
+                </a>
+            </div>
+        </div>
+
+        <!-- Graphique (nécessite Chart.js) -->
+        <div class="report-section">
+            <div class="section-header">
+                <h3 class="section-title">
+                    <i class="fas fa-chart-line"></i> Évolution des commandes
+                </h3>
+            </div>
+            <div class="chart-container">
+                <canvas id="ordersChart"></canvas>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Graphique des commandes
+const ctx = document.getElementById('ordersChart').getContext('2d');
+const ordersChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: [
+            {% for i in "x"|rjust:30 %}
+                '{{ start_date|add:forloop.counter0|date:"d/m" }}',
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Commandes',
+            data: [12, 19, 3, 5, 2, 3, 15, 20, 25, 30, 28, 32, 35, 40, 38, 42, 45, 50, 48, 52, 55, 60, 58, 62, 65, 70, 68, 72, 75, 80],
+            borderColor: '#8B4513',
+            backgroundColor: 'rgba(139, 69, 19, 0.1)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Périodes prédéfinies
+function setPeriod(days) {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    
+    document.querySelector('input[name="start_date"]').value = startDate.toISOString().split('T')[0];
+    document.querySelector('input[name="end_date"]').value = endDate.toISOString().split('T')[0];
+    document.querySelector('form').submit();
+}
+</script>
+{% endblock %}

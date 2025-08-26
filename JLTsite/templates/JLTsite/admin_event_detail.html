@@ -1,0 +1,565 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+
+{% block title %}Événement {{ event.event_name }} - Administration{% endblock %}
+
+{% block extra_css %}
+<style>
+    .event-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+
+    .status-badge {
+        font-size: 0.9rem;
+        padding: 8px 15px;
+        border-radius: 20px;
+    }
+
+    .priority-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+    }
+
+    .assignment-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        transition: transform 0.3s ease;
+        margin-bottom: 20px;
+    }
+
+    .assignment-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .timeline-item {
+        border-left: 3px solid #dee2e6;
+        padding-left: 20px;
+        margin-bottom: 20px;
+        position: relative;
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -8px;
+        top: 0;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #6c757d;
+    }
+
+    .timeline-item.important::before {
+        background-color: #dc3545;
+    }
+
+    .timeline-item.update::before {
+        background-color: #0d6efd;
+    }
+
+    .staff-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+    }
+
+    .action-section {
+        background-color: #f8f9fa;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 25px;
+    }
+
+    .photo-grid img {
+        border-radius: 10px;
+        transition: transform 0.3s ease;
+        cursor: pointer;
+    }
+
+    .photo-grid img:hover {
+        transform: scale(1.05);
+    }
+
+    .info-card {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+
+    .quick-actions {
+        position: sticky;
+        top: 20px;
+    }
+
+    @media (max-width: 768px) {
+        .event-header {
+            padding: 20px;
+        }
+        
+        .quick-actions {
+            position: static;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Event Header -->
+    <div class="event-header position-relative">
+        <div class="priority-badge">
+            <span class="badge bg-{% if event.priority == 'urgent' %}danger{% elif event.priority == 'high' %}warning{% else %}secondary{% endif %}">
+                {{ event.get_priority_display }}
+            </span>
+        </div>
+        
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-2">{{ event.event_name }}</h1>
+                <p class="mb-3 opacity-75">{{ event.event_description|default:"Aucune description" }}</p>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="mb-1"><i class="fas fa-user me-2"></i>{{ event.order.first_name }} {{ event.order.last_name }}</p>
+                        <p class="mb-1"><i class="fas fa-envelope me-2"></i>{{ event.order.email }}</p>
+                        <p class="mb-1"><i class="fas fa-phone me-2"></i>{{ event.order.phone }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-1"><i class="fas fa-calendar me-2"></i>{{ event.event_start_time|date:"d/m/Y" }}</p>
+                        <p class="mb-1"><i class="fas fa-clock me-2"></i>{{ event.event_start_time|date:"H:i" }} - {{ event.event_end_time|date:"H:i" }}</p>
+                        <p class="mb-1"><i class="fas fa-map-marker-alt me-2"></i>{{ event.order.delivery_address }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 text-end">
+                <span class="status-badge badge bg-{% if event.status == 'completed' %}success{% elif event.status == 'in_progress' %}warning{% elif event.status == 'confirmed' %}info{% else %}secondary{% endif %}">
+                    {{ event.get_status_display }}
+                </span>
+                <div class="mt-3">
+                    <small class="opacity-75">Commande: {{ event.order.order_number }}</small><br>
+                    <small class="opacity-75">Contrat: {{ event.contract_number }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Assignment Section -->
+            <div class="action-section">
+                <h4 class="mb-4"><i class="fas fa-user-tie me-2"></i>Assignation et Priorité</h4>
+                
+                <div class="row">
+                    <!-- Assign Maitre Hotel -->
+                    <div class="col-md-6 mb-3">
+                        <div class="card assignment-card">
+                            <div class="card-body">
+                                <h6 class="card-title">Maître d'Hôtel</h6>
+                                {% if event.maitre_hotel %}
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="staff-avatar me-3">
+                                            {{ event.maitre_hotel.first_name.0 }}{{ event.maitre_hotel.last_name.0 }}
+                                        </div>
+                                        <div>
+                                            <strong>{{ event.maitre_hotel.get_full_name }}</strong><br>
+                                            <small class="text-muted">{{ event.maitre_hotel.email }}</small>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                
+                                <form method="post" class="d-flex gap-2">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="assign_maitre_hotel">
+                                    <select name="maitre_hotel_id" class="form-select form-select-sm" required>
+                                        <option value="">Sélectionner...</option>
+                                        {% for mh in maitre_hotels %}
+                                            <option value="{{ mh.id }}" {% if mh == event.maitre_hotel %}selected{% endif %}>
+                                                {{ mh.get_full_name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="submit" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-save"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Update Priority -->
+                    <div class="col-md-6 mb-3">
+                        <div class="card assignment-card">
+                            <div class="card-body">
+                                <h6 class="card-title">Priorité</h6>
+                                <div class="mb-3">
+                                    <span class="badge bg-{% if event.priority == 'urgent' %}danger{% elif event.priority == 'high' %}warning{% else %}secondary{% endif %} fs-6">
+                                        {{ event.get_priority_display }}
+                                    </span>
+                                </div>
+                                
+                                <form method="post" class="d-flex gap-2">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="update_priority">
+                                    <select name="priority" class="form-select form-select-sm">
+                                        <option value="low" {% if event.priority == 'low' %}selected{% endif %}>Basse</option>
+                                        <option value="normal" {% if event.priority == 'normal' %}selected{% endif %}>Normale</option>
+                                        <option value="high" {% if event.priority == 'high' %}selected{% endif %}>Haute</option>
+                                        <option value="urgent" {% if event.priority == 'urgent' %}selected{% endif %}>Urgente</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-warning btn-sm">
+                                        <i class="fas fa-save"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Staff Management -->
+            <div class="action-section">
+                <h4 class="mb-4"><i class="fas fa-users me-2"></i>Équipe Assignée</h4>
+                
+                <!-- Add Staff Form -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">Ajouter du personnel</h6>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="add_staff">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <select name="staff_id" class="form-select" required>
+                                        <option value="">Sélectionner...</option>
+                                        {% for staff in available_staff %}
+                                            <option value="{{ staff.id }}">{{ staff.get_full_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select name="role" class="form-select">
+                                        <option value="server">Serveur</option>
+                                        <option value="bartender">Barman</option>
+                                        <option value="chef">Chef</option>
+                                        <option value="assistant" selected>Assistant</option>
+                                        <option value="setup">Installation</option>
+                                        <option value="cleanup">Nettoyage</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="number" name="hourly_rate" class="form-control" 
+                                           placeholder="Taux horaire" value="20.00" step="0.50" min="15">
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="submit" class="btn btn-success w-100">
+                                        <i class="fas fa-plus"></i> Ajouter
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Current Staff -->
+                <div class="row">
+                    {% for assignment in staff_assignments %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card assignment-card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div class="d-flex align-items-center">
+                                            <div class="staff-avatar me-3">
+                                                {{ assignment.staff_member.first_name.0 }}{{ assignment.staff_member.last_name.0 }}
+                                            </div>
+                                            <div>
+                                                <strong>{{ assignment.staff_member.get_full_name }}</strong><br>
+                                                <span class="badge bg-info">{{ assignment.get_role_display }}</span>
+                                                <small class="text-muted d-block">{{ assignment.hourly_rate }}$/h</small>
+                                            </div>
+                                        </div>
+                                        <div class="text-end">
+                                            {% if assignment.checked_in %}
+                                                <span class="badge bg-success mb-1">Présent</span><br>
+                                                <small class="text-muted">{{ assignment.checked_in_at|date:"H:i" }}</small>
+                                            {% else %}
+                                                <span class="badge bg-secondary mb-1">En attente</span><br>
+                                                <small class="text-muted">{{ assignment.arrival_time|date:"H:i" }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    {% if assignment.notes %}
+                                        <div class="mt-2">
+                                            <small class="text-muted">{{ assignment.notes }}</small>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="col-12">
+                            <div class="text-center py-4">
+                                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">Aucun personnel assigné pour le moment.</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Event Details -->
+            <div class="info-card">
+                <h4 class="mb-4"><i class="fas fa-info-circle me-2"></i>Détails de l'Événement</h4>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Horaires</h6>
+                        <p><strong>Installation :</strong> {{ event.setup_start_time|date:"d/m/Y H:i" }}</p>
+                        <p><strong>Début événement :</strong> {{ event.event_start_time|date:"d/m/Y H:i" }}</p>
+                        <p><strong>Fin événement :</strong> {{ event.event_end_time|date:"d/m/Y H:i" }}</p>
+                        <p><strong>Fin nettoyage :</strong> {{ event.cleanup_end_time|date:"d/m/Y H:i" }}</p>
+                        
+                        <h6 class="mt-4">Lieu</h6>
+                        {% if event.venue_name %}
+                            <p><strong>{{ event.venue_name }}</strong></p>
+                        {% endif %}
+                        <p>{{ event.order.delivery_address }}</p>
+                        <p>{{ event.order.delivery_postal_code }} {{ event.order.delivery_city }}</p>
+                        
+                        {% if event.venue_contact %}
+                            <p><strong>Contact lieu :</strong> {{ event.venue_contact }}</p>
+                        {% endif %}
+                        {% if event.venue_phone %}
+                            <p><strong>Téléphone lieu :</strong> {{ event.venue_phone }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-6">
+                        {% if event.equipment_needed %}
+                            <h6>Équipements nécessaires</h6>
+                            <p>{{ event.equipment_needed|linebreaks }}</p>
+                        {% endif %}
+                        
+                        {% if event.special_requirements %}
+                            <h6>Exigences spéciales</h6>
+                            <p>{{ event.special_requirements|linebreaks }}</p>
+                        {% endif %}
+                        
+                        {% if event.venue_instructions %}
+                            <h6>Instructions d'accès</h6>
+                            <p>{{ event.venue_instructions|linebreaks }}</p>
+                        {% endif %}
+                        
+                        <h6>Informations commande</h6>
+                        <p><strong>Invités :</strong> {{ event.order.guest_count|default:"Non spécifié" }}</p>
+                        <p><strong>Total :</strong> {{ event.order.total }}$</p>
+                        <p><strong>Type livraison :</strong> {{ event.order.get_delivery_type_display }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timeline -->
+            <div class="info-card">
+                <h4 class="mb-4"><i class="fas fa-history me-2"></i>Timeline de l'Événement</h4>
+                
+                {% if timeline %}
+                    <div class="timeline">
+                        {% for item in timeline %}
+                            <div class="timeline-item {% if item.is_important %}important{% elif 'changé' in item.description %}update{% endif %}">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <h6 class="mb-1">{{ item.get_action_type_display }}</h6>
+                                        <p class="mb-1">{{ item.description }}</p>
+                                        {% if item.created_by %}
+                                            <small class="text-muted">Par {{ item.created_by.get_full_name }}</small>
+                                        {% endif %}
+                                    </div>
+                                    <small class="text-muted">{{ item.timestamp|date:"d/m H:i" }}</small>
+                                </div>
+                                {% if item.is_issue %}
+                                    <span class="badge bg-danger">Problème</span>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Aucun événement dans la timeline pour le moment.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <div class="info-card">
+                    <h5 class="mb-3"><i class="fas fa-bolt me-2"></i>Actions Rapides</h5>
+                    
+                    <div class="d-grid gap-2">
+                        {% if event.maitre_hotel %}
+                            <a href="{% url 'maitre_hotel_event_detail' event.id %}" class="btn btn-outline-primary">
+                                <i class="fas fa-eye me-2"></i>
+                                Vue Maître d'Hôtel
+                            </a>
+                        {% endif %}
+                        
+                        <a href="{% url 'admin_order_detail' event.order.id %}" class="btn btn-outline-info">
+                            <i class="fas fa-shopping-cart me-2"></i>
+                            Voir Commande
+                        </a>
+                        
+                        {% if event.status == 'completed' and not event.final_report %}
+                            <button class="btn btn-outline-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Rapport manquant
+                            </button>
+                        {% endif %}
+                        
+                        <button class="btn btn-outline-secondary" onclick="window.print()">
+                            <i class="fas fa-print me-2"></i>
+                            Imprimer
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Photos -->
+                {% if photos %}
+                <div class="info-card">
+                    <h5 class="mb-3"><i class="fas fa-camera me-2"></i>Photos Récentes</h5>
+                    
+                    <div class="photo-grid">
+                        <div class="row g-2">
+                            {% for photo in photos %}
+                                <div class="col-6">
+                                    <img src="{{ photo.photo.url }}" 
+                                         alt="{{ photo.get_photo_type_display }}"
+                                         class="img-fluid"
+                                         data-bs-toggle="modal" 
+                                         data-bs-target="#photoModal"
+                                         data-photo-url="{{ photo.photo.url }}"
+                                         data-photo-caption="{{ photo.caption }}"
+                                         data-photo-type="{{ photo.get_photo_type_display }}">
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-3">
+                        <small class="text-muted">{{ photos.count }} photo{{ photos.count|pluralize }} au total</small>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Event Info Summary -->
+                <div class="info-card">
+                    <h5 class="mb-3"><i class="fas fa-chart-bar me-2"></i>Résumé</h5>
+                    
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <h4 class="text-primary mb-1">{{ event.get_duration_hours|floatformat:1 }}</h4>
+                            <small class="text-muted">Heures totales</small>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <h4 class="text-success mb-1">{{ staff_assignments.count }}</h4>
+                            <small class="text-muted">Personnel</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-info mb-1">{{ photos.count }}</h4>
+                            <small class="text-muted">Photos</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-warning mb-1">{{ timeline.count }}</h4>
+                            <small class="text-muted">Événements</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Photo Modal -->
+<div class="modal fade" id="photoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="photoModalTitle">Photo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="photoModalImage" src="" alt="" class="img-fluid rounded">
+                <p id="photoModalCaption" class="mt-3 text-muted"></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Photo modal functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const photoModal = document.getElementById('photoModal');
+        if (photoModal) {
+            photoModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const photoUrl = button.getAttribute('data-photo-url');
+                const photoCaption = button.getAttribute('data-photo-caption');
+                const photoType = button.getAttribute('data-photo-type');
+                
+                const modalTitle = photoModal.querySelector('#photoModalTitle');
+                const modalImage = photoModal.querySelector('#photoModalImage');
+                const modalCaption = photoModal.querySelector('#photoModalCaption');
+                
+                modalTitle.textContent = photoType;
+                modalImage.src = photoUrl;
+                modalCaption.textContent = photoCaption || 'Aucune description';
+            });
+        }
+    });
+
+    // Confirmation for critical actions
+    document.querySelectorAll('form').forEach(form => {
+        const action = form.querySelector('input[name="action"]');
+        if (action && action.value === 'assign_maitre_hotel') {
+            form.addEventListener('submit', function(e) {
+                const select = form.querySelector('select[name="maitre_hotel_id"]');
+                if (select.value) {
+                    const selectedText = select.options[select.selectedIndex].text;
+                    if (!confirm(`Êtes-vous sûr de vouloir assigner cet événement à ${selectedText} ?`)) {
+                        e.preventDefault();
+                    }
+                }
+            });
+        }
+    });
+
+    // Auto-refresh every 5 minutes for active events
+    {% if event.status == 'in_progress' %}
+        setInterval(() => {
+            location.reload();
+        }, 300000);
+    {% endif %}
+</script>
+{% endblock %}

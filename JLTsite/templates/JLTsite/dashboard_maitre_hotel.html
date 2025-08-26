@@ -1,0 +1,1338 @@
+{% extends 'JLTsite/base_maitre_hotel.html' %}
+{% load static %}
+
+{% block title %}Dashboard Maître d'hôtel - {{ selected_date|date:"d/m/Y" }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Interface 100% mobile-first pour maîtres d'hôtel */
+    :root {
+        --mh-primary: #8e44ad;
+        --mh-secondary: #9b59b6;
+        --mh-info: #3498db;
+        --mh-warning: #f39c12;
+        --mh-danger: #e74c3c;
+        --mh-success: #27ae60;
+        --mh-dark: #2c3e50;
+        --mh-light: #ecf0f1;
+        --mh-gold: #f1c40f;
+    }
+
+    * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+        font-size: 16px;
+        min-height: 100vh;
+    }
+
+    /* Header mobile fixe avec sélecteur de date */
+    .mobile-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(135deg, var(--mh-primary) 0%, var(--mh-secondary) 100%);
+        color: white;
+        padding: 15px;
+        z-index: 1000;
+        box-shadow: 0 4px 20px rgba(142, 68, 173, 0.3);
+    }
+
+    .header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .mobile-header h1 {
+        margin: 0;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 600;
+    }
+
+    .date-selector-mobile {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(255,255,255,0.15);
+        padding: 8px 12px;
+        border-radius: 25px;
+        font-size: 0.9rem;
+        backdrop-filter: blur(10px);
+    }
+
+    .date-selector-mobile input {
+        background: transparent;
+        border: none;
+        color: white;
+        font-size: 0.9rem;
+        outline: none;
+        width: 120px;
+    }
+
+    .date-selector-mobile input::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+        cursor: pointer;
+    }
+
+    .today-btn {
+        background: rgba(255,255,255,0.2);
+        border: none;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .today-btn:active {
+        transform: scale(0.95);
+    }
+
+    .mh-info {
+        font-size: 0.85rem;
+        opacity: 0.9;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 500;
+    }
+
+    /* Container principal avec padding pour header fixe */
+    .mobile-container {
+        padding-top: 120px;
+        padding-bottom: 80px;
+        min-height: 100vh;
+    }
+
+    /* Stats cards mobile avec effet glassmorphism */
+    .mobile-stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        padding: 15px;
+        margin-bottom: 10px;
+    }
+
+    .stat-card-mobile {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 20px 15px;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        cursor: pointer;
+        color: white;
+    }
+
+    .stat-card-mobile:active {
+        transform: scale(0.95);
+    }
+
+    .stat-card-mobile:hover {
+        box-shadow: 0 8px 25px rgba(142, 68, 173, 0.3);
+    }
+
+    .stat-icon {
+        font-size: 2.2rem;
+        margin-bottom: 8px;
+        opacity: 0.9;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        opacity: 0.8;
+        font-weight: 500;
+    }
+
+    /* Événement actuel */
+    .current-event {
+        background: rgba(255, 255, 255, 0.95);
+        margin: 15px;
+        border-radius: 20px;
+        padding: 25px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        border: 2px solid rgba(142, 68, 173, 0.1);
+    }
+
+    .event-header-mobile {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid var(--mh-light);
+    }
+
+    .event-status {
+        display: inline-block;
+        padding: 6px 15px;
+        border-radius: 25px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .event-status.confirmed {
+        background: linear-gradient(135deg, var(--mh-info), #5dade2);
+        color: white;
+    }
+
+    .event-status.in_progress {
+        background: linear-gradient(135deg, var(--mh-warning), #f7dc6f);
+        color: white;
+    }
+
+    .event-status.completed {
+        background: linear-gradient(135deg, var(--mh-success), #58d68d);
+        color: white;
+    }
+
+    /* Liste des événements mobile */
+    .event-list-mobile {
+        margin: 15px;
+    }
+
+    .event-card-mobile {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        padding: 20px;
+        margin-bottom: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        border-left: 5px solid var(--mh-primary);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .event-card-mobile::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(142, 68, 173, 0.1), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .event-card-mobile:active::before {
+        left: 100%;
+    }
+
+    .event-card-mobile:active {
+        transform: scale(0.98);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .event-card-mobile.urgent {
+        border-left-color: var(--mh-danger);
+        background: linear-gradient(135deg, #fff5f5, #ffffff);
+    }
+
+    .event-card-mobile.completed {
+        border-left-color: var(--mh-success);
+        background: linear-gradient(135deg, #f0fff4, #ffffff);
+        opacity: 0.8;
+    }
+
+    .event-card-mobile.vip {
+        border-left-color: var(--mh-gold);
+        background: linear-gradient(135deg, #fffbf0, #ffffff);
+    }
+
+    .event-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+    }
+
+    .event-time {
+        font-size: 0.9rem;
+        color: var(--mh-primary);
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        background: rgba(142, 68, 173, 0.1);
+        padding: 4px 10px;
+        border-radius: 15px;
+    }
+
+    .event-name {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--mh-dark);
+        margin-bottom: 8px;
+        line-height: 1.3;
+    }
+
+    .event-client {
+        font-size: 0.9rem;
+        color: #7f8c8d;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .event-venue {
+        font-size: 0.85rem;
+        color: #95a5a6;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+        line-height: 1.4;
+    }
+
+    .event-details {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: 15px;
+        font-size: 0.8rem;
+    }
+
+    .detail-item {
+        text-align: center;
+        padding: 8px;
+        background: rgba(142, 68, 173, 0.05);
+        border-radius: 12px;
+        border: 1px solid rgba(142, 68, 173, 0.1);
+    }
+
+    .detail-value {
+        font-weight: 600;
+        color: var(--mh-primary);
+        font-size: 0.9rem;
+    }
+
+    .detail-label {
+        color: #7f8c8d;
+        margin-top: 2px;
+    }
+
+    .event-actions {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .event-actions.two-buttons {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .event-actions.one-button {
+        grid-template-columns: 1fr;
+    }
+
+    .btn-mobile {
+        padding: 12px;
+        border: none;
+        border-radius: 15px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        -webkit-appearance: none;
+        min-height: 45px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-mobile::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255,255,255,0.2);
+        border-radius: 50%;
+        transition: all 0.3s ease;
+        transform: translate(-50%, -50%);
+    }
+
+    .btn-mobile:active::before {
+        width: 200px;
+        height: 200px;
+    }
+
+    .btn-mobile:active {
+        transform: scale(0.95);
+    }
+
+    .btn-start {
+        background: linear-gradient(135deg, var(--mh-success), #58d68d);
+        color: white;
+        box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+    }
+
+    .btn-view {
+        background: linear-gradient(135deg, var(--mh-info), #5dade2);
+        color: white;
+        box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+    }
+
+    .btn-report {
+        background: linear-gradient(135deg, var(--mh-primary), var(--mh-secondary));
+        color: white;
+        box-shadow: 0 4px 15px rgba(142, 68, 173, 0.3);
+    }
+
+    .btn-complete {
+        background: linear-gradient(135deg, var(--mh-gold), #f7dc6f);
+        color: var(--mh-dark);
+        box-shadow: 0 4px 15px rgba(241, 196, 15, 0.3);
+    }
+
+    /* Priority indicators */
+    .priority-indicator {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        font-size: 0.75rem;
+        padding: 4px 8px;
+        border-radius: 15px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .priority-indicator.high {
+        background: linear-gradient(135deg, var(--mh-danger), #ec7063);
+        color: white;
+    }
+
+    .priority-indicator.urgent {
+        background: linear-gradient(135deg, var(--mh-danger), #ff6b6b);
+        color: white;
+        animation: pulse 2s infinite;
+    }
+
+    .priority-indicator.vip {
+        background: linear-gradient(135deg, var(--mh-gold), #f7dc6f);
+        color: var(--mh-dark);
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    /* Bottom navigation avec glassmorphism */
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+        display: flex;
+        justify-content: space-around;
+        padding: 10px 0;
+        z-index: 999;
+        border-top: 1px solid rgba(142, 68, 173, 0.1);
+    }
+
+    .nav-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 8px;
+        color: #7f8c8d;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        border-radius: 15px;
+    }
+
+    .nav-item.active {
+        color: var(--mh-primary);
+        background: rgba(142, 68, 173, 0.1);
+    }
+
+    .nav-item i {
+        font-size: 1.5rem;
+        margin-bottom: 4px;
+        transition: transform 0.3s ease;
+    }
+
+    .nav-item.active i {
+        transform: scale(1.1);
+    }
+
+    .nav-item span {
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .nav-badge {
+        position: absolute;
+        top: 5px;
+        right: 25%;
+        background: linear-gradient(135deg, var(--mh-danger), #ec7063);
+        color: white;
+        border-radius: 50%;
+        width: 18px;
+        height: 18px;
+        font-size: 0.7rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+        40% { transform: translateY(-5px); }
+        60% { transform: translateY(-3px); }
+    }
+
+    /* Floating action button avec gradient */
+    .fab {
+        position: fixed;
+        bottom: 90px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, var(--mh-primary), var(--mh-secondary));
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 6px 20px rgba(142, 68, 173, 0.4);
+        cursor: pointer;
+        z-index: 998;
+        transition: all 0.3s ease;
+        border: none;
+    }
+
+    .fab:active {
+        transform: scale(0.9);
+    }
+
+    .fab:hover {
+        box-shadow: 0 8px 25px rgba(142, 68, 173, 0.5);
+    }
+
+    /* Empty state élégant */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: white;
+    }
+
+    .empty-state i {
+        font-size: 5rem;
+        opacity: 0.6;
+        margin-bottom: 20px;
+    }
+
+    .empty-state h3 {
+        font-weight: 600;
+        margin-bottom: 10px;
+        opacity: 0.9;
+    }
+
+    .empty-state p {
+        opacity: 0.7;
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    /* Toast notification avec style maître d'hôtel */
+    .toast-mobile {
+        position: fixed;
+        bottom: 100px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 15px 25px;
+        border-radius: 30px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        z-index: 9999;
+        animation: slideUp 0.5s ease;
+        color: white;
+        font-weight: 600;
+        backdrop-filter: blur(10px);
+    }
+
+    .toast-success {
+        background: linear-gradient(135deg, var(--mh-success), #58d68d);
+    }
+
+    .toast-error {
+        background: linear-gradient(135deg, var(--mh-danger), #ec7063);
+    }
+
+    .toast-warning {
+        background: linear-gradient(135deg, var(--mh-warning), #f7dc6f);
+        color: var(--mh-dark);
+    }
+
+    /* Loading spinner élégant */
+    .loading-spinner {
+        display: inline-block;
+        width: 25px;
+        height: 25px;
+        border: 3px solid rgba(255,255,255,0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translateX(-50%) translateY(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+    }
+
+    /* Responsive pour tablettes */
+    @media (min-width: 768px) {
+        .mobile-container {
+            max-width: 768px;
+            margin: 0 auto;
+        }
+
+        .mobile-stats {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        .event-list-mobile {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+    }
+
+    /* Ajustements pour iPhone X et plus */
+    @supports (padding: max(0px)) {
+        .bottom-nav {
+            padding-bottom: max(10px, env(safe-area-inset-bottom));
+        }
+    }
+
+    /* Mode nuit automatique */
+    @media (prefers-color-scheme: dark) {
+        .current-event,
+        .event-card-mobile {
+            background: rgba(44, 62, 80, 0.95);
+            color: white;
+        }
+
+        .event-name,
+        .event-time {
+            color: white;
+        }
+
+        .event-client,
+        .event-venue {
+            color: #bdc3c7;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header mobile fixe -->
+<div class="mobile-header">
+    <div class="header-top">
+        <h1>
+            <i class="fas fa-crown"></i>
+            Maître d'hôtel
+        </h1>
+        <div class="date-selector-mobile">
+            <input type="date" id="dateSelector" value="{{ selected_date|date:'Y-m-d' }}" 
+                   onchange="changeDate(this.value)">
+            <button class="today-btn" onclick="goToToday()">Aujourd'hui</button>
+        </div>
+    </div>
+    <div class="mh-info">
+        <span>{{ maitre_hotel.get_full_name }}</span>
+        <span>{{ selected_date|date:"d/m/Y" }}</span>
+    </div>
+</div>
+
+<!-- Container principal -->
+<div class="mobile-container">
+    <!-- Statistiques -->
+    <div class="mobile-stats">
+        <div class="stat-card-mobile">
+            <div class="stat-icon">
+                <i class="fas fa-calendar-alt"></i>
+            </div>
+            <div class="stat-value">{{ stats.total }}</div>
+            <div class="stat-label">Total</div>
+        </div>
+        
+        <div class="stat-card-mobile">
+            <div class="stat-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-value">{{ stats.completed }}</div>
+            <div class="stat-label">Terminés</div>
+        </div>
+        
+        <div class="stat-card-mobile">
+            <div class="stat-icon">
+                <i class="fas fa-play-circle"></i>
+            </div>
+            <div class="stat-value">{{ stats.in_progress }}</div>
+            <div class="stat-label">En cours</div>
+        </div>
+        
+        <div class="stat-card-mobile">
+            <div class="stat-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-value">{{ stats.pending }}</div>
+            <div class="stat-label">En attente</div>
+        </div>
+    </div>
+
+    <!-- Événement actuel -->
+    {% if current_event %}
+    <div class="current-event">
+        <div class="event-header-mobile">
+            <div>
+                <h3 style="margin: 0; font-size: 1.2rem; color: var(--mh-dark);">{{ current_event.event_name }}</h3>
+                <small style="color: #7f8c8d;">{{ current_event.contract_number }}</small>
+            </div>
+            <span class="event-status {{ current_event.status }}">
+                {% if current_event.status == 'in_progress' %}
+                    En cours
+                {% elif current_event.status == 'completed' %}
+                    Terminé
+                {% else %}
+                    Confirmé
+                {% endif %}
+            </span>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+            <div style="font-size: 0.9rem; color: #7f8c8d; margin-bottom: 5px;">
+                <i class="fas fa-clock"></i> {{ current_event.event_start_time|time:"H:i" }} - {{ current_event.event_end_time|time:"H:i" }}
+            </div>
+            <div style="font-size: 0.9rem; color: #7f8c8d;">
+                <i class="fas fa-map-marker-alt"></i> {{ current_event.order.delivery_address }}
+            </div>
+        </div>
+        
+        {% if current_event.status == 'confirmed' %}
+        <button class="btn-mobile btn-start" onclick="startEvent({{ current_event.id }})">
+            <i class="fas fa-play"></i> Démarrer l'événement
+        </button>
+        {% elif current_event.status == 'in_progress' %}
+        <div class="event-actions two-buttons">
+            <button class="btn-mobile btn-view" onclick="viewEvent({{ current_event.id }})">
+                <i class="fas fa-eye"></i> Voir détails
+            </button>
+            <button class="btn-mobile btn-complete" onclick="completeEvent({{ current_event.id }})">
+                <i class="fas fa-flag-checkered"></i> Terminer
+            </button>
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="current-event">
+        <div style="text-align: center; padding: 20px;">
+            <i class="fas fa-calendar-times" style="font-size: 3rem; color: #bdc3c7; margin-bottom: 15px;"></i>
+            <h3 style="color: #7f8c8d; margin: 0;">Aucun événement en cours</h3>
+            <p style="color: #95a5a6; margin: 5px 0 0 0;">Vérifiez vos événements à venir</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Liste des événements -->
+    <div class="event-list-mobile">
+        {% for event in events %}
+        <div class="event-card-mobile 
+                    {% if event.priority == 'urgent' %}urgent{% endif %} 
+                    {% if event.status == 'completed' %}completed{% endif %}
+                    {% if event.priority == 'high' %}vip{% endif %}" 
+             onclick="openEventDetail({{ event.id }})">
+             
+            {% if event.priority == 'urgent' %}
+                <div class="priority-indicator urgent">URGENT</div>
+            {% elif event.priority == 'high' %}
+                <div class="priority-indicator high">PRIORITÉ</div>
+            {% endif %}
+            
+            <div class="event-header">
+                <div class="event-time">
+                    <i class="fas fa-clock"></i> {{ event.event_start_time|time:"H:i" }}
+                </div>
+            </div>
+            
+            <div class="event-name">{{ event.event_name }}</div>
+            
+            <div class="event-client">
+                <i class="fas fa-user"></i>
+                <span>{{ event.order.first_name }} {{ event.order.last_name }}</span>
+            </div>
+            
+            {% if event.order.company %}
+            <div class="event-client">
+                <i class="fas fa-building"></i>
+                <span>{{ event.order.company }}</span>
+            </div>
+            {% endif %}
+            
+            <div class="event-venue">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>{{ event.order.delivery_address }}, {{ event.order.delivery_postal_code }} {{ event.order.delivery_city }}</span>
+            </div>
+            
+            <div class="event-details">
+                <div class="detail-item">
+                    <div class="detail-value">{{ event.order.items.count }}</div>
+                    <div class="detail-label">Articles</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-value">{{ event.get_duration_hours|floatformat:1 }}h</div>
+                    <div class="detail-label">Durée</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-value">{{ event.order.total|floatformat:0 }}$</div>
+                    <div class="detail-label">Montant</div>
+                </div>
+            </div>
+            
+            <div class="event-actions 
+                        {% if event.status == 'completed' %}one-button{% elif event.status == 'in_progress' %}two-buttons{% else %}three-buttons{% endif %}">
+                {% if event.status == 'completed' %}
+                    {% if event.final_report %}
+                        <button class="btn-mobile btn-view" onclick="event.stopPropagation(); viewReport({{ event.final_report.id }})">
+                            <i class="fas fa-file-alt"></i> Voir rapport
+                        </button>
+                    {% else %}
+                        <button class="btn-mobile btn-report" onclick="event.stopPropagation(); createReport({{ event.id }})">
+                            <i class="fas fa-plus"></i> Créer rapport
+                        </button>
+                    {% endif %}
+                {% elif event.status == 'in_progress' %}
+                    <button class="btn-mobile btn-view" onclick="event.stopPropagation(); viewEvent({{ event.id }})">
+                        <i class="fas fa-eye"></i> Détails
+                    </button>
+                    <button class="btn-mobile btn-complete" onclick="event.stopPropagation(); completeEvent({{ event.id }})">
+                        <i class="fas fa-flag-checkered"></i> Terminer
+                    </button>
+                {% else %}
+                    <button class="btn-mobile btn-view" onclick="event.stopPropagation(); viewEvent({{ event.id }})">
+                        <i class="fas fa-eye"></i> Détails
+                    </button>
+                    <button class="btn-mobile btn-start" onclick="event.stopPropagation(); startEvent({{ event.id }})">
+                        <i class="fas fa-play"></i> Démarrer
+                    </button>
+                    {% if event.order.order_source == 'manual' %}
+                    <button class="btn-mobile btn-view" onclick="event.stopPropagation(); callClient('{{ event.order.phone }}')">
+                        <i class="fas fa-phone"></i> Appeler
+                    </button>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <i class="fas fa-calendar-check"></i>
+            <h3>Aucun événement</h3>
+            <p>Vous n'avez pas d'événements assignés pour le {{ selected_date|date:"d/m/Y" }}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Prochains événements -->
+    {% if upcoming_events %}
+    <div style="margin: 20px 15px 10px; color: white;">
+        <h3 style="margin: 0; font-size: 1.1rem; opacity: 0.9;">
+            <i class="fas fa-calendar-plus"></i> Prochains événements
+        </h3>
+    </div>
+    
+    <div class="event-list-mobile">
+        {% for event in upcoming_events %}
+        <div class="event-card-mobile" onclick="openEventDetail({{ event.id }})" style="opacity: 0.8;">
+            <div class="event-header">
+                <div class="event-time">
+                    <i class="fas fa-calendar"></i> {{ event.event_start_time|date:"d/m" }} - {{ event.event_start_time|time:"H:i" }}
+                </div>
+            </div>
+            
+            <div class="event-name">{{ event.event_name }}</div>
+            
+            <div class="event-client">
+                <i class="fas fa-user"></i>
+                <span>{{ event.order.first_name }} {{ event.order.last_name }}</span>
+            </div>
+            
+            <div class="event-venue">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>{{ event.venue_name|default:event.order.delivery_address }}</span>
+            </div>
+            
+            <div class="event-actions one-button">
+                <button class="btn-mobile btn-view" onclick="event.stopPropagation(); viewEvent({{ event.id }})">
+                    <i class="fas fa-eye"></i> Voir détails
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Floating Action Button pour créer rapport -->
+{% if current_event and current_event.status == 'in_progress' %}
+<button class="fab" onclick="addTimelineEvent()">
+    <i class="fas fa-plus"></i>
+</button>
+{% endif %}
+
+<!-- Bottom Navigation -->
+<div class="bottom-nav">
+    <a href="{% url 'maitre_hotel_dashboard' %}" class="nav-item active">
+        <i class="fas fa-home"></i>
+        <span>Accueil</span>
+    </a>
+    <a href="{% url 'maitre_hotel_planning' %}" class="nav-item">
+        <i class="fas fa-calendar"></i>
+        <span>Planning</span>
+    </a>
+    <a href="{% url 'maitre_hotel_notifications' %}" class="nav-item">
+        <i class="fas fa-bell"></i>
+        <span>Notifications</span>
+        {% if notifications_count > 0 %}
+        <span class="nav-badge">{{ notifications_count }}</span>
+        {% endif %}
+    </a>
+    <a href="{% url 'maitre_hotel_profile' %}" class="nav-item">
+        <i class="fas fa-user-tie"></i>
+        <span>Profil</span>
+    </a>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Variables globales
+    const eventData = {
+        {% for event in events %}
+        {{ event.id }}: {
+            id: {{ event.id }},
+            name: '{{ event.event_name|escapejs }}',
+            client_name: '{{ event.order.first_name|escapejs }} {{ event.order.last_name|escapejs }}',
+            phone: '{{ event.order.phone|escapejs }}',
+            address: '{{ event.order.delivery_address|escapejs }}',
+            status: '{{ event.status }}',
+            priority: '{{ event.priority }}',
+            start_time: '{{ event.event_start_time|date:"c" }}',
+            end_time: '{{ event.event_end_time|date:"c" }}'
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    };
+
+    // Vibration API pour feedback haptique
+    function vibrate(pattern = [50]) {
+        if ('vibrate' in navigator) {
+            navigator.vibrate(pattern);
+        }
+    }
+
+    // Démarrer un événement
+    function startEvent(eventId) {
+        vibrate([100, 50, 100]);
+        if (confirm('Démarrer cet événement maintenant?')) {
+            showLoading('Démarrage en cours...');
+            
+            fetch(`/maitre-hotel/event/${eventId}/start/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    showToast('Événement démarré avec succès!', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showToast(data.message || 'Erreur lors du démarrage', 'error');
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                console.error('Erreur:', error);
+                showToast('Erreur de connexion', 'error');
+            });
+        }
+    }
+
+    // Terminer un événement
+    function completeEvent(eventId) {
+        vibrate([50, 50, 100]);
+        if (confirm('Terminer cet événement? Vous pourrez ensuite créer le rapport final.')) {
+            showLoading('Finalisation en cours...');
+            
+            fetch(`/maitre-hotel/event/${eventId}/complete/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    showToast('Événement terminé!', 'success');
+                    if (data.redirect_url) {
+                        setTimeout(() => {
+                            window.location.href = data.redirect_url;
+                        }, 1500);
+                    } else {
+                        setTimeout(() => location.reload(), 1500);
+                    }
+                } else {
+                    showToast(data.message || 'Impossible de terminer l\'événement', 'error');
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                console.error('Erreur:', error);
+                showToast('Erreur de connexion', 'error');
+            });
+        }
+    }
+
+    // Voir les détails d'un événement
+    function viewEvent(eventId) {
+        vibrate();
+        window.location.href = `/maitre-hotel/event/${eventId}/`;
+    }
+
+    // Ouvrir le détail d'un événement
+    function openEventDetail(eventId) {
+        vibrate();
+        viewEvent(eventId);
+    }
+
+    // Créer un rapport
+    function createReport(eventId) {
+        vibrate();
+        window.location.href = `/maitre-hotel/event/${eventId}/report/create/`;
+    }
+
+    // Voir un rapport
+    function viewReport(reportId) {
+        vibrate();
+        window.location.href = `/maitre-hotel/report/${reportId}/`;
+    }
+
+    // Appeler le client
+    function callClient(phone) {
+        vibrate();
+        if (phone) {
+            window.location.href = `tel:${phone}`;
+        } else {
+            showToast('Numéro de téléphone non disponible', 'warning');
+        }
+    }
+
+    // Ajouter un événement à la timeline
+    function addTimelineEvent() {
+        vibrate();
+        {% if current_event %}
+        const eventId = {{ current_event.id }};
+        const description = prompt('Que s\'est-il passé?');
+        
+        if (description && description.trim()) {
+            showLoading('Ajout en cours...');
+            
+            fetch('/maitre-hotel/api/add-timeline/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    event_id: eventId,
+                    action_type: 'other',
+                    description: description.trim(),
+                    is_issue: description.toLowerCase().includes('problème') || 
+                             description.toLowerCase().includes('issue') ||
+                             description.toLowerCase().includes('erreur')
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    showToast('Événement ajouté à la timeline', 'success');
+                } else {
+                    showToast('Erreur lors de l\'ajout', 'error');
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                console.error('Erreur:', error);
+                showToast('Erreur de connexion', 'error');
+            });
+        }
+        {% else %}
+        showToast('Aucun événement en cours', 'warning');
+        {% endif %}
+    }
+
+    // Changer la date
+    function changeDate(date) {
+        showLoading('Chargement...');
+        window.location.href = `{% url 'maitre_hotel_dashboard' %}?date=${date}`;
+    }
+
+    function goToToday() {
+        const today = new Date().toISOString().split('T')[0];
+        changeDate(today);
+    }
+
+    // Toast notification
+    function showToast(message, type = 'info', duration = 3000) {
+        const existingToasts = document.querySelectorAll('.toast-mobile');
+        existingToasts.forEach(toast => toast.remove());
+        
+        const toast = document.createElement('div');
+        toast.className = `toast-mobile toast-${type}`;
+        toast.textContent = message;
+        
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, duration);
+    }
+
+    // Loading indicator
+    function showLoading(message = 'Chargement...') {
+        const loading = document.createElement('div');
+        loading.id = 'loadingIndicator';
+        loading.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            backdrop-filter: blur(5px);
+        `;
+        loading.innerHTML = `
+            <div class="loading-spinner" style="margin-bottom: 20px;"></div>
+            <div style="font-weight: 600; font-size: 1.1rem;">${message}</div>
+        `;
+        document.body.appendChild(loading);
+    }
+
+    function hideLoading() {
+        const loading = document.getElementById('loadingIndicator');
+        if (loading) {
+            loading.remove();
+        }
+    }
+
+    // Détection de perte de connexion
+    function updateConnectionStatus() {
+        if (navigator.onLine) {
+            document.body.classList.remove('offline');
+        } else {
+            document.body.classList.add('offline');
+            showToast('Connexion perdue - Mode hors ligne', 'warning', 5000);
+        }
+    }
+
+    // Gestion des photos pour les rapports
+    function takePhoto() {
+        if ('mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices) {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    // Ouvrir l'interface de prise de photo
+                    openCameraInterface(stream);
+                })
+                .catch(error => {
+                    console.error('Erreur accès caméra:', error);
+                    // Fallback vers input file
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.capture = 'environment';
+                    input.onchange = handlePhotoUpload;
+                    input.click();
+                });
+        } else {
+            // Fallback pour anciens navigateurs
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = handlePhotoUpload;
+            input.click();
+        }
+    }
+
+    function handlePhotoUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const formData = new FormData();
+            formData.append('photo', file);
+            formData.append('event_id', {{ current_event.id|default:0 }});
+            formData.append('photo_type', 'service');
+            formData.append('caption', 'Photo prise depuis le dashboard');
+            
+            showLoading('Upload de la photo...');
+            
+            fetch('/maitre-hotel/api/upload-photo/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    showToast('Photo uploadée avec succès!', 'success');
+                } else {
+                    showToast('Erreur lors de l\'upload', 'error');
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                console.error('Erreur:', error);
+                showToast('Erreur lors de l\'upload', 'error');
+            });
+        }
+    }
+
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Dashboard maître d\'hôtel initialisé');
+        
+        // Écouter les changements de connexion
+        window.addEventListener('online', updateConnectionStatus);
+        window.addEventListener('offline', updateConnectionStatus);
+        
+        // Demander la permission pour les notifications
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+
+        // Service Worker pour mode offline
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/sw.js').catch(console.error);
+        }
+
+        // Actualisation automatique toutes les 5 minutes
+        setInterval(() => {
+            if (navigator.onLine && document.visibilityState === 'visible') {
+                // Actualiser seulement les données critiques
+                fetch(`{% url 'maitre_hotel_dashboard' %}?ajax=1`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Mettre à jour les notifications
+                        if (data.notifications_count !== {{ notifications_count }}) {
+                            location.reload();
+                        }
+                    })
+                    .catch(error => console.error('Erreur actualisation:', error));
+            }
+        }, 5 * 60 * 1000);
+    });
+
+    // Gestion de la visibilité de la page
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible') {
+            updateConnectionStatus();
+        }
+    });
+
+    // Gestion des gestes tactiles pour navigation rapide
+    let touchStartY = 0;
+    let touchEndY = 0;
+
+    document.addEventListener('touchstart', function(event) {
+        touchStartY = event.changedTouches[0].screenY;
+    });
+
+    document.addEventListener('touchend', function(event) {
+        touchEndY = event.changedTouches[0].screenY;
+        handleSwipe();
+    });
+
+    function handleSwipe() {
+        const swipeThreshold = 100;
+        const diff = touchStartY - touchEndY;
+        
+        if (Math.abs(diff) > swipeThreshold) {
+            if (diff > 0) {
+                // Swipe vers le haut - actualiser
+                if (window.scrollY < 50) {
+                    vibrate([25, 25, 25]);
+                    location.reload();
+                }
+            }
+        }
+    }
+</script>
+{% endblock %}

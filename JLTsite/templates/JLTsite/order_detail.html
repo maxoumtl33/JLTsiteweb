@@ -38,6 +38,131 @@
         margin: 0;
         padding: 0;
     }
+
+    /* Styles pour le bouton checklist */
+    .checklist-section {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin: 2rem 0;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        border-left: 4px solid #3498db;
+    }
+    
+    .checklist-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .checklist-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #2c3e50;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .checklist-title i {
+        color: #3498db;
+    }
+    
+    .btn-create-checklist {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        color: white;
+        padding: 12px 25px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-create-checklist:hover {
+        background: linear-gradient(135deg, #2980b9, #21618c);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+    }
+    
+    .btn-view-checklist {
+        background: #ecf0f1;
+        color: #2c3e50;
+        padding: 12px 25px;
+        border: 2px solid #3498db;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-view-checklist:hover {
+        background: #3498db;
+        color: white;
+        transform: translateY(-2px);
+    }
+    
+    .checklist-info {
+        background: #ebf5fb;
+        padding: 1rem;
+        border-radius: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .checklist-status {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .checklist-progress {
+        width: 200px;
+        height: 20px;
+        background: #e9ecef;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .checklist-progress-fill {
+        height: 100%;
+        background: linear-gradient(to right, #3498db, #27ae60);
+        transition: width 0.5s ease;
+    }
+    
+    .checklist-assigned {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #2c3e50;
+    }
+    
+    .checklist-assigned i {
+        color: #3498db;
+    }
+    
+    .checklist-alert {
+        background: #fff3cd;
+        color: #856404;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-top: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
     
     .admin-nav-tab {
         padding: 1rem 1.5rem;
@@ -264,6 +389,161 @@
         border-color: var(--jlt-yellow);
         box-shadow: 0 0 0 3px rgba(244, 200, 67, 0.1);
     }
+    text-purple { color: #8e44ad !important; }
+.btn-purple { 
+    background-color: #8e44ad; 
+    border-color: #8e44ad; 
+    color: white; 
+}
+.btn-purple:hover { 
+    background-color: #7d3c98; 
+    border-color: #7d3c98; 
+    color: white; 
+}
+.btn-outline-purple { 
+    border-color: #8e44ad; 
+    color: #8e44ad; 
+}
+.btn-outline-purple:hover { 
+    background-color: #8e44ad; 
+    border-color: #8e44ad; 
+    color: white; 
+}
+
+.event-info-card {
+    border: 2px solid #e3e6f0;
+    border-radius: 10px;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f8f9fc 0%, white 100%);
+}
+
+.event-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e3e6f0;
+}
+
+.event-name {
+    margin: 0;
+    color: #2c3e50;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.event-contract-number {
+    margin: 0.25rem 0 0 0;
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+.status-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.5rem 0.75rem;
+    border-radius: 15px;
+}
+
+.badge-draft { background-color: #f8f9fa; color: #6c757d; }
+.badge-confirmed { background-color: #d4f4dd; color: #28a745; }
+.badge-in_progress { background-color: #fff3cd; color: #856404; }
+.badge-completed { background-color: #d1ecf1; color: #0c5460; }
+.badge-cancelled { background-color: #f8d7da; color: #721c24; }
+
+.badge-priority-low { background-color: #e9ecef; color: #6c757d; }
+.badge-priority-normal { background-color: #d4f4dd; color: #28a745; }
+.badge-priority-high { background-color: #fff3cd; color: #856404; }
+.badge-priority-urgent { 
+    background-color: #f8d7da; 
+    color: #721c24; 
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+.event-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.event-detail {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(142, 68, 173, 0.05);
+    border-radius: 8px;
+    border-left: 3px solid #8e44ad;
+}
+
+.event-detail i {
+    font-size: 1.1rem;
+    margin-top: 0.1rem;
+    color: #8e44ad !important;
+}
+
+.event-description {
+    margin: 1rem 0;
+    padding: 1rem;
+    background: #f8f9fc;
+    border-radius: 8px;
+    border-left: 3px solid #8e44ad;
+}
+
+.event-description p {
+    margin: 0.5rem 0 0 0;
+    color: #2c3e50;
+    line-height: 1.5;
+}
+
+.event-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.assign-maitre-hotel {
+    flex: 1;
+    min-width: 250px;
+}
+
+.no-event-state {
+    border: 2px dashed #dee2e6;
+    border-radius: 10px;
+    background: #f8f9fc;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .event-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .event-details-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .event-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .assign-maitre-hotel {
+        min-width: auto;
+    }
+}
     
     /* Notification Toast */
     .notification-toast {
@@ -363,6 +643,237 @@
 <!-- Order Detail Content -->
 <section class="order-detail-container">
     <div class="container">
+        <!-- Section Checklist à ajouter dans admin_order_detail.html -->
+<div class="checklist-section">
+    <div class="checklist-header">
+        <h3 class="checklist-title">
+            <i class="fas fa-clipboard-check"></i>
+            Checklist de préparation
+        </h3>
+        
+        {% if order.checklist %}
+            <!-- Si une checklist existe déjà -->
+            <div>
+                <a href="{% url 'admin_edit_checklist' order.order_number %}" class="btn-view-checklist">
+                    <i class="fas fa-edit"></i> Modifier
+                </a>
+                
+            </div>
+        {% else %}
+            <!-- Si aucune checklist n'existe -->
+            <a href="{% url 'admin_create_checklist' order.order_number %}" class="btn-create-checklist">
+                <i class="fas fa-plus-circle"></i> Créer une checklist
+            </a>
+        {% endif %}
+    </div>
+    
+    {% if order.checklist %}
+    <div class="checklist-info">
+        <div class="checklist-status">
+            <strong>Statut:</strong>
+            <span class="badge" style="background: 
+                {% if order.checklist.status == 'completed' %}#28a745
+                {% elif order.checklist.status == 'in_progress' %}#ffc107
+                {% else %}#6c757d{% endif %}; 
+                color: white; padding: 5px 10px; border-radius: 5px;">
+                {{ order.checklist.get_status_display }}
+            </span>
+            
+            <div class="checklist-progress">
+                <div class="checklist-progress-fill" style="width: {{ order.checklist.progress_percentage }}%;"></div>
+            </div>
+            <span>{{ order.checklist.progress_percentage }}%</span>
+        </div>
+        
+        {% if order.checklist.assigned_to %}
+        <div class="checklist-assigned">
+            <i class="fas fa-user-check"></i>
+            Assignée à: <strong>{{ order.checklist.assigned_to.get_full_name }}</strong>
+        </div>
+        {% endif %}
+    </div>
+    
+    {% if order.checklist.status == 'pending' %}
+    <div class="checklist-alert">
+        <i class="fas fa-exclamation-triangle"></i>
+        La checklist n'a pas encore été commencée. 
+        {% if order.checklist.assigned_to %}
+            Assignée à {{ order.checklist.assigned_to.get_full_name }}.
+        {% else %}
+            Aucun responsable assigné.
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    {% if order.checklist.notifications.filter.is_read.False.exists %}
+    <div class="checklist-alert" style="background: #f8d7da; color: #721c24;">
+        <i class="fas fa-bell"></i>
+        {{ order.checklist.notifications.filter.is_read.False.count }} notification(s) non lue(s)
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <div style="padding: 1rem; background: #f8f9fa; border-radius: 8px; margin-top: 1rem;">
+        <p style="margin: 0; color: #6c757d;">
+            <i class="fas fa-info-circle"></i>
+            Aucune checklist n'a été créée pour cette commande. 
+            Créez une checklist pour suivre la préparation des articles nécessaires.
+        </p>
+    </div>
+    {% endif %}
+</div>
+<!-- Section événement dans les détails de commande -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-calendar-alt text-purple"></i>
+            Gestion événement
+        </h5>
+        {% if not order.event_contract %}
+        <a href="{% url 'admin_create_event_from_order' order.order_number %}" 
+           class="btn btn-outline-purple btn-sm">
+            <i class="fas fa-plus"></i> Créer un événement
+        </a>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        {% if order.event_contract %}
+        <!-- Événement existant -->
+        <div class="event-info-card">
+            <div class="event-header">
+                <div class="event-main-info">
+                    <h6 class="event-name">{{ order.event_contract.event_name }}</h6>
+                    <p class="event-contract-number">{{ order.event_contract.contract_number }}</p>
+                </div>
+                <div class="event-status">
+                    <span class="badge badge-{{ order.event_contract.status }} status-badge">
+                        {% if order.event_contract.status == 'draft' %}Brouillon
+                        {% elif order.event_contract.status == 'confirmed' %}Confirmé
+                        {% elif order.event_contract.status == 'in_progress' %}En cours
+                        {% elif order.event_contract.status == 'completed' %}Terminé
+                        {% elif order.event_contract.status == 'cancelled' %}Annulé
+                        {% endif %}
+                    </span>
+                    <span class="badge badge-priority-{{ order.event_contract.priority }} ml-2">
+                        {% if order.event_contract.priority == 'low' %}Priorité basse
+                        {% elif order.event_contract.priority == 'normal' %}Priorité normale
+                        {% elif order.event_contract.priority == 'high' %}Priorité haute
+                        {% elif order.event_contract.priority == 'urgent' %}URGENT
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="event-details-grid">
+                <div class="event-detail">
+                    <i class="fas fa-clock text-muted"></i>
+                    <div>
+                        <strong>Horaires</strong><br>
+                        <small>
+                            Installation: {{ order.event_contract.setup_start_time|date:"d/m H:i" }}<br>
+                            Événement: {{ order.event_contract.event_start_time|date:"d/m H:i" }} - {{ order.event_contract.event_end_time|date:"H:i" }}<br>
+                            Nettoyage: {{ order.event_contract.cleanup_end_time|date:"H:i" }}
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="event-detail">
+                    <i class="fas fa-crown text-muted"></i>
+                    <div>
+                        <strong>Maître d'hôtel</strong><br>
+                        {% if order.event_contract.maitre_hotel %}
+                        <small>{{ order.event_contract.maitre_hotel.get_full_name }}</small>
+                        <br><small class="text-muted">{{ order.event_contract.maitre_hotel.email }}</small>
+                        {% else %}
+                        <small class="text-warning">Non assigné</small>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="event-detail">
+                    <i class="fas fa-map-marker-alt text-muted"></i>
+                    <div>
+                        <strong>Lieu</strong><br>
+                        <small>
+                            {% if order.event_contract.venue_name %}{{ order.event_contract.venue_name }}{% else %}{{ order.delivery_address }}{% endif %}
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="event-detail">
+                    <i class="fas fa-users text-muted"></i>
+                    <div>
+                        <strong>Personnel</strong><br>
+                        <small>{{ order.event_contract.staff_assignments.count }} personne{{ order.event_contract.staff_assignments.count|pluralize }} assignée{{ order.event_contract.staff_assignments.count|pluralize }}</small>
+                    </div>
+                </div>
+            </div>
+            
+            {% if order.event_contract.event_description %}
+            <div class="event-description">
+                <strong>Description:</strong>
+                <p>{{ order.event_contract.event_description }}</p>
+            </div>
+            {% endif %}
+            
+            <div class="event-actions">
+                <a href="{% url 'admin_event_detail' order.event_contract.id %}" 
+                   class="btn btn-outline-purple btn-sm">
+                    <i class="fas fa-eye"></i> Voir détails
+                </a>
+                
+                {% if order.event_contract.status == 'confirmed' %}
+                <button type="button" class="btn btn-success btn-sm" 
+                        onclick="changeEventStatus({{ order.event_contract.id }}, 'in_progress')">
+                    <i class="fas fa-play"></i> Démarrer
+                </button>
+                {% elif order.event_contract.status == 'in_progress' %}
+                <button type="button" class="btn btn-warning btn-sm" 
+                        onclick="changeEventStatus({{ order.event_contract.id }}, 'completed')">
+                    <i class="fas fa-check"></i> Terminer
+                </button>
+                {% endif %}
+                
+                {% if not order.event_contract.maitre_hotel %}
+                <div class="assign-maitre-hotel mt-2">
+                    <small class="text-muted">Assigner à:</small>
+                    <div class="input-group input-group-sm">
+                        <select class="form-control" id="maitre-hotel-select-{{ order.event_contract.id }}">
+                            <option value="">Choisir un maître d'hôtel...</option>
+                            {% for mh in available_maitre_hotels %}
+                            <option value="{{ mh.id }}">{{ mh.get_full_name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-success" type="button" 
+                                    onclick="assignMaitreHotel({{ order.event_contract.id }})">
+                                <i class="fas fa-check"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% else %}
+        <!-- Pas d'événement -->
+        <div class="no-event-state">
+            <div class="text-center py-4">
+                <i class="fas fa-calendar-plus text-muted mb-3" style="font-size: 3rem;"></i>
+                <h6 class="text-muted">Aucun événement créé</h6>
+                <p class="text-muted mb-3">
+                    Cette commande peut être transformée en événement pour la gestion par un maître d'hôtel.
+                </p>
+                <a href="{% url 'admin_create_event_from_order' order.order_number %}" 
+                   class="btn btn-purple">
+                    <i class="fas fa-plus"></i> Créer un événement
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
         <div class="row">
             <!-- Main Column -->
             <div class="col-lg-8">
@@ -670,6 +1181,9 @@
     </div>
 </section>
 
+
+
+
 <!-- Notification Toast -->
 <div id="notificationToast" class="notification-toast">
     <div class="d-flex align-items-center gap-2">
@@ -693,6 +1207,8 @@
 </div>
 {% endif %}
 {% endblock %}
+
+
 
 {% block extra_js %}
 <script>
@@ -837,5 +1353,86 @@
             });
         }
     }
+
+    {% if order.checklist and order.checklist.status == 'in_progress' %}
+    setInterval(function() {
+        fetch(`/api/checklist/{{ order.checklist.id }}/progress/`)
+            .then(response => response.json())
+            .then(data => {
+                // Mettre à jour la barre de progression
+                document.querySelector('.checklist-progress-fill').style.width = data.progress + '%';
+                document.querySelector('.checklist-status span:last-child').textContent = data.progress + '%';
+                
+                // Mettre à jour le statut si nécessaire
+                if (data.status === 'completed') {
+                    location.reload();
+                }
+            });
+    }, 30000); // 30 secondes
+    {% endif %}
+
+function changeEventStatus(eventId, newStatus) {
+    if (confirm(`Confirmer le changement de statut?`)) {
+        fetch('/admin-dashboard/api/change-event-status/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                event_id: eventId,
+                status: newStatus
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Recharger la page pour voir les changements
+                location.reload();
+            } else {
+                alert('Erreur: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            alert('Erreur de connexion');
+        });
+    }
+}
+
+function assignMaitreHotel(eventId) {
+    const select = document.getElementById(`maitre-hotel-select-${eventId}`);
+    const maitreHotelId = select.value;
+    
+    if (!maitreHotelId) {
+        alert('Veuillez sélectionner un maître d\'hôtel');
+        return;
+    }
+    
+    fetch('/admin-dashboard/api/quick-assign-maitre-hotel/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            event_id: eventId,
+            maitre_hotel_id: maitreHotelId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Recharger la page pour voir les changements
+            location.reload();
+        } else {
+            alert('Erreur: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        alert('Erreur de connexion');
+    });
+}
 </script>
 {% endblock %}

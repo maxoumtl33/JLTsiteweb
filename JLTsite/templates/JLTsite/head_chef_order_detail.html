@@ -1,0 +1,319 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Détail Commande {{ order.order_number }} - Chef de Cuisine{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --chef-primary: #8B4513;
+        --chef-secondary: #DEB887;
+        --chef-accent: #CD853F;
+        --chef-dark: #654321;
+        --chef-light: #FFF8DC;
+    }
+
+    .order-detail-header {
+        background: linear-gradient(135deg, var(--chef-primary) 0%, var(--chef-dark) 100%);
+        color: white;
+        padding: 2rem 0;
+    }
+
+    .order-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+        margin: 2rem 0;
+    }
+
+    .info-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .info-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .info-value {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--chef-dark);
+    }
+
+    .department-section {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .department-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--chef-light);
+        margin-bottom: 1rem;
+    }
+
+    .department-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--chef-primary);
+    }
+
+    .items-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .items-table th {
+        background: var(--chef-light);
+        padding: 0.75rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--chef-dark);
+    }
+
+    .items-table td {
+        padding: 0.75rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .item-status {
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .status-prepared {
+        background: #d4f4dd;
+        color: #28a745;
+    }
+
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .production-status {
+        background: var(--chef-light);
+        border-radius: 10px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 10px;
+        background: #e9ecef;
+        border-radius: 5px;
+        overflow: hidden;
+        margin: 0.5rem 0;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--chef-accent) 0%, var(--chef-primary) 100%);
+        transition: width 0.5s ease;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .btn-chef {
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary-chef {
+        background: var(--chef-primary);
+        color: white;
+    }
+
+    .btn-primary-chef:hover {
+        background: var(--chef-dark);
+        transform: translateY(-2px);
+    }
+
+    .btn-secondary-chef {
+        background: var(--chef-secondary);
+        color: var(--chef-dark);
+    }
+
+    .btn-print {
+        background: #6c757d;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<section class="order-detail-header">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb" style="background: transparent;">
+                <li class="breadcrumb-item"><a href="{% url 'head_chef_dashboard' %}" style="color: var(--chef-secondary);">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'head_chef_orders' %}" style="color: var(--chef-secondary);">Commandes</a></li>
+                <li class="breadcrumb-item active" style="color: white;">{{ order.order_number }}</li>
+            </ol>
+        </nav>
+        <h1><i class="fas fa-clipboard-list"></i> Commande {{ order.order_number }}</h1>
+        <p class="mb-0">{{ order.get_status_display }} - {{ order.delivery_date|date:"d F Y" }}</p>
+    </div>
+</section>
+
+<!-- Contenu principal -->
+<section class="py-4" style="background: var(--chef-light);">
+    <div class="container">
+        <!-- Informations de la commande -->
+        <div class="order-info-grid">
+            <div class="info-card">
+                <h5 class="mb-3"><i class="fas fa-user"></i> Client</h5>
+                <div class="info-label">Nom</div>
+                <div class="info-value">{{ order.first_name }} {{ order.last_name }}</div>
+                {% if order.company %}
+                <div class="info-label mt-2">Entreprise</div>
+                <div class="info-value">{{ order.company }}</div>
+                {% endif %}
+                <div class="info-label mt-2">Téléphone</div>
+                <div class="info-value">{{ order.phone }}</div>
+            </div>
+
+            <div class="info-card">
+                <h5 class="mb-3"><i class="fas fa-truck"></i> Livraison</h5>
+                <div class="info-label">Date</div>
+                <div class="info-value">{{ order.delivery_date|date:"d/m/Y" }}</div>
+                <div class="info-label mt-2">Heure</div>
+                <div class="info-value">{{ order.delivery_time|time:"H:i" }}</div>
+                <div class="info-label mt-2">Type</div>
+                <div class="info-value">{{ order.get_delivery_type_display }}</div>
+            </div>
+
+            <div class="info-card">
+                <h5 class="mb-3"><i class="fas fa-map-marker-alt"></i> Adresse</h5>
+                <div class="info-value">
+                    {{ order.delivery_address }}<br>
+                    {{ order.delivery_postal_code }} {{ order.delivery_city }}
+                </div>
+                {% if order.delivery_notes %}
+                <div class="info-label mt-2">Notes</div>
+                <div class="info-value" style="font-size: 0.95rem;">{{ order.delivery_notes }}</div>
+                {% endif %}
+            </div>
+
+            <div class="info-card">
+                <h5 class="mb-3"><i class="fas fa-dollar-sign"></i> Montants</h5>
+                <div class="info-label">Sous-total</div>
+                <div class="info-value">${{ order.subtotal|floatformat:2 }}</div>
+                <div class="info-label mt-2">Taxes</div>
+                <div class="info-value">${{ order.tax_amount|floatformat:2 }}</div>
+                <div class="info-label mt-2">Total</div>
+                <div class="info-value" style="font-size: 1.5rem; color: var(--chef-primary);">
+                    ${{ order.total|floatformat:2 }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Articles par département -->
+        <h3 class="mt-4 mb-3"><i class="fas fa-utensils"></i> Articles par département</h3>
+        
+        {% for dept, items in items_by_department.items %}
+        <div class="department-section">
+            <div class="department-header">
+                <div class="department-title">
+                    {{ dept|capfirst }}
+                    <span class="badge badge-secondary">{{ items|length }} article{{ items|length|pluralize }}</span>
+                </div>
+                {% if productions %}
+                    {% for prod in productions %}
+                        {% if prod.department == dept %}
+                        <div class="production-status">
+                            <small>Production: {{ prod.progress_percentage }}% complété</small>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: {{ prod.progress_percentage }}%;"></div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>Produit</th>
+                        <th>Quantité</th>
+                        <th>Prix unitaire</th>
+                        <th>Sous-total</th>
+                        <th>Statut</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td><strong>{{ item.product_name }}</strong></td>
+                        <td>{{ item.quantity }}</td>
+                        <td>${{ item.product_price|floatformat:2 }}</td>
+                        <td>${{ item.subtotal|floatformat:2 }}</td>
+                        <td>
+                            {% if item.is_prepared %}
+                                <span class="item-status status-prepared">Préparé</span>
+                            {% else %}
+                                <span class="item-status status-pending">En attente</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ item.notes|default:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endfor %}
+
+        <!-- Actions -->
+        <div class="action-buttons">
+            <a href="{% url 'head_chef_orders' %}" class="btn-chef btn-secondary-chef">
+                <i class="fas fa-arrow-left"></i> Retour aux commandes
+            </a>
+            <a href="{% url 'head_chef_dispatch' %}?date={{ order.delivery_date|date:'Y-m-d' }}" class="btn-chef btn-primary-chef">
+                <i class="fas fa-clipboard-check"></i> Voir dispatch du jour
+            </a>
+            <button onclick="window.print()" class="btn-chef btn-print">
+                <i class="fas fa-print"></i> Imprimer
+            </button>
+        </div>
+
+        <!-- Notes internes -->
+        {% if order.admin_notes %}
+        <div class="department-section mt-4">
+            <h5><i class="fas fa-sticky-note"></i> Notes internes</h5>
+            <p>{{ order.admin_notes }}</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<script>
+// Auto-refresh de la progression toutes les 30 secondes
+setInterval(function() {
+    location.reload();
+}, 30000);
+</script>
+{% endblock %}

@@ -9,7 +9,51 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
+import pymysql
+pymysql.install_as_MySQLdb()
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = True
+# Remplacez votre configuration DATABASES par:
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'jlt_database',
+        'USER': 'jlt_user',
+        'PASSWORD': 'JLT2024!Secure',
+        'HOST': 'localhost',
+        'PORT': '3306',
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            'isolation_level': 'read committed',
+        },
+        'TEST': {
+            'CHARSET': 'utf8mb4',
+            'COLLATION': 'utf8mb4_unicode_ci',
+        }
+    }
+}
 
+# Configuration optionnelle pour de meilleures performances
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Si vous voulez voir les requêtes SQL dans la console (développement uniquement)
+if DEBUG:
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+            },
+        },
+        'loggers': {
+            'django.db.backends': {
+                'handlers': ['console'],
+                'level': 'DEBUG',
+            },
+        },
+    }
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -22,8 +66,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-ka&&n)#g!hy9z8zigm(p0m3ozk^%r@$6!qc$3-(@0v4@&oue7&'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+
 
 ALLOWED_HOSTS = ['maxoufaya33.pythonanywhere.com', '127.0.0.1']
 
@@ -81,15 +124,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'JLTwebsite.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'jltwebsitevitrine2.sqlite3',  # Adding .sqlite3 extension
-    }
-}
 
 
 
@@ -143,6 +177,8 @@ STATICFILES_DIRS = [
 ]
 
 SITE_URL = 'http://127.0.0.1:8000/'
+
+GOOGLE_API_KEY = 'AIzaSyC2GqoZLMIMuAihXl8271sJN3kJ_57smdM'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')

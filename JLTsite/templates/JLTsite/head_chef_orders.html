@@ -1,0 +1,996 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Gestion des commandes - Chef de Cuisine{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --chef-primary: #8B4513;
+        --chef-secondary: #DEB887;
+        --chef-accent: #CD853F;
+        --chef-dark: #654321;
+        --chef-light: #FFF8DC;
+        --success: #28a745;
+        --warning: #ffc107;
+        --danger: #dc3545;
+        --info: #17a2b8;
+    }
+
+    .orders-header {
+        background: linear-gradient(135deg, var(--chef-primary) 0%, var(--chef-dark) 100%);
+        color: white;
+        padding: 2rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .orders-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 60%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(205, 133, 63, 0.1) 0%, transparent 70%);
+        animation: float 20s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(10deg); }
+    }
+
+    .quick-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--chef-primary);
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+
+    .filters-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .filter-row {
+        display: flex;
+        gap: 1rem;
+        align-items: end;
+        flex-wrap: wrap;
+    }
+
+    .filter-group {
+        flex: 1;
+        min-width: 150px;
+    }
+
+    .filter-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #495057;
+        font-size: 0.9rem;
+    }
+
+    .filter-control {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 0.95rem;
+    }
+
+    .btn-filter {
+        padding: 8px 20px;
+        background: var(--chef-primary);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-filter:hover {
+        background: var(--chef-dark);
+        transform: translateY(-2px);
+    }
+
+    .btn-reset {
+        padding: 8px 20px;
+        background: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .orders-table-section {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+    }
+
+    .table-header {
+        background: var(--chef-light);
+        padding: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid var(--chef-accent);
+    }
+
+    .table-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--chef-dark);
+        margin: 0;
+    }
+
+    .orders-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .orders-table thead {
+        background: #f8f9fa;
+    }
+
+    .orders-table th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--chef-dark);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .orders-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #e9ecef;
+        vertical-align: middle;
+    }
+
+    .orders-table tbody tr {
+        transition: background 0.3s ease;
+    }
+
+    .orders-table tbody tr:hover {
+        background: var(--chef-light);
+    }
+
+    .order-number-link {
+        font-weight: 600;
+        color: var(--chef-primary);
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .order-number-link:hover {
+        color: var(--chef-dark);
+        text-decoration: underline;
+    }
+
+    .customer-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .customer-name {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .customer-company {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+
+    .delivery-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .delivery-date {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .delivery-time {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        display: inline-block;
+    }
+
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-confirmed { background: #d4f4dd; color: var(--success); }
+    .status-preparing { background: #cce5ff; color: #004085; }
+    .status-ready { background: #d1ecf1; color: #0c5460; }
+    .status-delivered { background: #e2e3e5; color: #383d41; }
+    .status-cancelled { background: #f8d7da; color: var(--danger); }
+
+    .delivery-type-badge {
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .type-delivery { background: var(--chef-light); color: var(--chef-dark); }
+    .type-pickup { background: #e3f2fd; color: #1565c0; }
+
+    .amount-cell {
+        font-weight: 700;
+        color: var(--chef-dark);
+        font-size: 1.1rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-action {
+        padding: 6px 10px;
+        border-radius: 6px;
+        border: none;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        color: white;
+    }
+
+    .btn-view { background: var(--info); }
+    .btn-view:hover { background: #138496; }
+    .btn-edit { background: var(--chef-accent); }
+    .btn-edit:hover { background: var(--chef-primary); }
+    .btn-print { background: #6c757d; }
+    .btn-print:hover { background: #5a6268; }
+
+    .pagination-section {
+        padding: 1.5rem;
+        display: flex;
+        justify-content: center;
+        background: #f8f9fa;
+    }
+
+    .pagination {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .page-link {
+        padding: 8px 12px;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        color: var(--chef-primary);
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .page-link:hover {
+        background: var(--chef-light);
+        border-color: var(--chef-accent);
+    }
+
+    .page-link.active {
+        background: var(--chef-primary);
+        color: white;
+        border-color: var(--chef-primary);
+    }
+
+    .page-link.disabled {
+        color: #6c757d;
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .priority-indicator {
+        width: 4px;
+        height: 100%;
+        position: absolute;
+        left: 0;
+        top: 0;
+    }
+
+    .priority-high { background: var(--danger); }
+    .priority-normal { background: var(--warning); }
+    .priority-low { background: var(--success); }
+
+    .table-row-priority {
+        position: relative;
+    }
+
+    .export-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-export {
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-production { background: var(--chef-accent); }
+    .btn-production:hover { background: var(--chef-primary); }
+    
+    /* Modal styles */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+    }
+    
+    .modal-content {
+        background: white;
+        margin: 10% auto;
+        padding: 2rem;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+    
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--chef-light);
+    }
+    
+    .modal-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--chef-dark);
+    }
+    
+    .close-modal {
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #6c757d;
+        background: none;
+        border: none;
+    }
+    
+    .department-checkbox-group {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1.5rem 0;
+    }
+    
+    .dept-checkbox-item {
+        padding: 1rem;
+        background: var(--chef-light);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .dept-checkbox-item:hover {
+        border-color: var(--chef-accent);
+    }
+    
+    .dept-checkbox-item.selected {
+        background: var(--chef-accent);
+        color: white;
+    }
+    
+    .dept-checkbox-item input {
+        margin-right: 0.5rem;
+    }
+    
+    .production-items-list {
+        margin: 1.5rem 0;
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+    }
+    
+    .production-item {
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        background: #f8f9fa;
+        border-radius: 6px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .item-info {
+        flex: 1;
+    }
+    
+    .item-quantity {
+        font-weight: 600;
+        color: var(--chef-primary);
+        margin-left: 1rem;
+    }
+    
+    .modal-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 2rem;
+    }
+    
+    .btn-modal {
+        padding: 10px 20px;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-confirm {
+        background: var(--success);
+        color: white;
+    }
+    
+    .btn-cancel {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        padding: 2rem;
+    }
+    
+    .success-message {
+        display: none;
+        background: #d4f4dd;
+        color: var(--success);
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+        margin-top: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<section class="orders-header">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb" style="background: transparent;">
+                <li class="breadcrumb-item"><a href="{% url 'head_chef_dashboard' %}" style="color: var(--chef-secondary);">Dashboard</a></li>
+                <li class="breadcrumb-item active" style="color: white;">Commandes</li>
+            </ol>
+        </nav>
+        <h1><i class="fas fa-clipboard-list"></i> Gestion des commandes</h1>
+        <p class="mb-0">Visualisez et gérez toutes les commandes de la cuisine</p>
+    </div>
+</section>
+
+<!-- Contenu principal -->
+<section class="py-4" style="background: #f8f9fa;">
+    <div class="container">
+        <!-- Statistiques rapides -->
+        <div class="quick-stats">
+            <div class="stat-card">
+                <div class="stat-number">{{ quick_stats.today_orders }}</div>
+                <div class="stat-label">Aujourd'hui</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ quick_stats.tomorrow_orders }}</div>
+                <div class="stat-label">Demain</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ quick_stats.week_orders }}</div>
+                <div class="stat-label">Cette semaine</div>
+            </div>
+        </div>
+
+        <!-- Filtres -->
+        <div class="filters-section">
+            <form method="get" class="filter-row">
+                <div class="filter-group">
+                    <label class="filter-label">Date de livraison</label>
+                    <input type="date" name="date" class="filter-control" value="{{ date_filter }}">
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">Statut</label>
+                    <select name="status" class="filter-control">
+                        <option value="">Tous les statuts</option>
+                        {% for status_code, status_name in statuses %}
+                        <option value="{{ status_code }}" {% if status_filter == status_code %}selected{% endif %}>
+                            {{ status_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">Département</label>
+                    <select name="department" class="filter-control">
+                        <option value="">Tous les départements</option>
+                        {% for dept_code, dept_name in departments %}
+                        <option value="{{ dept_code }}" {% if department_filter == dept_code %}selected{% endif %}>
+                            {{ dept_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn-filter">
+                    <i class="fas fa-filter"></i> Filtrer
+                </button>
+                
+                <a href="{% url 'head_chef_orders' %}" class="btn-reset">
+                    <i class="fas fa-redo"></i> Réinitialiser
+                </a>
+            </form>
+        </div>
+
+        <!-- Table des commandes -->
+        <div class="orders-table-section">
+            <div class="table-header">
+                <h3 class="table-title">
+                    <i class="fas fa-list"></i> Liste des commandes
+                </h3>
+                <div class="export-buttons">
+                    <a href="?{{ request.GET.urlencode }}&export=csv" class="btn-export btn-csv">
+                        <i class="fas fa-file-csv"></i> CSV
+                    </a>
+                    <a href="?{{ request.GET.urlencode }}&export=pdf" class="btn-export btn-pdf">
+                        <i class="fas fa-file-pdf"></i> PDF
+                    </a>
+                </div>
+            </div>
+
+            <table class="orders-table">
+                <thead>
+                    <tr>
+                        <th style="width: 120px;">N° Commande</th>
+                        <th>Client</th>
+                        <th>Livraison</th>
+                        <th>Type</th>
+                        <th>Statut</th>
+                        <th>Montant</th>
+                        <th style="width: 120px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr class="table-row-priority">
+                        {% if order.delivery_time.hour < 10 %}
+                        <div class="priority-indicator priority-high"></div>
+                        {% elif order.delivery_time.hour < 14 %}
+                        <div class="priority-indicator priority-normal"></div>
+                        {% else %}
+                        <div class="priority-indicator priority-low"></div>
+                        {% endif %}
+                        
+                        <td>
+                            <a href="{% url 'head_chef_order_detail' order.order_number %}" class="order-number-link">
+                                {{ order.order_number }}
+                            </a>
+                        </td>
+                        
+                        <td>
+                            <div class="customer-info">
+                                <span class="customer-name">{{ order.first_name }} {{ order.last_name }}</span>
+                                {% if order.company %}
+                                <span class="customer-company">{{ order.company }}</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        
+                        <td>
+                            <div class="delivery-info">
+                                <span class="delivery-date">{{ order.delivery_date|date:"d/m/Y" }}</span>
+                                <span class="delivery-time">{{ order.delivery_time|time:"H:i" }}</span>
+                            </div>
+                        </td>
+                        
+                        <td>
+                            <span class="delivery-type-badge type-{{ order.delivery_type }}">
+                                {% if order.delivery_type == 'delivery' %}
+                                    <i class="fas fa-truck"></i> Livraison
+                                {% else %}
+                                    <i class="fas fa-store"></i> Ramassage
+                                {% endif %}
+                            </span>
+                        </td>
+                        
+                        <td>
+                            <span class="status-badge status-{{ order.status }}">
+                                {{ order.get_status_display }}
+                            </span>
+                        </td>
+                        
+                        <td class="amount-cell">
+                            ${{ order.total|floatformat:2 }}
+                        </td>
+                        
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{% url 'head_chef_order_detail' order.order_number %}" 
+                                   class="btn-action btn-view" 
+                                   title="Voir détails">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'head_chef_dispatch' %}?date={{ order.delivery_date|date:'Y-m-d' }}" 
+                                   class="btn-action btn-edit" 
+                                   title="Dispatch">
+                                    <i class="fas fa-clipboard-check"></i>
+                                </a>
+                                <button onclick="createProduction('{{ order.order_number }}')" 
+                                        class="btn-action btn-production" 
+                                        title="Créer production">
+                                    <i class="fas fa-industry"></i>
+                                </button>
+                                <button onclick="printOrder('{{ order.order_number }}')" 
+                                        class="btn-action btn-print" 
+                                        title="Imprimer">
+                                    <i class="fas fa-print"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <h4>Aucune commande trouvée</h4>
+                            <p>Modifiez vos filtres pour voir d'autres commandes</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Pagination -->
+            {% if orders.has_other_pages %}
+            <div class="pagination-section">
+                <div class="pagination">
+                    {% if orders.has_previous %}
+                    <a href="?page=1&{{ request.GET.urlencode }}" class="page-link">«</a>
+                    <a href="?page={{ orders.previous_page_number }}&{{ request.GET.urlencode }}" class="page-link">‹</a>
+                    {% endif %}
+                    
+                    {% for num in orders.paginator.page_range %}
+                        {% if orders.number == num %}
+                            <span class="page-link active">{{ num }}</span>
+                        {% elif num > orders.number|add:'-3' and num < orders.number|add:'3' %}
+                            <a href="?page={{ num }}&{{ request.GET.urlencode }}" class="page-link">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if orders.has_next %}
+                    <a href="?page={{ orders.next_page_number }}&{{ request.GET.urlencode }}" class="page-link">›</a>
+                    <a href="?page={{ orders.paginator.num_pages }}&{{ request.GET.urlencode }}" class="page-link">»</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<script>
+function printOrder(orderNumber) {
+    window.open(`/head-chef/orders/${orderNumber}/print/`, '_blank');
+}
+
+// Fonction pour créer la production
+function createProduction(orderNumber) {
+    // Ouvrir le modal
+    document.getElementById('productionModal').style.display = 'block';
+    document.getElementById('modalOrderNumber').value = orderNumber;
+    
+    // Charger les détails de la commande via AJAX
+    fetch(`/head-chef/orders/${orderNumber}/get-items/`)
+        .then(response => response.json())
+        .then(data => {
+            displayOrderItems(data);
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            alert('Erreur lors du chargement de la commande');
+        });
+}
+
+// Afficher les items de la commande dans le modal
+function displayOrderItems(data) {
+    const itemsList = document.getElementById('orderItemsList');
+    itemsList.innerHTML = '';
+    
+    // Grouper par département
+    const itemsByDept = {};
+    data.items.forEach(item => {
+        const dept = item.department || 'autres';
+        if (!itemsByDept[dept]) {
+            itemsByDept[dept] = [];
+        }
+        itemsByDept[dept].push(item);
+    });
+    
+    // Afficher les départements disponibles
+    const deptCheckboxes = document.getElementById('departmentCheckboxes');
+    deptCheckboxes.innerHTML = '';
+    
+    Object.keys(itemsByDept).forEach(dept => {
+        const deptDiv = document.createElement('div');
+        deptDiv.className = 'dept-checkbox-item';
+        deptDiv.innerHTML = `
+            <label>
+                <input type="checkbox" name="departments" value="${dept}" checked>
+                <strong>${getDepartmentName(dept)}</strong>
+                <span class="badge">${itemsByDept[dept].length} items</span>
+            </label>
+        `;
+        deptCheckboxes.appendChild(deptDiv);
+    });
+    
+    // Afficher les items
+    Object.entries(itemsByDept).forEach(([dept, items]) => {
+        const deptSection = document.createElement('div');
+        deptSection.className = 'dept-section';
+        deptSection.innerHTML = `<h5>${getDepartmentName(dept)}</h5>`;
+        
+        items.forEach(item => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'production-item';
+            itemDiv.innerHTML = `
+                <div class="item-info">
+                    <strong>${item.product_name}</strong>
+                    <br><small>Commande: ${item.order_number}</small>
+                </div>
+                <div class="item-quantity">
+                    Qté: ${item.quantity}
+                </div>
+            `;
+            deptSection.appendChild(itemDiv);
+        });
+        
+        itemsList.appendChild(deptSection);
+    });
+}
+
+// Confirmer et créer la production
+function confirmCreateProduction() {
+    const orderNumber = document.getElementById('modalOrderNumber').value;
+    const selectedDepts = Array.from(document.querySelectorAll('input[name="departments"]:checked'))
+        .map(cb => cb.value);
+    
+    if (selectedDepts.length === 0) {
+        alert('Veuillez sélectionner au moins un département');
+        return;
+    }
+    
+    // Afficher le spinner
+    document.getElementById('loadingSpinner').style.display = 'block';
+    document.querySelector('.modal-buttons').style.display = 'none';
+    
+    // Envoyer la requête
+    fetch(`/head-chef/orders/${orderNumber}/create-production/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            departments: selectedDepts,
+            create_quality_check: document.getElementById('createQualityCheck').checked
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('loadingSpinner').style.display = 'none';
+        
+        if (data.success) {
+            document.getElementById('successMessage').style.display = 'block';
+            document.getElementById('successMessage').innerHTML = `
+                <i class="fas fa-check-circle"></i> Production créée avec succès!<br>
+                <small>${data.message}</small>
+            `;
+            
+            setTimeout(() => {
+                closeProductionModal();
+                location.reload();
+            }, 2000);
+        } else {
+            alert('Erreur: ' + data.error);
+            document.querySelector('.modal-buttons').style.display = 'flex';
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        alert('Erreur lors de la création de la production');
+        document.getElementById('loadingSpinner').style.display = 'none';
+        document.querySelector('.modal-buttons').style.display = 'flex';
+    });
+}
+
+// Fermer le modal
+function closeProductionModal() {
+    document.getElementById('productionModal').style.display = 'none';
+    document.getElementById('successMessage').style.display = 'none';
+    document.querySelector('.modal-buttons').style.display = 'flex';
+}
+
+// Fonction helper pour obtenir le nom du département
+function getDepartmentName(code) {
+    const departments = {
+        'patisserie': 'Pâtisserie',
+        'chaud': 'Cuisine Chaude',
+        'sandwichs': 'Sandwichs',
+        'boites': 'Boîtes à lunch',
+        'salades': 'Salades',
+        'dejeuners': 'Déjeuners',
+        'bouchees': 'Bouchées',
+        'autres': 'Autres'
+    };
+    return departments[code] || code;
+}
+
+// Auto-refresh toutes les 60 secondes
+setInterval(function() {
+    if (!document.hidden) {
+        location.reload();
+    }
+}, 60000);
+
+// Raccourcis clavier
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+        switch(e.key) {
+            case 'f':
+                e.preventDefault();
+                document.querySelector('input[name="date"]').focus();
+                break;
+            case 'p':
+                e.preventDefault();
+                window.print();
+                break;
+        }
+    }
+    
+    // Fermer le modal avec Escape
+    if (e.key === 'Escape') {
+        closeProductionModal();
+    }
+});
+
+// Fermer le modal en cliquant en dehors
+window.onclick = function(event) {
+    const modal = document.getElementById('productionModal');
+    if (event.target == modal) {
+        closeProductionModal();
+    }
+}
+</script>
+
+<!-- Modal de création de production -->
+<div id="productionModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="fas fa-industry"></i> Créer la production
+            </h3>
+            <button class="close-modal" onclick="closeProductionModal()">&times;</button>
+        </div>
+        
+        <input type="hidden" id="modalOrderNumber">
+        
+        <div>
+            <h4>Sélectionner les départements</h4>
+            <div id="departmentCheckboxes" class="department-checkbox-group">
+                <!-- Les départements seront ajoutés ici dynamiquement -->
+            </div>
+        </div>
+        
+        <div>
+            <h4>Articles à produire</h4>
+            <div id="orderItemsList" class="production-items-list">
+                <!-- Les items seront affichés ici -->
+            </div>
+        </div>
+        
+        <div style="margin: 1.5rem 0;">
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                <input type="checkbox" id="createQualityCheck" checked>
+                <span>Créer automatiquement les contrôles qualité</span>
+            </label>
+        </div>
+        
+        <div id="loadingSpinner" class="loading-spinner">
+            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--chef-primary);"></i>
+            <p>Création en cours...</p>
+        </div>
+        
+        <div id="successMessage" class="success-message"></div>
+        
+        <div class="modal-buttons">
+            <button onclick="closeProductionModal()" class="btn-modal btn-cancel">
+                Annuler
+            </button>
+            <button onclick="confirmCreateProduction()" class="btn-modal btn-confirm">
+                <i class="fas fa-check"></i> Créer la production
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}

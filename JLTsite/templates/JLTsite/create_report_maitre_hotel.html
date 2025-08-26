@@ -1,0 +1,1107 @@
+{% extends 'JLTsite/base_maitre_hotel.html' %}
+{% load static %}
+
+{% block title %}Rapport final - {{ event.event_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --mh-primary: #8e44ad;
+        --mh-secondary: #9b59b6;
+        --mh-success: #27ae60;
+        --mh-warning: #f39c12;
+        --mh-danger: #e74c3c;
+        --mh-info: #3498db;
+        --mh-dark: #2c3e50;
+        --mh-light: #ecf0f1;
+        --mh-gold: #f1c40f;
+    }
+
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    /* Header mobile */
+    .mobile-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(135deg, var(--mh-primary), var(--mh-secondary));
+        color: white;
+        padding: 15px;
+        z-index: 1000;
+        box-shadow: 0 4px 20px rgba(142, 68, 173, 0.3);
+    }
+
+    .header-content {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .back-btn {
+        background: rgba(255,255,255,0.2);
+        border: none;
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .back-btn:active {
+        transform: scale(0.9);
+    }
+
+    .header-title h1 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .header-title .subtitle {
+        font-size: 0.85rem;
+        opacity: 0.8;
+        margin-top: 2px;
+    }
+
+    /* Container principal */
+    .mobile-container {
+        padding-top: 100px;
+        padding-bottom: 100px;
+        min-height: 100vh;
+    }
+
+    /* Formulaire */
+    .report-form {
+        background: rgba(255, 255, 255, 0.95);
+        margin: 15px;
+        border-radius: 20px;
+        padding: 25px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .form-section {
+        margin-bottom: 30px;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--mh-dark);
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid var(--mh-light);
+    }
+
+    .section-title i {
+        color: var(--mh-primary);
+        font-size: 1.2rem;
+    }
+
+    /* Évaluations avec étoiles */
+    .rating-group {
+        margin-bottom: 20px;
+    }
+
+    .rating-label {
+        font-weight: 600;
+        color: var(--mh-dark);
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .star-rating {
+        display: flex;
+        gap: 5px;
+        margin-bottom: 10px;
+    }
+
+    .star {
+        font-size: 2rem;
+        color: #ddd;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        user-select: none;
+    }
+
+    .star.active,
+    .star:hover {
+        color: var(--mh-gold);
+        transform: scale(1.1);
+    }
+
+    .star:active {
+        transform: scale(0.9);
+    }
+
+    .rating-description {
+        font-size: 0.85rem;
+        color: #7f8c8d;
+        margin-left: 5px;
+    }
+
+    /* Champs de formulaire */
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: var(--mh-dark);
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 15px;
+        border: 2px solid var(--mh-light);
+        border-radius: 12px;
+        font-size: 16px;
+        font-family: inherit;
+        transition: all 0.3s ease;
+        background: white;
+        resize: vertical;
+        min-height: 20px;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--mh-primary);
+        box-shadow: 0 0 0 3px rgba(142, 68, 173, 0.1);
+    }
+
+    .form-control.textarea {
+        min-height: 100px;
+        line-height: 1.5;
+    }
+
+    /* Photos existantes */
+    .existing-photos {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .photo-item {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--mh-light);
+    }
+
+    .photo-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .photo-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(transparent, rgba(0,0,0,0.8));
+        color: white;
+        padding: 5px;
+        font-size: 0.7rem;
+        text-align: center;
+    }
+
+    /* Upload de nouvelles photos */
+    .photo-upload-area {
+        border: 2px dashed var(--mh-primary);
+        border-radius: 15px;
+        padding: 20px;
+        text-align: center;
+        background: rgba(142, 68, 173, 0.05);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-bottom: 20px;
+    }
+
+    .photo-upload-area:hover {
+        background: rgba(142, 68, 173, 0.1);
+        border-color: var(--mh-secondary);
+    }
+
+    .photo-upload-area.dragover {
+        background: rgba(142, 68, 173, 0.15);
+        border-color: var(--mh-secondary);
+        transform: scale(1.02);
+    }
+
+    .upload-icon {
+        font-size: 3rem;
+        color: var(--mh-primary);
+        margin-bottom: 10px;
+    }
+
+    .upload-text {
+        color: var(--mh-dark);
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+
+    .upload-subtext {
+        color: #7f8c8d;
+        font-size: 0.85rem;
+    }
+
+    /* Nouvelles photos prévisualisées */
+    .new-photos-preview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .new-photo-item {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: 10px;
+        overflow: hidden;
+        background: var(--mh-light);
+    }
+
+    .new-photo-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .remove-photo {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: rgba(231, 76, 60, 0.9);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 25px;
+        height: 25px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Timeline résumé */
+    .timeline-summary {
+        background: rgba(142, 68, 173, 0.05);
+        border-radius: 15px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+
+    .timeline-item-summary {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(142, 68, 173, 0.1);
+        font-size: 0.9rem;
+    }
+
+    .timeline-item-summary:last-child {
+        border-bottom: none;
+    }
+
+    .timeline-time-summary {
+        color: var(--mh-primary);
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .timeline-description-summary {
+        flex: 1;
+        margin: 0 10px;
+        color: var(--mh-dark);
+    }
+
+    .timeline-issue-badge {
+        background: var(--mh-danger);
+        color: white;
+        padding: 2px 6px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+
+    /* Boutons d'action */
+    .form-actions {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 15px;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+        display: flex;
+        gap: 10px;
+        z-index: 998;
+    }
+
+    .action-btn {
+        flex: 1;
+        padding: 15px;
+        border: none;
+        border-radius: 15px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 50px;
+    }
+
+    .action-btn:active {
+        transform: scale(0.95);
+    }
+
+    .btn-save-draft {
+        background: var(--mh-light);
+        color: var(--mh-dark);
+        border: 2px solid var(--mh-primary);
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, var(--mh-primary), var(--mh-secondary));
+        color: white;
+        box-shadow: 0 4px 15px rgba(142, 68, 173, 0.3);
+    }
+
+    /* Loading overlay pour upload */
+    .upload-loading {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(142, 68, 173, 0.9);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border-radius: 15px;
+        color: white;
+    }
+
+    .upload-progress {
+        width: 80%;
+        height: 4px;
+        background: rgba(255,255,255,0.3);
+        border-radius: 2px;
+        margin-top: 10px;
+        overflow: hidden;
+    }
+
+    .upload-progress-bar {
+        height: 100%;
+        background: white;
+        border-radius: 2px;
+        transition: width 0.3s ease;
+    }
+
+    /* Responsive */
+    @media (min-width: 768px) {
+        .mobile-container {
+            max-width: 768px;
+            margin: 0 auto;
+        }
+
+        .existing-photos,
+        .new-photos-preview {
+            grid-template-columns: repeat(4, 1fr);
+        }
+    }
+
+    /* Safe area pour iPhone X+ */
+    @supports (padding: max(0px)) {
+        .form-actions {
+            padding-bottom: max(15px, env(safe-area-inset-bottom));
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header mobile -->
+<div class="mobile-header">
+    <div class="header-content">
+        <button class="back-btn" onclick="goBack()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <div class="header-title">
+            <h1>Rapport final</h1>
+            <div class="subtitle">{{ event.event_name }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Container principal -->
+<div class="mobile-container">
+    <form id="reportForm" class="report-form" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <!-- Évaluations générales -->
+        <div class="form-section">
+            <div class="section-title">
+                <i class="fas fa-star"></i>
+                Évaluation générale
+            </div>
+            
+            <div class="rating-group">
+                <label class="rating-label">Note globale de l'événement</label>
+                <div class="star-rating" data-rating="overall_rating">
+                    <span class="star" data-value="1">★</span>
+                    <span class="star" data-value="2">★</span>
+                    <span class="star" data-value="3">★</span>
+                    <span class="star" data-value="4">★</span>
+                    <span class="star" data-value="5">★</span>
+                </div>
+                <span class="rating-description" id="overall_description"></span>
+                <input type="hidden" name="overall_rating" id="overall_rating" required>
+            </div>
+
+            <div class="rating-group">
+                <label class="rating-label">Satisfaction du client</label>
+                <div class="star-rating" data-rating="client_satisfaction">
+                    <span class="star" data-value="1">★</span>
+                    <span class="star" data-value="2">★</span>
+                    <span class="star" data-value="3">★</span>
+                    <span class="star" data-value="4">★</span>
+                    <span class="star" data-value="5">★</span>
+                </div>
+                <span class="rating-description" id="client_description"></span>
+                <input type="hidden" name="client_satisfaction" id="client_satisfaction" required>
+            </div>
+        </div>
+
+        <!-- Notes de déroulement -->
+        <div class="form-section">
+            <div class="section-title">
+                <i class="fas fa-clipboard-list"></i>
+                Déroulement de l'événement
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="setup_notes">Installation et préparation</label>
+                <textarea class="form-control textarea" name="setup_notes" id="setup_notes" 
+                         placeholder="Comment s'est déroulée l'installation? Problèmes rencontrés?"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="service_notes">Service et déroulement</label>
+                <textarea class="form-control textarea" name="service_notes" id="service_notes" 
+                         placeholder="Comment s'est déroulé le service? Points forts et points faibles?"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="cleanup_notes">Nettoyage et remballage</label>
+                <textarea class="form-control textarea" name="cleanup_notes" id="cleanup_notes" 
+                         placeholder="Comment s'est déroulé le nettoyage? Matériel récupéré?"></textarea>
+            </div>
+        </div>
+
+        <!-- Timeline résumé -->
+        {% if timeline %}
+        <div class="form-section">
+            <div class="section-title">
+                <i class="fas fa-history"></i>
+                Résumé chronologique
+            </div>
+            
+            <div class="timeline-summary">
+                {% for item in timeline %}
+                <div class="timeline-item-summary">
+                    <span class="timeline-time-summary">{{ item.timestamp|time:"H:i" }}</span>
+                    <span class="timeline-description-summary">{{ item.get_action_type_display }}</span>
+                    {% if item.is_issue %}
+                    <span class="timeline-issue-badge">PROBLÈME</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Problèmes et solutions -->
+        <div class="form-section">
+            <div class="section-title">
+                <i class="fas fa-exclamation-triangle"></i>
+                Incidents et solutions
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="issues_encountered">Problèmes rencontrés</label>
+                <textarea class="form-control textarea" name="issues_encountered" id="issues_encountered" 
+                         placeholder="Décrivez les problèmes ou incidents survenus pendant l'événement..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="solutions_applied">Solutions appliquées</label>
+                <textarea class="form-control textarea" name="solutions_applied" id="solutions_applied" 
+                         placeholder="Comment avez-vous résolu ces problèmes?"></textarea>
+            </div>
+        </div>
+
+        <!-- Équipe et performance -->
+        <div class="form-section">
+            <div class="section-title">
+                <i class="fas fa-users"></i>
+                Performance de l'équipe
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="staff_performance">Évaluation de l'équipe</label>
+                <textarea class="form-control textarea" name="staff_performance" id="staff_performance" 
+                         placeholder="Comment l'équipe a-t-elle performé? Points forts et améliorations?"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="staff_feedback">Retours de l'équipe</label>
+                <textarea class="form-control textarea" name="staff_feedback" id="staff_feedback" 
+                         placeholder="Commentaires et suggestions de l'équipe?"></textarea>
+            </div>
+        </div>
+
+        <!-- Client -->
+        <div class="form-section">
+            <div class="section-title">
+                <i class="fas fa-comments"></i>
+                Retours client
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="client_feedback">Commentaires du client</label>
+                <textarea class="form-control textarea" name="client_feedback" id="client_feedback" 
+                         placeholder="Quels ont été les retours du client pendant et après l'événement?"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="client_complaints">Plaintes ou réclamations</label>
+                <textarea class="form-control textarea" name="client_complaints" id="client_complaints" 
+                         placeholder="Le client a-t-il formulé des plaintes ou réclamations?"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="client_compliments">Compliments reçus</label>
+                <textarea class="form-control textarea" name="client_compliments" id="client_compliments" 
+                         placeholder="Quels compliments avez-vous reçus?"></textarea>
+            </div>
+        </div>
+
+        <!-- Photos -->
+        <div class="form-section">
+            <div class="section-title">
+                <i class="fas fa-camera"></i>
+                Photos du rapport ({{ photos.count }} existantes)
+            </div>
+
+            <!-- Photos existantes -->
+            {% if photos %}
+            <div class="existing-photos">
+                {% for photo in photos %}
+                <div class="photo-item">
+                    <img src="{{ photo.photo.url }}" alt="{{ photo.caption }}" loading="lazy">
+                    {% if photo.caption %}
+                    <div class="photo-overlay">{{ photo.caption }}</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Upload de nouvelles photos -->
+            <div class="photo-upload-area" onclick="triggerPhotoUpload()" 
+                 ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragleave="handleDragLeave(event)">
+                <div class="upload-icon">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                </div>
+                <div class="upload-text">Ajouter des photos</div>
+                <div class="upload-subtext">Cliquez ou glissez-déposez vos images</div>
+            </div>
+
+            <!-- Input caché pour photos -->
+            <input type="file" id="photoInput" multiple accept="image/*" style="display: none;" onchange="handlePhotoSelection(event)">
+
+            <!-- Prévisualisation des nouvelles photos -->
+            <div class="new-photos-preview" id="newPhotosPreview"></div>
+        </div>
+
+        <!-- Recommandations -->
+        <div class="form-section">
+            <div class="section-title">
+                <i class="fas fa-lightbulb"></i>
+                Recommandations et améliorations
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="recommendations">Recommandations pour l'avenir</label>
+                <textarea class="form-control textarea" name="recommendations" id="recommendations" 
+                         placeholder="Quelles recommandations feriez-vous pour des événements similaires?"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="improvements_needed">Améliorations nécessaires</label>
+                <textarea class="form-control textarea" name="improvements_needed" id="improvements_needed" 
+                         placeholder="Quels processus ou équipements devraient être améliorés?"></textarea>
+            </div>
+        </div>
+
+        <!-- Espace pour les boutons d'action -->
+        <div style="height: 80px;"></div>
+    </form>
+</div>
+
+<!-- Actions en bas -->
+<div class="form-actions">
+    <button type="button" class="action-btn btn-save-draft" onclick="saveDraft()">
+        <i class="fas fa-save"></i> Brouillon
+    </button>
+    <button type="button" class="action-btn btn-submit" onclick="submitReport()">
+        <i class="fas fa-paper-plane"></i> Soumettre
+    </button>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const eventId = {{ event.id }};
+    let selectedPhotos = [];
+    
+    // Descriptions pour les notes
+    const ratingDescriptions = {
+        1: 'Très décevant',
+        2: 'Décevant', 
+        3: 'Correct',
+        4: 'Bien',
+        5: 'Excellent'
+    };
+
+    // Vibration pour feedback
+    function vibrate(pattern = [50]) {
+        if ('vibrate' in navigator) {
+            navigator.vibrate(pattern);
+        }
+    }
+
+    // Retour
+    function goBack() {
+        vibrate();
+        if (confirm('Voulez-vous vraiment quitter sans sauvegarder?')) {
+            window.history.back();
+        }
+    }
+
+    // Gestion des étoiles
+    document.addEventListener('DOMContentLoaded', function() {
+        const starRatings = document.querySelectorAll('.star-rating');
+        
+        starRatings.forEach(rating => {
+            const stars = rating.querySelectorAll('.star');
+            const inputName = rating.dataset.rating;
+            const hiddenInput = document.getElementById(inputName);
+            const description = document.getElementById(inputName.replace('_rating', '_description'));
+            
+            stars.forEach((star, index) => {
+                star.addEventListener('click', () => {
+                    vibrate();
+                    const value = parseInt(star.dataset.value);
+                    
+                    // Mettre à jour l'input caché
+                    hiddenInput.value = value;
+                    
+                    // Mettre à jour l'affichage des étoiles
+                    stars.forEach((s, i) => {
+                        if (i < value) {
+                            s.classList.add('active');
+                        } else {
+                            s.classList.remove('active');
+                        }
+                    });
+                    
+                    // Mettre à jour la description
+                    if (description) {
+                        description.textContent = ratingDescriptions[value];
+                    }
+                });
+                
+                // Effet hover
+                star.addEventListener('mouseenter', () => {
+                    const value = parseInt(star.dataset.value);
+                    stars.forEach((s, i) => {
+                        if (i < value) {
+                            s.style.color = 'var(--mh-gold)';
+                        } else {
+                            s.style.color = '#ddd';
+                        }
+                    });
+                });
+            });
+            
+            // Reset hover
+            rating.addEventListener('mouseleave', () => {
+                const currentValue = parseInt(hiddenInput.value) || 0;
+                stars.forEach((s, i) => {
+                    if (i < currentValue) {
+                        s.style.color = 'var(--mh-gold)';
+                    } else {
+                        s.style.color = '#ddd';
+                    }
+                });
+            });
+        });
+    });
+
+    // Upload de photos
+    function triggerPhotoUpload() {
+        vibrate();
+        document.getElementById('photoInput').click();
+    }
+
+    function handlePhotoSelection(event) {
+        const files = Array.from(event.target.files);
+        addPhotosToPreview(files);
+    }
+
+    function handleDragOver(event) {
+        event.preventDefault();
+        event.currentTarget.classList.add('dragover');
+    }
+
+    function handleDragLeave(event) {
+        event.currentTarget.classList.remove('dragover');
+    }
+
+    function handleDrop(event) {
+        event.preventDefault();
+        event.currentTarget.classList.remove('dragover');
+        
+        const files = Array.from(event.dataTransfer.files);
+        const imageFiles = files.filter(file => file.type.startsWith('image/'));
+        
+        if (imageFiles.length > 0) {
+            addPhotosToPreview(imageFiles);
+        } else {
+            showToast('Veuillez sélectionner des images', 'warning');
+        }
+    }
+
+    function addPhotosToPreview(files) {
+        const preview = document.getElementById('newPhotosPreview');
+        
+        files.forEach((file, index) => {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const photoItem = document.createElement('div');
+                    photoItem.className = 'new-photo-item';
+                    photoItem.innerHTML = `
+                        <img src="${e.target.result}" alt="Nouvelle photo">
+                        <button type="button" class="remove-photo" onclick="removePhoto(${selectedPhotos.length})">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                    preview.appendChild(photoItem);
+                };
+                reader.readAsDataURL(file);
+                
+                selectedPhotos.push(file);
+            }
+        });
+        
+        showToast(`${files.length} photo(s) ajoutée(s)`, 'success');
+    }
+
+    function removePhoto(index) {
+        vibrate();
+        selectedPhotos.splice(index, 1);
+        
+        // Reconstruire la prévisualisation
+        const preview = document.getElementById('newPhotosPreview');
+        preview.innerHTML = '';
+        
+        selectedPhotos.forEach((file, newIndex) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const photoItem = document.createElement('div');
+                photoItem.className = 'new-photo-item';
+                photoItem.innerHTML = `
+                    <img src="${e.target.result}" alt="Nouvelle photo">
+                    <button type="button" class="remove-photo" onclick="removePhoto(${newIndex})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                preview.appendChild(photoItem);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // Sauvegarder en brouillon
+    function saveDraft() {
+        vibrate();
+        showToast('Fonctionnalité en cours de développement', 'info');
+    }
+
+    // Soumettre le rapport
+    function submitReport() {
+        vibrate([50, 50, 100]);
+        
+        // Validation
+        const overallRating = document.getElementById('overall_rating').value;
+        const clientSatisfaction = document.getElementById('client_satisfaction').value;
+        
+        if (!overallRating || !clientSatisfaction) {
+            showToast('Veuillez donner une note générale et de satisfaction client', 'warning');
+            return;
+        }
+        
+        if (confirm('Soumettre ce rapport final? Il ne pourra plus être modifié.')) {
+            showLoading('Création du rapport...');
+            
+            // Préparer FormData
+            const formData = new FormData(document.getElementById('reportForm'));
+            
+            // Ajouter les nouvelles photos
+            selectedPhotos.forEach((file, index) => {
+                formData.append('photos', file);
+            });
+            
+            // Envoyer le rapport
+            fetch(`/maitre-hotel/event/${eventId}/report/create/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.text();
+                } else {
+                    throw new Error('Erreur serveur');
+                }
+            })
+            .then(data => {
+                hideLoading();
+                showToast('Rapport créé avec succès!', 'success');
+                setTimeout(() => {
+                    window.location.href = '/maitre-hotel/';
+                }, 2000);
+            })
+            .catch(error => {
+                hideLoading();
+                console.error('Erreur:', error);
+                showToast('Erreur lors de la création du rapport', 'error');
+            });
+        }
+    }
+
+    // Toast notification
+    function showToast(message, type = 'info', duration = 3000) {
+        const existingToasts = document.querySelectorAll('.toast-mobile');
+        existingToasts.forEach(toast => toast.remove());
+        
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 25px;
+            border-radius: 30px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+            z-index: 9999;
+            color: white;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            animation: slideUp 0.5s ease;
+        `;
+        
+        switch(type) {
+            case 'success':
+                toast.style.background = 'linear-gradient(135deg, var(--mh-success), #58d68d)';
+                break;
+            case 'error':
+                toast.style.background = 'linear-gradient(135deg, var(--mh-danger), #ec7063)';
+                break;
+            case 'warning':
+                toast.style.background = 'linear-gradient(135deg, var(--mh-warning), #f7dc6f)';
+                toast.style.color = 'var(--mh-dark)';
+                break;
+            default:
+                toast.style.background = 'linear-gradient(135deg, var(--mh-info), #5dade2)';
+        }
+        
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, duration);
+    }
+
+    // Loading indicator
+    function showLoading(message = 'Chargement...') {
+        const loading = document.createElement('div');
+        loading.id = 'loadingIndicator';
+        loading.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            backdrop-filter: blur(5px);
+        `;
+        loading.innerHTML = `
+            <div style="
+                width: 30px;
+                height: 30px;
+                border: 3px solid rgba(255,255,255,0.3);
+                border-radius: 50%;
+                border-top-color: white;
+                animation: spin 1s ease-in-out infinite;
+                margin-bottom: 20px;
+            "></div>
+            <div style="font-weight: 600; font-size: 1.1rem;">${message}</div>
+        `;
+        document.body.appendChild(loading);
+    }
+
+    function hideLoading() {
+        const loading = document.getElementById('loadingIndicator');
+        if (loading) {
+            loading.remove();
+        }
+    }
+
+    // Styles pour animations
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideUp {
+            from {
+                transform: translateX(-50%) translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Auto-save dans localStorage
+    function autoSave() {
+        const formData = new FormData(document.getElementById('reportForm'));
+        const data = {};
+        for (let [key, value] of formData.entries()) {
+            data[key] = value;
+        }
+        
+        localStorage.setItem(`report_draft_${eventId}`, JSON.stringify(data));
+    }
+
+    // Charger brouillon au démarrage
+    function loadDraft() {
+        const draft = localStorage.getItem(`report_draft_${eventId}`);
+        if (draft) {
+            try {
+                const data = JSON.parse(draft);
+                Object.keys(data).forEach(key => {
+                    const element = document.getElementById(key) || document.querySelector(`[name="${key}"]`);
+                    if (element) {
+                        element.value = data[key];
+                        
+                        // Trigger les événements pour les étoiles
+                        if (key.includes('_rating')) {
+                            const ratingContainer = document.querySelector(`[data-rating="${key}"]`);
+                            if (ratingContainer) {
+                                const star = ratingContainer.querySelector(`[data-value="${data[key]}"]`);
+                                if (star) {
+                                    star.click();
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                showToast('Brouillon restauré', 'info', 2000);
+            } catch (e) {
+                console.error('Erreur lors du chargement du brouillon:', e);
+            }
+        }
+    }
+
+    // Auto-save toutes les 30 secondes
+    setInterval(autoSave, 30000);
+
+    // Auto-save lors de la saisie
+    document.addEventListener('input', function(e) {
+        if (e.target.matches('textarea, input')) {
+            clearTimeout(window.autoSaveTimeout);
+            window.autoSaveTimeout = setTimeout(autoSave, 2000);
+        }
+    });
+
+    // Charger le brouillon au démarrage
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(loadDraft, 500);
+        
+        // Supprimer le brouillon lors de la soumission réussie
+        const originalSubmit = submitReport;
+        window.submitReport = function() {
+            originalSubmit();
+            // La suppression se fera après succès dans la promesse
+        };
+    });
+
+    // Gestion de la sortie de page
+    window.addEventListener('beforeunload', function(e) {
+        autoSave();
+        
+        // Avertir si des modifications non sauvegardées
+        const form = document.getElementById('reportForm');
+        if (form.querySelector('textarea[value!=""], input[value!=""]')) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+</script>
+{% endblock %}

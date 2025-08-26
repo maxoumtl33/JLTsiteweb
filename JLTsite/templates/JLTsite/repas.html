@@ -7,7 +7,7 @@
     <title>Repas d'affaires - Julien-Leblanc Traiteur</title>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family:Playfair+Display:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap');
         @font-face {
             font-family: 'NeueKabel-Regular';
             src: url('{% static "fonts/NeueKabel-Regular.otf" %}') format('opentype');
@@ -49,12 +49,11 @@
             z-index: 100;
             width: calc(100% - 16%);
             margin: 0 8%;
-            position: sticky; /* Ajouté */
+            position: sticky;
             top: 0;
             z-index: 100;
             transition: height 0.3s ease;
             height: 150px;
-            
         }
         
         .header-content {
@@ -66,7 +65,37 @@
             height: 13vh;
         }
 
-       
+        /* Boutons de navigation rapide */
+        .quick-nav {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            top: 180px;
+            display: flex;
+            gap: 30px;
+            z-index: 99;
+        }
+
+        .quick-nav-btn {
+            background-color: #444E36;
+            color: #F4C843;
+            padding: 12px 30px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid #444E36;
+        }
+
+        .quick-nav-btn:hover {
+            background-color: #F4C843;
+            color: #444E36;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(68, 78, 54, 0.3);
+        }
         
         /* Menu burger */
         .menu-burger {
@@ -100,34 +129,27 @@
             transform: rotate(-45deg) translate(8px, -8px);
         }
         
-        /* Logo */
+        /* Logo cliquable */
         .logo {
             text-align: center;
             text-decoration: none;
             position: absolute;
             left: 50%;
             transform: translateX(-50%);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: translateX(-50%) scale(1.05);
         }
         
-        .logo-icon {
-            font-size: 36px;
-            color: #F4C843;
-            font-style: italic;
-            margin-bottom: -10px;
+        .logo-image {
+            width: 200px;
         }
-        
-        .logo-text {
-            font-size: 28px;
-            color: #000;
-            letter-spacing: 1px;
-        }
-        
-        .logo-subtitle {
-            font-size: 11px;
-            color: #000;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            margin-top: 2px;
+
+        .logoscroll {
+            width: 100px;
         }
         
         /* Actions header */
@@ -272,11 +294,113 @@
             display: block;
             opacity: 1;
         }
+
+        /* Modal pour les menus */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0);
+            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modal.show {
+            display: block;
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-content {
+            background-color: #F7F3EA;
+            margin: 5% auto;
+            padding: 40px;
+            border: none;
+            width: 80%;
+            max-width: 900px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border-radius: 0;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.3);
+            transform: scale(0.7) translateY(100px);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+        }
+
+        .close-modal {
+            color: #444E36;
+            float: right;
+            font-size: 36px;
+            font-weight: 300;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            line-height: 20px;
+        }
+
+        .close-modal:hover,
+        .close-modal:focus {
+            color: #F4C843;
+            transform: rotate(90deg);
+        }
+
+        .modal h2 {
+            color: #444E36;
+            font-size: 32px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 2px solid #F4C843;
+            padding-bottom: 15px;
+        }
+
+        .menu-items {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .menu-item {
+            padding: 20px;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .menu-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .menu-item h3 {
+            color: #444E36;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .menu-item p {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .menu-item .price {
+            color: #F4C843;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
         
         /* Contenu principal */
         .main-content {
             max-width: 1400px;
-            margin: 0 auto;
+            margin: 60px auto 0;
             display: flex;
             gap: 60px;
             padding: 0 60px;
@@ -285,7 +409,6 @@
         /* Section gauche - Hero */
         .hero-section {
             flex: 1;
-            
         }
         
         .hero-content {
@@ -303,14 +426,6 @@
             margin-bottom: 15px;
             font-weight: normal;
         }
-
-        .logo-image {
-            width: 200px;
-        }
-
-        .logoscroll {
-            width: 100px;
-        }
         
         .hero-content .subtitle {
             font-size: 42px;
@@ -326,7 +441,7 @@
         
         .hero-description {
             line-height: 1.8;
-            font-size: 14px;
+            font-size: 16px;
             color: #fff;
             opacity: 0.9;
             width: 30%;
@@ -345,6 +460,7 @@
             background-color: #F7F3EA;
         }
 
+        /* Cards moins hautes */
         .service-card {
             margin-bottom: 40px;
             display: flex;
@@ -362,8 +478,8 @@
         }
         
         .service-image {
-            flex: 0 0 800px;
-            height: 450px;
+            flex: 0 0 600px;
+            height: 320px;
             background-color: #ddd;
             overflow: hidden;
         }
@@ -372,17 +488,23 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .service-image:hover img {
+            transform: scale(1.05);
         }
         
         .service-content {
             flex: 1;
-            padding: 30px;
+            padding: 20px 30px;
         }
         
         .service-content h2 {
-            font-size: 24px;
-            color: #000;
-            margin-bottom: 15px;
+            font-size: 22px;
+            color: #444E36;
+            margin-bottom: 60px;
+            margin-top: 15px;
             font-weight: normal;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -392,11 +514,12 @@
             color: #333;
             line-height: 1.6;
             margin-bottom: 20px;
-            font-size: 14px;
+            font-size: 18px;
         }
         
         .btn-consulter {
             background-color: #F4C843;
+            font-family: 'NeueKabel-Regular', serif;
             color: #000;
             padding: 12px 30px;
             border: none;
@@ -427,7 +550,6 @@
             margin-right: auto;
             width: calc(100% - 10%);
             margin: 0 5%;
-            
         }
         
         .event-banner-content {
@@ -511,8 +633,6 @@
             gap: 20px;
             margin-top: 20px;
         }
-        
-       
 
         .social-links a {
             color: #ccc;
@@ -531,6 +651,16 @@
                 padding: 0 40px;
             }
             
+            .service-image {
+                flex: 0 0 400px;
+                height: 250px;
+            }
+
+            .quick-nav {
+                top: 160px;
+                gap: 15px;
+            }
+
             .event-banner {
                 flex-direction: column;
                 text-align: center;
@@ -554,6 +684,12 @@
             .search-box {
                 display: none;
             }
+
+            .quick-nav {
+                flex-direction: column;
+                gap: 10px;
+                width: 90%;
+            }
             
             .service-card {
                 flex-direction: column;
@@ -572,18 +708,20 @@
             .footer-content {
                 grid-template-columns: 1fr;
             }
+
+            .menu-items {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <body>
-  
     <!-- Barre décorative -->
-    <div class="decorative-bar">
-    </div>
+    <div class="decorative-bar"></div>
     
     <!-- Header -->
     <header>
-        
         <div class="header-content">
             <!-- Menu burger -->
             <div class="menu-burger" id="menuBurger">
@@ -592,14 +730,16 @@
                 <span></span>
             </div>
             
-            <div class="logo">
-            <div class="logo-container">
-                <img src="{% static 'images/JLT_noir_jaune.png' %}" alt="Logo" class="logo-image" />
+            <!-- Logo cliquable pour retour en haut -->
+            <div class="logo" id="logoLink">
+                <div class="logo-container">
+                    <img src="{% static 'images/JLT_noir_jaune.png' %}" alt="Logo" class="logo-image" />
+                </div>
+                <div class="logo-container">
+                    <img src="{% static 'images/jaune.png' %}" alt="Logo" class="logoscroll" style="display: none;"/>
+                </div>
             </div>
-            <div class="logo-container">
-                <img src="{% static 'images/jaune.png' %}" alt="Logo" class="logoscroll" style="display: none;"/>
-            </div>
-        </div>
+            
             <!-- Actions -->
             <div class="header-actions">
                 <div class="search-box">
@@ -607,7 +747,7 @@
                     <button>🔍</button>
                 </div>
                 <div class="cart-icon">
-                    🛒
+                    <i class="fa-solid fa-bag-shopping"></i>
                     <span class="cart-count">0</span>
                 </div>
                 <div class="language-selector">
@@ -617,187 +757,202 @@
             </div>
         </div>
     </header>
+
+    <!-- Boutons de navigation rapide -->
+    <div class="quick-nav">
+        <a href="#boitelunch" class="quick-nav-btn">En ligne</a>
+        <a href="#dejeuners" class="quick-nav-btn">Menus</a>
+    </div>
+
     <div class="container-global">
-    <!-- Menu latéral -->
-    <div class="side-menu" id="sideMenu">
-        <div class="menu-section">
-            <h3>REPAS D'AFFAIRES</h3>
-            <ul>
-                <li><a href="#dejeuners">Déjeuners</a></li>
-                <li><a href="#pauses">Pauses & collations</a></li>
-                <li><a href="#repas-froids">Repas froids</a></li>
-                <li><a href="#repas-chauds">Repas chauds</a></li>
-                <li><a href="#cocktails">Cocktails & 5@7</a></li>
-            </ul>
+        <!-- Menu latéral -->
+        <div class="side-menu" id="sideMenu">
+            <div class="menu-section">
+                <h3>REPAS D'AFFAIRES</h3>
+                <ul>
+                    <li><a href="#dejeuners">Déjeuners</a></li>
+                    <li><a href="#pauses">Pauses & collations</a></li>
+                    <li><a href="#repas-froids">Repas froids</a></li>
+                    <li><a href="#repas-chauds">Repas chauds</a></li>
+                    <li><a href="#cocktails">Cocktails & 5@7</a></li>
+                </ul>
+            </div>
+            
+            <div class="menu-section">
+                <h3>BOÎTES REPAS</h3>
+                <ul>
+                    <li><a href="#pret-manger">Prêt-à-manger</a></li>
+                    <li><a href="#pret-emporter">Prêt-à-emporter</a></li>
+                </ul>
+            </div>
+            
+            <div class="menu-section">
+                <h3>ÉVÉNEMENTS</h3>
+                <ul>
+                    <li><a href="#stations">Stations culinaires</a></li>
+                    <li><a href="#banquets">Banquets</a></li>
+                    <li><a href="#thematiques">Repas et événements thématiques</a></li>
+                    <li><a href="#cocktails-events">Cocktails & 5@7</a></li>
+                    <li><a href="#chef">Chef à domicile</a></li>
+                </ul>
+            </div>
+            
+            <div class="menu-section">
+                <h3>À PROPOS</h3>
+                <ul>
+                    <li><a href="#histoire">Notre histoire</a></li>
+                    <li><a href="#achat-local">Achat local</a></li>
+                    <li><a href="#environnement">Pratiques environnementales</a></li>
+                    <li><a href="#realisations">Réalisations</a></li>
+                    <li><a href="#carrieres">Carrières</a></li>
+                    <li><a href="#faq">FAQ</a></li>
+                </ul>
+            </div>
+            
+            <div class="menu-section">
+                <h3>NOUS JOINDRE</h3>
+                <ul>
+                    <li><a href="#contact">Contactez notre équipe conseil</a></li>
+                </ul>
+            </div>
         </div>
         
-        <div class="menu-section">
-            <h3>BOÎTES REPAS</h3>
-            <ul>
-                <li><a href="#pret-manger">Prêt-à-manger</a></li>
-                <li><a href="#pret-emporter">Prêt-à-emporter</a></li>
-            </ul>
-        </div>
-        
-        <div class="menu-section">
-            <h3>ÉVÉNEMENTS</h3>
-            <ul>
-                <li><a href="#stations">Stations culinaires</a></li>
-                <li><a href="#banquets">Banquets</a></li>
-                <li><a href="#thematiques">Repas et événements thématiques</a></li>
-                <li><a href="#cocktails-events">Cocktails & 5@7</a></li>
-                <li><a href="#chef">Chef à domicile</a></li>
-            </ul>
-        </div>
-        
-        <div class="menu-section">
-            <h3>À PROPOS</h3>
-            <ul>
-                <li><a href="#histoire">Notre histoire</a></li>
-                <li><a href="#achat-local">Achat local</a></li>
-                <li><a href="#environnement">Pratiques environnementales</a></li>
-                <li><a href="#realisations">Réalisations</a></li>
-                <li><a href="#carrieres">Carrières</a></li>
-                <li><a href="#faq">FAQ</a></li>
-            </ul>
-        </div>
-        
-        <div class="menu-section">
-            <h3>NOUS JOINDRE</h3>
-            <ul>
-                <li><a href="#contact">Contactez notre équipe conseil</a></li>
-            </ul>
-        </div>
-    </div>
-    
-    <!-- Overlay -->
-    <div class="menu-overlay" id="menuOverlay"></div>
+        <!-- Overlay -->
+        <div class="menu-overlay" id="menuOverlay"></div>
 
-    
-     <!-- Section gauche - Hero -->
-     <div class="hero-section">
-        <div class="hero-content">
+        <!-- Modals pour les menus -->
+        <div id="menuModal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2 id="modalTitle">Menu</h2>
+                <div class="menu-items" id="menuItems">
+                    <!-- Le contenu sera injecté par JavaScript -->
+                </div>
+            </div>
+        </div>
         
-            <p class="hero-description">
+        <!-- Section gauche - Hero -->
+        <div class="hero-section">
+            <div class="hero-content">
+                <p class="hero-description">
+                    <br>
+                    <br>
+                    Depuis 1989 nous traçons le chemin de la tendance culinaire et entrepreneuriale à Montréal. Nous célébrons au quotidien la richesse d'une nouvelle génération de talent tout en bonifiant plus formellement les entre'prise les réussir.
+                </p>
+
+                <div style="margin-right: 50px; text-align: right;">
+                    <h1>Pratique.</h1>
+                    <div class="subtitle">Généreux.</div>
+                    <div class="tagline">Savoureux.</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Contenu principal -->
+        <div class="main-content">
+            <!-- Section droite - Services -->
+            <div class="services-section">
+                <!-- Boîtes à lunch -->
+                <div class="service-card" id="boitelunch">
+                    <div class="service-content">
+                        <h2 style="text-align: left;">COFFRETS LUNCH</h2>
+                        <p>
+                            Démarrez votre journée professionnelle du bon pied avec nos petits déjeuners pour le bureau et notre service de café et thé. Offerts en format buffet ou en coffrets individuels et avec une multitude d'options pour satisfaire vos attentes.
+                        </p>
+                        <a href="{% url 'shop_boites_lunch' %}" class="btn-consulter">Commander en ligne</a>
+                    </div>
+                    <div class="service-image">
+                        <img src="https://cdn.pixabay.com/photo/2022/02/11/07/03/bento-7006658_1280.jpg" alt="boitelunch">
+                    </div>
+                </div>
+                
+                <!-- Déjeuners -->
+                <div class="service-card" id="dejeuners">
+                    <div class="service-image">
+                        <img src="https://media.istockphoto.com/id/1829241109/photo/enjoying-a-brunch-together.jpg?s=1024x1024&w=is&k=20&c=QPHFTWoscwMSXOEGKoAKOjlCnMGszppFBrqQHdy4EGc=" alt="Déjeuners">
+                    </div>
+                    <div class="service-content">
+                        <h2 style="text-align: right;">DÉJEUNERS</h2>
+                        <p>
+                            Démarrez votre journée professionnelle du bon pied avec nos petits déjeuners pour le bureau et notre service de café et thé. Offerts en format buffet ou en coffrets individuels.
+                        </p>
+                        <button class="btn-consulter" onclick="openModal('Déjeuners', 'dejeuners')">Consulter le menu</button>
+                    </div>
+                </div>
+                
+                <!-- Pauses & Collations -->
+                <div class="service-card" id="pauses">
+                    <div class="service-content">
+                        <h2 style="text-align: left;">COLLATIONS & PLATEAUX A PARTAGER</h2>
+                        <p>
+                            Lorsque le feu se fait sentir entre les repas, la concentration faiblit. Découvrez nos menus pour atténuer et revivre! Différentes alternatives pour vos réunions.
+                        </p>
+                        <button class="btn-consulter" onclick="openModal('Pauses & Collations', 'pauses')">Consulter le menu</button>
+                    </div>
+                    <div class="service-image">
+                        <img src="https://cdn.pixabay.com/photo/2018/08/29/19/01/fig-3640553_1280.jpg" alt="Pauses & Collations">
+                    </div>
+                </div>
+                
+                <!-- Repas froids -->
+                <div class="service-card" id="repas-froids">
+                    <div class="service-image">
+                        <img src="https://cdn.pixabay.com/photo/2020/01/08/03/05/lavash-wrap-4749135_1280.jpg" alt="Repas froids">
+                    </div>
+                    <div class="service-content">
+                        <h2 style="text-align: right;">BUFFETS FROIDS</h2>
+                        <p>
+                            Nos frais repas savoureux rafraîchiront vos convives. De nobles aux plats apéritifs, notre menu cyclique est très similaire et permet de manger varié.
+                        </p>
+                        <button class="btn-consulter" onclick="openModal('Repas Froids', 'froids')">Consulter le menu</button>
+                    </div>
+                </div>
+                
+                <!-- Repas chauds -->
+                <div class="service-card" id="repas-chauds">
+                    <div class="service-content">
+                        <h2 style="text-align: left;">BUFFETS CHAUDS</h2>
+                        <p>
+                            Nos délicieux repas chauds sont réconfortants et satisferont les estomacs les plus exigeants. Notre menu est varié et permet de combler tous les goûts.
+                        </p>
+                        <button class="btn-consulter" onclick="openModal('Repas Chauds', 'chauds')">Consulter le menu</button>
+                    </div>
+                    <div class="service-image">
+                        <img src="https://media.istockphoto.com/id/1376132506/photo/lacquered-salmon.jpg?s=1024x1024&w=is&k=20&c=r86IK0mwDTEv4p2FdXzv5E36goFgFCEfXjJwUz_jhWw=" alt="Repas chauds">
+                    </div>
+                </div>
+                
+                <!-- Cocktails & 5@7 -->
+                <div class="service-card" id="cocktails">
+                    <div class="service-image">
+                        <img src="https://cdn.pixabay.com/photo/2022/11/03/20/21/bruschetta-7568375_1280.jpg" alt="Cocktails">
+                    </div>
+                    <div class="service-content">
+                        <h2 style="text-align: right;">COCKTAILS & 5@7</h2>
+                        <p>
+                            Le 5 à 7 est le moment idéal pour favoriser les échanges. Nos menus s'adaptent à toutes les formules et à toutes les heures.
+                        </p>
+                        <button class="btn-consulter" onclick="openModal('Cocktails & 5@7', 'cocktails')">Consulter le menu</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section événement -->
+        <div class="event-banner">
+            <div class="event-banner-content">
+                <h2>ÉVÉNEMENT SUR MESURE?</h2>
                 <br>
                 <br>
-                Depuis 1989 nous traçons le chemin de la tendance culinaire et entrepreneuriale à Montréal. Nous célébrons au quotidien la richesse d'une nouvelle génération de talent tout en bonifiant plus formellement les entre'prise les réussir.
-            </p>
-
-            <div style="margin-right: 5Opx;">
-                <h1>Pratique.</h1>
-                <div class="subtitle">Généreux.</div>
-                <div class="tagline">Savoureux.</div>
+                <br>
+                <a href="{% url 'contacts' %}" class="btn-consulter">Contactez notre équipe conseil</a>
             </div>
-        </div>
-    </div>
-    <!-- Contenu principal -->
-    <div class="main-content">
-       
-        
-        <!-- Section droite - Services -->
-        <div class="services-section">
-            <div class="service-card" id="boitelunch">
-                
-                <div class="service-content">
-                    <h2 style="margin-bottom: 100px; margin-top: 20px; text-align: left;color: #444E36;">BOITES A LUNCH</h2>
-                    <p>
-                        Démarrez votre journée professionnelle du bon pied avec nos petits déjeuners pour le bureau et notre service de café et thé. Offerts en format buffet ou en coffrets individuels et avec une multitude d'options pour satisfaire vos attentes. Parce que bien manger stimule la productivité!
-                    </p>
-                    <a href="{% url 'shop_boites_lunch' %}" class="btn-consulter">Commander en ligne</a>
-                </div>
-                <div class="service-image">
-                    <img src="https://cdn.pixabay.com/photo/2022/02/11/07/03/bento-7006658_1280.jpg" alt="boitelunch">
-                </div>
-            </div>
-            <!-- Déjeuners -->
-            <div class="service-card" id="dejeuners">
-                <div class="service-image">
-                    <img src="https://media.istockphoto.com/id/1829241109/photo/enjoying-a-brunch-together.jpg?s=1024x1024&w=is&k=20&c=QPHFTWoscwMSXOEGKoAKOjlCnMGszppFBrqQHdy4EGc=" alt="Déjeuners">
-                </div>
-                <div class="service-content">
-                    <h2 style="margin-bottom: 100px; margin-top: 20px; text-align: right;color: #444E36;">DÉJEUNERS</h2>
-                    <p>
-                        Démarrez votre journée professionnelle du bon pied avec nos petits déjeuners pour le bureau et notre service de café et thé. Offerts en format buffet ou en coffrets individuels et avec une multitude d'options pour satisfaire vos attentes. Parce que bien manger stimule la productivité!
-                    </p>
-                    <a href="#" class="btn-consulter">Consultez le menu</a>
-                </div>
-            </div>
-            
-            <!-- Pauses & Collations -->
-            <div class="service-card" id="pauses">
-                <div class="service-content">
-                    <h2 style="margin-bottom: 100px; margin-top: 20px; text-align: left;color: #444E36;">PAUSES & COLLATIONS</h2>
-                    <p>
-                        Lorsque le feu se fait sentir entre les repas, la concentration faiblit. Découvrez nos menus pour atténuer et revivre! Différentes alternatives. Différentes réunions, matins ou après-midi et même avec service de café et thé, vos pauses collations au bureau boufferont les besoins du massage. Elles sont aussi offertes en format individualisé.
-                    </p>
-                    <a href="#" class="btn-consulter">Consultez le menu</a>
-                </div>
-                <div class="service-image">
-                    <img src="https://cdn.pixabay.com/photo/2018/08/29/19/01/fig-3640553_1280.jpg" alt="Pauses & Collations">
-                </div>
-            </div>
-            
-            <!-- Repas froids -->
-            <div class="service-card" id="repas-froids">
-                <div class="service-image">
-                    <img src="https://cdn.pixabay.com/photo/2020/01/08/03/05/lavash-wrap-4749135_1280.jpg" alt="Repas froids">
-                </div>
-                <div class="service-content">
-                    <h2 style="margin-bottom: 100px; margin-top: 20px; text-align: right;color: #444E36;">REPAS FROIDS</h2>
-                    <p>
-                        Nos frais repas savoureux rafraîchiront vos convives. Nous avons prévu nos choux idées. De nobles aux plats apéritifs, ils ont ce kiosque, plats repas d'assiette, notre menu cyclique est très similaire nous permet de manger varié toute la joure.
-                    </p>
-                    <a href="#" class="btn-consulter">Consultez le menu</a>
-                </div>
-            </div>
-            
-            <!-- Repas chauds -->
-            <div class="service-card" id="repas-chauds">
-                
-                <div class="service-content">
-                    <h2 style="margin-bottom: 100px; margin-top: 20px; text-align: left;color: #444E36;">REPAS CHAUDS</h2>
-                    <p>
-                        Nos délicieux repas chauds sont réconfortants et satisferont nos estomacs les défier ou les occupés. Idéal même les plus expérimentants. Notre menu est varié et permet de combler tous les goûts et tous les types de réunions alimentaires. Plateaux ou buffets, possibilités et tout simplement excellentes bouillies note chaudes.
-                    </p>
-                    <a href="#" class="btn-consulter">Consultez le menu</a>
-                </div>
-                <div class="service-image">
-                    <img src="https://media.istockphoto.com/id/1376132506/photo/lacquered-salmon.jpg?s=1024x1024&w=is&k=20&c=r86IK0mwDTEv4p2FdXzv5E36goFgFCEfXjJwUz_jhWw=" alt="Repas chauds">
-                </div>
-            </div>
-            
-            <!-- Cocktails & 5@7 -->
-            <div class="service-card" id="cocktails">
-                <div class="service-image">
-                    <img src="https://cdn.pixabay.com/photo/2022/11/03/20/21/bruschetta-7568375_1280.jpg" alt="Cocktails">
-                </div>
-                <div class="service-content">
-                    <h2 style="margin-bottom: 100px; margin-top: 20px; text-align: right; color: #444E36;">COCKTAILS & 5@7</h2>
-                    <p>
-                        Il est toujours l'heure du cocktail martiens sent dans le monde! Le 5 à 7 est le moment idéal pour favoriser les échanges à la décontraction. Nos menus s'adaptent à la formule même souhait et à toutes heures. Navette avec un petit apéro de 4 à 12 bouchées ou sous formule de 15 bouchées et plus pour imaginer le look-bien officiel. Soulignement et plein le meilleur de leurs éléments avec accompagne. forme d'un cocktail dinatoire sans que notre patronner soit dans formule buffet ou mérous avenue et peuf.
-                    </p>
-                    <a href="#" class="btn-consulter">Consultez le menu</a>
-                </div>
+            <div class="event-banner-image">
+                <p>Soyez curieux,<br>allez voir ce<br>qu'on fait d'autre...</p>
             </div>
         </div>
     </div>
     
-    <!-- Section événement -->
-    <div class="event-banner">
-        <div class="event-banner-content" >
-            <h2>ÉVÉNEMENT SUR MESURE?</h2>
-            <br>
-            <br>
-            <br>
-            
-            <a href="{% url 'contacts' %}" class="btn-consulter">Contactez notre équipe conseil</a>
-        </div>
-        <div class="event-banner-image">
-            <p>Soyez curieux,<br>allez voir ce<br>qu'on fait d'autre...</p>
-        </div>
-    </div>
-</div>
     <!-- Footer -->
     <footer>
         <div class="footer-content">
@@ -805,28 +960,26 @@
                 <h3>Repas d'affaires</h3>
                 <ul>
                     <li><a href="#">Déjeuners</a></li>
-                    <li><a href="#">Pauses & collations</a></li>
-                    <li><a href="#">Repas froids</a></li>
-                    <li><a href="#">Repas chauds</a></li>
-                    <li><a href="#">Cocktails & 5@7</a></li>
+                    <li><a href="#">Collations $ plateaux a partager</a></li>
+                    <li><a href="#">Buffets</a></li>
+                    <li><a href="#">Coffrets</a></li>
                 </ul>
             </div>
             
             <div class="footer-section">
-                <h3>Boîtes repas</h3>
+                <h3>Commander en ligne</h3>
                 <ul>
-                    <li><a href="#">Prêt-à-manger</a></li>
-                    <li><a href="#">Prêt-à-emporter</a></li>
+                    <li><a href="#">Coffrets lunch</a></li>
                 </ul>
             </div>
             
             <div class="footer-section">
                 <h3>Événements</h3>
                 <ul>
-                    <li><a href="#">Stations culinaires</a></li>
-                    <li><a href="#">Banquets</a></li>
-                    <li><a href="#">Repas thématiques</a></li>
-                    <li><a href="#">Chef à domicile</a></li>
+                    <li><a href="#">Cocktails</a></li>
+                    <li><a href="#">Gala / Banquets</a></li>
+                    <li><a href="#">Marriages</a></li>
+                    <li><a href="#">5@7</a></li>
                 </ul>
             </div>
             
@@ -834,16 +987,21 @@
                 <h3>À propos</h3>
                 <ul>
                     <li><a href="#">Notre histoire</a></li>
-                    <li><a href="#">Achat local</a></li>
-                    <li><a href="#">Environnement</a></li>
                     <li><a href="#">Réalisations</a></li>
+                    <li><a href="#">Nous contacter</a></li>
                     <li><a href="#">Carrières</a></li>
                     <li><a href="#">FAQ</a></li>
                 </ul>
                 <div class="social-links">
-                    <a href="#">📘</a>
-                    <a href="#">📷</a>
-                    <a href="#">💼</a>
+                    <a href="https://facebook.com" target="_blank" rel="noopener" aria-label="Facebook">
+                        <i class="fa-brands fa-facebook-f"></i>
+                    </a>
+                    <a href="https://instagram.com" target="_blank" rel="noopener" aria-label="Instagram">
+                        <i class="fa-brands fa-instagram"></i>
+                    </a>
+                    <a href="https://linkedin.com" target="_blank" rel="noopener" aria-label="LinkedIn">
+                        <i class="fa-brands fa-linkedin-in"></i>
+                    </a>
                 </div>
             </div>
         </div>
@@ -852,134 +1010,216 @@
             <p>514 812-0698 | contact@julien-leblanc.com © 2024 Julien-Leblanc Traiteur - Tous droits réservés | Montréal QC, H4N 3G6</p>
         </div>
     </footer>
-
     
     <script>
+        // Données des menus pour chaque catégorie
+        const menuData = {
+            dejeuners: [
+                { name: "Continental Classique", description: "Croissants, pains, confitures maison, fruits frais", price: "12.50$ / pers" },
+                { name: "Déjeuner Énergisant", description: "Parfaits au yogourt, granola maison, fruits de saison", price: "14.00$ / pers" },
+                { name: "Brunch Gourmand", description: "Œufs brouillés, bacon, saucisses, pommes de terre", price: "18.50$ / pers" },
+                { name: "Santé Vitalité", description: "Smoothie bowl, pain multigrain, avocat", price: "16.00$ / pers" }
+            ],
+            pauses: [
+                { name: "Pause Sucrée", description: "Mini pâtisseries, macarons, fruits", price: "8.50$ / pers" },
+                { name: "Collation Santé", description: "Légumes, houmous, noix mélangées", price: "7.00$ / pers" },
+                { name: "Café Gourmand", description: "Café, thé, biscuits artisanaux", price: "6.50$ / pers" },
+                { name: "Energy Break", description: "Barres énergétiques, fruits secs, jus frais", price: "9.00$ / pers" }
+            ],
+            froids: [
+                { name: "Salade Niçoise", description: "Thon, œufs, anchois, légumes frais", price: "22.00$ / pers" },
+                { name: "Wrap Végétarien", description: "Légumes grillés, fromage de chèvre, pesto", price: "18.50$ / pers" },
+                { name: "Plateau de Sandwichs", description: "Assortiment de sandwichs gourmets", price: "16.00$ / pers" },
+                { name: "Poke Bowl", description: "Saumon, avocat, edamame, riz", price: "24.00$ / pers" }
+            ],
+            chauds: [
+                { name: "Poulet Teriyaki", description: "Poulet mariné, légumes asiatiques, riz jasmin", price: "26.00$ / pers" },
+                { name: "Lasagne Maison", description: "Lasagne traditionnelle, salade césar", price: "22.50$ / pers" },
+                { name: "Saumon Grillé", description: "Saumon, asperges, pommes de terre", price: "32.00$ / pers" },
+                { name: "Bœuf Bourguignon", description: "Bœuf mijoté, légumes racines, purée", price: "35.00$ / pers" }
+            ],
+            cocktails: [
+                { name: "Bouchées Classiques", description: "12 bouchées variées par personne", price: "28.00$ / pers" },
+                { name: "Cocktail Prestige", description: "15 bouchées premium par personne", price: "38.00$ / pers" },
+                { name: "5@7 Express", description: "8 bouchées et boissons", price: "22.00$ / pers" },
+                { name: "Stations Gourmandes", description: "3 stations thématiques", price: "45.00$ / pers" }
+            ]
+        };
+
+        // Fonction pour ouvrir le modal
+        function openModal(title, category) {
+            const modal = document.getElementById('menuModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const menuItems = document.getElementById('menuItems');
+            
+            modalTitle.textContent = title;
+            menuItems.innerHTML = '';
+            
+            if (menuData[category]) {
+                menuData[category].forEach(item => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'menu-item';
+                    itemDiv.innerHTML = `
+                        <h3>${item.name}</h3>
+                        <p>${item.description}</p>
+                        <div class="price">${item.price}</div>
+                    `;
+                    menuItems.appendChild(itemDiv);
+                });
+            }
+            
+            modal.style.display = 'block';
+            setTimeout(() => {
+                modal.classList.add('show');
+            }, 10);
+        }
+
+        // Fermer le modal
+        document.querySelector('.close-modal').addEventListener('click', function() {
+            const modal = document.getElementById('menuModal');
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 500);
+        });
+
+        // Fermer le modal en cliquant à l'extérieur
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('menuModal');
+            if (event.target == modal) {
+                modal.classList.remove('show');
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                }, 500);
+            }
+        });
+
+        // Logo cliquable pour retour en haut
+        document.getElementById('logoLink').addEventListener('click', function() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        // Header scroll effect
         window.addEventListener('scroll', () => {
             const header = document.querySelector('header');
             const logoText = document.querySelector('.logo-image');
             const scrollPosition = window.scrollY;
-            const thresholdPoint = 60; // ajustez selon votre besoin
+            const thresholdPoint = 60;
             const logoscroll = document.querySelector('.logoscroll');
+            const quickNav = document.querySelector('.quick-nav');
         
             if (scrollPosition > thresholdPoint) {
-                header.style.height = '100px'; // hauteur réduite
+                header.style.height = '100px';
                 header.style.padding = '5px';
-                logoText.style.display = 'none'; // cacher texte
+                logoText.style.display = 'none';
                 logoscroll.style.display = 'block';
+                if (quickNav) quickNav.style.top = '110px';
             } else {
-                header.style.height = '150px'; // hauteur initiale
-                logoText.style.display = 'block'; // montrer texte
+                header.style.height = '150px';
+                logoText.style.display = 'block';
                 logoscroll.style.display = 'none';
+                if (quickNav) quickNav.style.top = '180px';
             }
         });
         
-                // Menu burger functionality
-                document.addEventListener('DOMContentLoaded', function() {
-                    const menuBurger = document.getElementById('menuBurger');
-                    const sideMenu = document.getElementById('sideMenu');
-                    const menuOverlay = document.getElementById('menuOverlay');
+        // Menu burger functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuBurger = document.getElementById('menuBurger');
+            const sideMenu = document.getElementById('sideMenu');
+            const menuOverlay = document.getElementById('menuOverlay');
+            
+            menuBurger.addEventListener('click', function() {
+                menuBurger.classList.toggle('active');
+                sideMenu.classList.toggle('active');
+                menuOverlay.classList.toggle('active');
+            });
+            
+            menuOverlay.addEventListener('click', function() {
+                menuBurger.classList.remove('active');
+                sideMenu.classList.remove('active');
+                menuOverlay.classList.remove('active');
+            });
+            
+            // Smooth scroll for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
                     
-                    // Toggle menu
-                    menuBurger.addEventListener('click', function() {
-                        console.log('Menu burger clicked');
-                        menuBurger.classList.toggle('active');
-                        sideMenu.classList.toggle('active');
-                        menuOverlay.classList.toggle('active');
-                    });
+                    if (targetId === '#') return;
                     
-                    // Close menu when clicking overlay
-                    menuOverlay.addEventListener('click', function() {
+                    const target = document.querySelector(targetId);
+                    
+                    if (target) {
                         menuBurger.classList.remove('active');
                         sideMenu.classList.remove('active');
                         menuOverlay.classList.remove('active');
-                    });
-                    
-                    // Smooth scroll for anchor links
-                    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                        anchor.addEventListener('click', function (e) {
-                            e.preventDefault();
-                            const targetId = this.getAttribute('href');
-                            
-                            if (targetId === '#') return;
-                            
-                            const target = document.querySelector(targetId);
-                            
-                            if (target) {
-                                // Close menu if open
-                                menuBurger.classList.remove('active');
-                                sideMenu.classList.remove('active');
-                                menuOverlay.classList.remove('active');
-                                
-                                // Scroll to section
-                                target.scrollIntoView({
-                                    behavior: 'smooth',
-                                    block: 'start'
-                                });
-                            }
+                        
+                        const headerHeight = document.querySelector('header').offsetHeight;
+                        const targetPosition = target.getBoundingClientRect().top + window.pageYOffset - headerHeight - 20;
+                        
+                        window.scrollTo({
+                            top: targetPosition,
+                            behavior: 'smooth'
                         });
-                    });
-                    
-                    // Animation on scroll
-                    const observerOptions = {
-                        threshold: 0.1,
-                        rootMargin: '0px 0px -50px 0px'
-                    };
-                    
-                    const observer = new IntersectionObserver((entries) => {
-                        entries.forEach(entry => {
-                            if (entry.isIntersecting) {
-                                entry.target.style.opacity = '0';
-                                entry.target.style.transform = 'translateY(20px)';
-                                
-                                setTimeout(() => {
-                                    entry.target.style.transition = 'all 0.6s ease';
-                                    entry.target.style.opacity = '1';
-                                    entry.target.style.transform = 'translateY(0)';
-                                }, 100);
-                                
-                                observer.unobserve(entry.target);
-                            }
-                        });
-                    }, observerOptions);
-                    
-                    // Observe service cards
-                    document.querySelectorAll('.service-card').forEach(card => {
-                        observer.observe(card);
-                    });
-                    
-                    // Cart management
-                    const cartIcon = document.querySelector('.cart-icon');
-                    const cartCount = document.querySelector('.cart-count');
-                    
-                    // Language selector
-                    const langButtons = document.querySelectorAll('.language-selector span');
-                    langButtons.forEach(btn => {
-                        btn.addEventListener('click', () => {
-                            langButtons.forEach(b => b.classList.remove('active'));
-                            btn.classList.add('active');
-                            console.log('Language selected:', btn.textContent);
-                        });
-                    });
-                    
-                    // Hero animation on load
-                    window.addEventListener('load', () => {
-                        const heroContent = document.querySelector('.hero-content');
-                        if (heroContent) {
-                            heroContent.style.opacity = '0';
-                            heroContent.style.transform = 'translateX(-30px)';
-                            
-                            setTimeout(() => {
-                                heroContent.style.transition = 'all 1s ease';
-                                heroContent.style.opacity = '1';
-                                heroContent.style.transform = 'translateX(0)';
-                            }, 200);
-                        }
-                    });
-                    
-                    
+                    }
                 });
-      
-
-
-        </script>
+            });
+            
+            // Animation on scroll
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '0';
+                        entry.target.style.transform = 'translateY(20px)';
+                        
+                        setTimeout(() => {
+                            entry.target.style.transition = 'all 0.6s ease';
+                            entry.target.style.opacity = '1';
+                            entry.target.style.transform = 'translateY(0)';
+                        }, 100);
+                        
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            
+            document.querySelectorAll('.service-card').forEach(card => {
+                observer.observe(card);
+            });
+            
+            // Language selector
+            const langButtons = document.querySelectorAll('.language-selector span');
+            langButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    langButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                });
+            });
+            
+            // Hero animation on load
+            window.addEventListener('load', () => {
+                const heroContent = document.querySelector('.hero-content');
+                if (heroContent) {
+                    heroContent.style.opacity = '0';
+                    heroContent.style.transform = 'translateX(-30px)';
+                    
+                    setTimeout(() => {
+                        heroContent.style.transition = 'all 1s ease';
+                        heroContent.style.opacity = '1';
+                        heroContent.style.transform = 'translateX(0)';
+                    }, 200);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

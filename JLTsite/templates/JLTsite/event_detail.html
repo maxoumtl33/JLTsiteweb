@@ -1,0 +1,1426 @@
+{% extends 'JLTsite/base_maitre_hotel.html' %}
+{% load static %}
+
+{% block title %}{{ event.event_name }} - Détail événement{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --mh-primary: #8e44ad;
+        --mh-secondary: #9b59b6;
+        --mh-success: #27ae60;
+        --mh-warning: #f39c12;
+        --mh-danger: #e74c3c;
+        --mh-info: #3498db;
+        --mh-dark: #2c3e50;
+        --mh-light: #ecf0f1;
+        --mh-gold: #f1c40f;
+    }
+
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    /* Header mobile */
+    .mobile-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(135deg, var(--mh-primary), var(--mh-secondary));
+        color: white;
+        padding: 15px;
+        z-index: 1000;
+        box-shadow: 0 4px 20px rgba(142, 68, 173, 0.3);
+    }
+
+    .header-content {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .back-btn {
+        background: rgba(255,255,255,0.2);
+        border: none;
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .back-btn:active {
+        transform: scale(0.9);
+    }
+
+    .header-title {
+        flex: 1;
+    }
+
+    .header-title h1 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .header-title .subtitle {
+        font-size: 0.85rem;
+        opacity: 0.8;
+        margin-top: 2px;
+    }
+
+    /* Container principal */
+    .mobile-container {
+        padding-top: 100px;
+        padding-bottom: 20px;
+        min-height: 100vh;
+    }
+
+    /* Section header avec infos principales */
+    .event-header-section {
+        background: rgba(255, 255, 255, 0.95);
+        margin: 15px;
+        border-radius: 20px;
+        padding: 25px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        position: relative;
+    }
+
+    .status-badge {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        padding: 6px 15px;
+        border-radius: 25px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-badge.confirmed {
+        background: linear-gradient(135deg, var(--mh-info), #5dade2);
+        color: white;
+    }
+
+    .status-badge.in_progress {
+        background: linear-gradient(135deg, var(--mh-warning), #f7dc6f);
+        color: white;
+    }
+
+    .status-badge.completed {
+        background: linear-gradient(135deg, var(--mh-success), #58d68d);
+        color: white;
+    }
+
+    .event-name {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--mh-dark);
+        margin-bottom: 15px;
+        line-height: 1.3;
+        padding-right: 80px;
+    }
+
+    .event-meta {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+        color: #7f8c8d;
+    }
+
+    .meta-item i {
+        color: var(--mh-primary);
+        width: 16px;
+        text-align: center;
+    }
+
+    .meta-value {
+        font-weight: 600;
+        color: var(--mh-dark);
+    }
+
+    /* Actions principales */
+    .main-actions {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-top: 20px;
+    }
+
+    .main-actions.single {
+        grid-template-columns: 1fr;
+    }
+
+    .action-btn {
+        padding: 15px;
+        border: none;
+        border-radius: 15px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 50px;
+    }
+
+    .action-btn:active {
+        transform: scale(0.95);
+    }
+
+    .btn-start {
+        background: linear-gradient(135deg, var(--mh-success), #58d68d);
+        color: white;
+        box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+    }
+
+    .btn-complete {
+        background: linear-gradient(135deg, var(--mh-gold), #f7dc6f);
+        color: var(--mh-dark);
+        box-shadow: 0 4px 15px rgba(241, 196, 15, 0.3);
+    }
+
+    .btn-report {
+        background: linear-gradient(135deg, var(--mh-primary), var(--mh-secondary));
+        color: white;
+        box-shadow: 0 4px 15px rgba(142, 68, 173, 0.3);
+    }
+
+    /* Sections détails */
+    .detail-section {
+        background: rgba(255, 255, 255, 0.95);
+        margin: 15px;
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--mh-dark);
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .section-title i {
+        color: var(--mh-primary);
+        font-size: 1.2rem;
+    }
+
+    /* Timeline */
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 15px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(180deg, var(--mh-primary), var(--mh-secondary));
+    }
+
+    .timeline-item {
+        position: relative;
+        margin-bottom: 20px;
+        padding: 15px;
+        background: rgba(142, 68, 173, 0.05);
+        border-radius: 12px;
+        border-left: 3px solid var(--mh-primary);
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -47px;
+        top: 20px;
+        width: 12px;
+        height: 12px;
+        background: var(--mh-primary);
+        border-radius: 50%;
+        border: 3px solid white;
+        box-shadow: 0 2px 8px rgba(142, 68, 173, 0.3);
+    }
+
+    .timeline-item.issue::before {
+        background: var(--mh-danger);
+    }
+
+    .timeline-time {
+        font-size: 0.8rem;
+        color: var(--mh-primary);
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+
+    .timeline-description {
+        font-size: 0.9rem;
+        color: var(--mh-dark);
+        line-height: 1.4;
+    }
+
+    .timeline-issue {
+        background: rgba(231, 76, 60, 0.1);
+        border-left-color: var(--mh-danger);
+    }
+
+    /* Galerie photos */
+    .photo-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .photo-item {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--mh-light);
+        cursor: pointer;
+    }
+
+    .photo-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+
+    .photo-item:active img {
+        transform: scale(1.05);
+    }
+
+    .photo-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(transparent, rgba(0,0,0,0.7));
+        color: white;
+        padding: 8px;
+        font-size: 0.75rem;
+    }
+
+    .add-photo-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(142, 68, 173, 0.1);
+        border: 2px dashed var(--mh-primary);
+        color: var(--mh-primary);
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .add-photo-btn:active {
+        transform: scale(0.95);
+        background: rgba(142, 68, 173, 0.2);
+    }
+
+    /* Personnel */
+    .staff-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .staff-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px;
+        background: rgba(142, 68, 173, 0.05);
+        border-radius: 12px;
+        border-left: 3px solid var(--mh-primary);
+    }
+
+    .staff-info {
+        flex: 1;
+    }
+
+    .staff-name {
+        font-weight: 600;
+        color: var(--mh-dark);
+        margin-bottom: 2px;
+    }
+
+    .staff-role {
+        font-size: 0.8rem;
+        color: #7f8c8d;
+    }
+
+    .staff-status {
+        padding: 4px 10px;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .staff-status.present {
+        background: var(--mh-success);
+        color: white;
+    }
+
+    .staff-status.absent {
+        background: var(--mh-light);
+        color: #7f8c8d;
+    }
+
+    /* Floating Action Button */
+    .fab {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, var(--mh-primary), var(--mh-secondary));
+        color: white;
+        border-radius: 50%;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 6px 20px rgba(142, 68, 173, 0.4);
+        cursor: pointer;
+        z-index: 999;
+        transition: all 0.3s ease;
+        font-size: 1.5rem;
+    }
+
+    .fab:active {
+        transform: scale(0.9);
+    }
+
+    /* Modal pour photos */
+    .photo-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.9);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .photo-modal.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .photo-modal img {
+        max-width: 90%;
+        max-height: 90%;
+        border-radius: 12px;
+    }
+
+    .photo-modal-close {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(255,255,255,0.2);
+        border: none;
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        font-size: 1.2rem;
+        cursor: pointer;
+    }
+
+    /* Quick actions en bas */
+    .quick-actions {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 15px;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+        display: flex;
+        gap: 10px;
+        z-index: 998;
+    }
+
+    .quick-btn {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .quick-btn:active {
+        transform: scale(0.95);
+    }
+
+    .quick-btn.primary {
+        background: var(--mh-primary);
+        color: white;
+    }
+
+    .quick-btn.secondary {
+        background: var(--mh-light);
+        color: var(--mh-dark);
+    }
+
+    .quick-btn.success {
+        background: var(--mh-success);
+        color: white;
+    }
+
+    .quick-btn.warning {
+        background: var(--mh-warning);
+        color: white;
+    }
+
+    /* Responsive tablette */
+    @media (min-width: 768px) {
+        .mobile-container {
+            max-width: 768px;
+            margin: 0 auto;
+        }
+
+        .photo-grid {
+            grid-template-columns: repeat(4, 1fr);
+        }
+    }
+
+    /* Ajustements safe area */
+    @supports (padding: max(0px)) {
+        .quick-actions {
+            padding-bottom: max(15px, env(safe-area-inset-bottom));
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header mobile -->
+<div class="mobile-header">
+    <div class="header-content">
+        <button class="back-btn" onclick="goBack()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <div class="header-title">
+            <h1>{{ event.event_name|truncatechars:30 }}</h1>
+            <div class="subtitle">{{ event.contract_number }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Container principal -->
+<div class="mobile-container">
+    <!-- Header événement -->
+    <div class="event-header-section">
+        <div class="status-badge {{ event.status }}">
+            {% if event.status == 'confirmed' %}
+                Confirmé
+            {% elif event.status == 'in_progress' %}
+                En cours
+            {% elif event.status == 'completed' %}
+                Terminé
+            {% else %}
+                {{ event.get_status_display }}
+            {% endif %}
+        </div>
+
+        <div class="event-name">{{ event.event_name }}</div>
+
+        <div class="event-meta">
+            <div class="meta-item">
+                <i class="fas fa-clock"></i>
+                <div>
+                    <div class="meta-value">{{ event.event_start_time|time:"H:i" }}</div>
+                    <div>{{ event.event_start_time|date:"d/m/Y" }}</div>
+                </div>
+            </div>
+
+            <div class="meta-item">
+                <i class="fas fa-hourglass-half"></i>
+                <div>
+                    <div class="meta-value">{{ event.get_duration_hours|floatformat:1 }}h</div>
+                    <div>Durée totale</div>
+                </div>
+            </div>
+
+            <div class="meta-item">
+                <i class="fas fa-user"></i>
+                <div>
+                    <div class="meta-value">{{ event.order.first_name }} {{ event.order.last_name }}</div>
+                    {% if event.order.company %}
+                    <div>{{ event.order.company }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="meta-item">
+                <i class="fas fa-phone"></i>
+                <div>
+                    <div class="meta-value">{{ event.order.phone }}</div>
+                    <div>Contact</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="meta-item" style="grid-column: 1 / -1;">
+            <i class="fas fa-map-marker-alt"></i>
+            <div>
+                <div class="meta-value">{{ event.venue_name|default:event.order.delivery_address }}</div>
+                <div>{{ event.order.delivery_postal_code }} {{ event.order.delivery_city }}</div>
+            </div>
+        </div>
+
+        <!-- Actions principales -->
+        <div class="main-actions {% if event.status == 'completed' %}single{% endif %}">
+            {% if event.status == 'confirmed' %}
+                <button class="action-btn btn-start" onclick="startEvent()">
+                    <i class="fas fa-play"></i> Démarrer
+                </button>
+                <button class="action-btn btn-complete" onclick="callClient()">
+                    <i class="fas fa-phone"></i> Appeler
+                </button>
+            {% elif event.status == 'in_progress' %}
+                <button class="action-btn btn-complete" onclick="completeEvent()">
+                    <i class="fas fa-flag-checkered"></i> Terminer
+                </button>
+                <button class="action-btn btn-start" onclick="addTimelineEvent()">
+                    <i class="fas fa-plus"></i> Ajouter note
+                </button>
+            {% elif event.status == 'completed' %}
+                {% if event.final_report %}
+                    <button class="action-btn btn-report" onclick="viewReport()">
+                        <i class="fas fa-file-alt"></i> Voir le rapport
+                    </button>
+                {% else %}
+                    <button class="action-btn btn-report" onclick="createReport()">
+                        <i class="fas fa-plus"></i> Créer le rapport
+                    </button>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Timeline -->
+    {% if timeline %}
+    <div class="detail-section">
+        <div class="section-title">
+            <i class="fas fa-history"></i>
+            Timeline de l'événement
+        </div>
+        <div class="timeline">
+            {% for item in timeline %}
+            <div class="timeline-item {% if item.is_issue %}timeline-issue{% endif %}">
+                <div class="timeline-time">
+                    <i class="fas fa-clock"></i> {{ item.timestamp|time:"H:i" }}
+                    {% if item.is_issue %}
+                    <span style="color: var(--mh-danger); margin-left: 10px;">
+                        <i class="fas fa-exclamation-triangle"></i> PROBLÈME
+                    </span>
+                    {% endif %}
+                </div>
+                <div class="timeline-description">
+                    <strong>{{ item.get_action_type_display }}</strong><br>
+                    {{ item.description }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Photos -->
+    <div class="detail-section">
+        <div class="section-title">
+            <i class="fas fa-camera"></i>
+            Photos de l'événement ({{ photos.count }})
+        </div>
+        <div class="photo-grid">
+            {% for photo in photos %}
+            <div class="photo-item" onclick="viewPhoto('{{ photo.photo.url }}', '{{ photo.caption|escapejs }}')">
+                <img src="{{ photo.photo.url }}" alt="{{ photo.caption }}" loading="lazy">
+                {% if photo.caption %}
+                <div class="photo-overlay">{{ photo.caption|truncatechars:30 }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            
+            <!-- Bouton ajouter photo -->
+            <div class="photo-item add-photo-btn" onclick="takePhoto()">
+                <i class="fas fa-plus"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Personnel assigné -->
+    {% if staff_assignments %}
+    <div class="detail-section">
+        <div class="section-title">
+            <i class="fas fa-users"></i>
+            Personnel assigné ({{ staff_assignments.count }})
+        </div>
+        <div class="staff-list">
+            {% for assignment in staff_assignments %}
+            <div class="staff-item">
+                <div class="staff-info">
+                    <div class="staff-name">{{ assignment.staff_member.get_full_name }}</div>
+                    <div class="staff-role">{{ assignment.get_role_display }} - {{ assignment.arrival_time|time:"H:i" }} à {{ assignment.departure_time|time:"H:i" }}</div>
+                </div>
+                <div class="staff-status {% if assignment.checked_in %}present{% else %}absent{% endif %}">
+                    {% if assignment.checked_in %}
+                        Présent
+                    {% else %}
+                        En attente
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Détails commande -->
+    <div class="detail-section">
+        <div class="section-title">
+            <i class="fas fa-shopping-cart"></i>
+            Détails de la commande
+        </div>
+        
+        <div class="meta-item" style="margin-bottom: 10px;">
+            <i class="fas fa-hashtag"></i>
+            <div>
+                <div class="meta-value">{{ event.order.order_number }}</div>
+                <div>Numéro de commande</div>
+            </div>
+        </div>
+
+        <div class="meta-item" style="margin-bottom: 15px;">
+            <i class="fas fa-dollar-sign"></i>
+            <div>
+                <div class="meta-value">{{ event.order.total|floatformat:2 }}$</div>
+                <div>Montant total</div>
+            </div>
+        </div>
+
+        <div style="margin-top: 15px;">
+            <strong>Articles commandés :</strong>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+                {% for item in event.order.items.all %}
+                <li style="margin-bottom: 5px;">
+                    {{ item.quantity }}x {{ item.product_name }}
+                    {% if item.notes %}
+                    <br><small style="color: #7f8c8d;">{{ item.notes }}</small>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        {% if event.special_requirements %}
+        <div style="margin-top: 15px; padding: 12px; background: rgba(241, 196, 15, 0.1); border-radius: 10px; border-left: 3px solid var(--mh-gold);">
+            <strong style="color: var(--mh-warning);">
+                <i class="fas fa-exclamation-circle"></i> Exigences spéciales :
+            </strong>
+            <div style="margin-top: 5px;">{{ event.special_requirements }}</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Espace pour les quick actions -->
+    <div style="height: 80px;"></div>
+</div>
+
+<!-- Quick Actions en bas -->
+<div class="quick-actions">
+    {% if event.status == 'confirmed' %}
+        <button class="quick-btn success" onclick="startEvent()">
+            <i class="fas fa-play"></i> Démarrer
+        </button>
+        <button class="quick-btn secondary" onclick="callClient()">
+            <i class="fas fa-phone"></i> Appeler
+        </button>
+    {% elif event.status == 'in_progress' %}
+        <button class="quick-btn primary" onclick="addTimelineEvent()">
+            <i class="fas fa-plus"></i> Note
+        </button>
+        <button class="quick-btn secondary" onclick="takePhoto()">
+            <i class="fas fa-camera"></i> Photo
+        </button>
+        <button class="quick-btn warning" onclick="completeEvent()">
+            <i class="fas fa-check"></i> Terminer
+        </button>
+    {% elif event.status == 'completed' %}
+        {% if not event.final_report %}
+        <button class="quick-btn primary" onclick="createReport()">
+            <i class="fas fa-file-alt"></i> Créer rapport
+        </button>
+        {% endif %}
+        <button class="quick-btn secondary" onclick="goBack()">
+            <i class="fas fa-arrow-left"></i> Retour
+        </button>
+    {% endif %}
+</div>
+
+<!-- Floating Action Button -->
+{% if event.status == 'in_progress' %}
+<button class="fab" onclick="quickMenu()">
+    <i class="fas fa-ellipsis-v"></i>
+</button>
+{% endif %}
+
+<!-- Modal pour photos -->
+<div class="photo-modal" id="photoModal" onclick="closePhotoModal()">
+    <button class="photo-modal-close" onclick="closePhotoModal()">
+        <i class="fas fa-times"></i>
+    </button>
+    <img id="modalPhoto" src="" alt="">
+</div>
+
+<!-- Input caché pour photos -->
+<input type="file" id="photoInput" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoUpload(event)">
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const eventId = {{ event.id }};
+    const eventStatus = '{{ event.status }}';
+
+    // Vibration pour feedback
+    function vibrate(pattern = [50]) {
+        if ('vibrate' in navigator) {
+            navigator.vibrate(pattern);
+        }
+    }
+
+    // Retour
+    function goBack() {
+        vibrate();
+        window.history.back();
+    }
+
+    // Démarrer l'événement
+    function startEvent() {
+        vibrate([100, 50, 100]);
+        if (confirm('Démarrer cet événement maintenant?')) {
+            showLoading('Démarrage en cours...');
+            
+            fetch(`/maitre-hotel/event/${eventId}/start/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    showToast('Événement démarré!', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showToast(data.message || 'Erreur', 'error');
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                showToast('Erreur de connexion', 'error');
+            });
+        }
+    }
+
+    // Terminer l'événement
+    function completeEvent() {
+        vibrate([50, 50, 100]);
+        if (confirm('Terminer cet événement? Vous pourrez ensuite créer le rapport final.')) {
+            showLoading('Finalisation...');
+            
+            fetch(`/maitre-hotel/event/${eventId}/complete/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    showToast('Événement terminé!', 'success');
+                    if (data.redirect_url) {
+                        setTimeout(() => {
+                            window.location.href = data.redirect_url;
+                        }, 1500);
+                    } else {
+                        setTimeout(() => location.reload(), 1500);
+                    }
+                } else {
+                    showToast(data.message || 'Erreur', 'error');
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                showToast('Erreur de connexion', 'error');
+            });
+        }
+    }
+
+    // Appeler le client
+    function callClient() {
+        vibrate();
+        const phone = '{{ event.order.phone|escapejs }}';
+        if (phone) {
+            window.location.href = `tel:${phone}`;
+        } else {
+            showToast('Numéro non disponible', 'warning');
+        }
+    }
+
+    // Créer un rapport
+    function createReport() {
+        vibrate();
+        window.location.href = `/maitre-hotel/event/${eventId}/report/create/`;
+    }
+
+    // Voir le rapport
+    function viewReport() {
+        vibrate();
+        {% if event.final_report %}
+        window.location.href = `/maitre-hotel/report/{{ event.final_report.id }}/`;
+        {% endif %}
+    }
+
+    // Ajouter un événement à la timeline
+    function addTimelineEvent() {
+        vibrate();
+        
+        // Menu rapide pour types d'événements courants
+        const options = [
+            'Service en cours',
+            'Problème technique',
+            'Demande client',
+            'Équipe arrivée',
+            'Installation terminée',
+            'Nettoyage commencé',
+            'Autre...'
+        ];
+        
+        let selectedOption = null;
+        
+        // Créer un menu de sélection rapide
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 10001;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        `;
+        
+        const content = document.createElement('div');
+        content.style.cssText = `
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            max-width: 350px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+        `;
+        
+        content.innerHTML = `
+            <h3 style="margin: 0 0 20px 0; color: var(--mh-dark); text-align: center;">
+                <i class="fas fa-plus-circle" style="color: var(--mh-primary);"></i> Ajouter à la timeline
+            </h3>
+            ${options.map((option, index) => `
+                <button onclick="selectTimelineOption('${option}', ${index})" 
+                        style="
+                            width: 100%;
+                            padding: 15px;
+                            margin-bottom: 10px;
+                            border: 2px solid var(--mh-light);
+                            border-radius: 12px;
+                            background: white;
+                            color: var(--mh-dark);
+                            font-size: 0.9rem;
+                            font-weight: 500;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            align-items: center;
+                            gap: 10px;
+                        "
+                        onmouseover="this.style.borderColor='var(--mh-primary)'; this.style.background='rgba(142,68,173,0.05)'"
+                        onmouseout="this.style.borderColor='var(--mh-light)'; this.style.background='white'">
+                    <i class="fas fa-${index === 1 || index === 2 ? 'exclamation-triangle' : index === 3 ? 'users' : index === 4 ? 'check' : index === 5 ? 'broom' : 'clock'}"></i>
+                    ${option}
+                </button>
+            `).join('')}
+            <button onclick="closeTimelineModal()" 
+                    style="
+                        width: 100%;
+                        padding: 12px;
+                        border: none;
+                        border-radius: 12px;
+                        background: var(--mh-light);
+                        color: var(--mh-dark);
+                        font-weight: 600;
+                        cursor: pointer;
+                        margin-top: 10px;
+                    ">
+                Annuler
+            </button>
+        `;
+        
+        modal.appendChild(content);
+        document.body.appendChild(modal);
+        modal.id = 'timelineModal';
+        
+        // Fonction globale pour sélection
+        window.selectTimelineOption = function(option, index) {
+            closeTimelineModal();
+            
+            if (option === 'Autre...') {
+                const customDescription = prompt('Décrivez ce qui s\'est passé :');
+                if (customDescription && customDescription.trim()) {
+                    submitTimelineEvent(customDescription.trim(), false);
+                }
+            } else {
+                const isIssue = index === 1 || index === 2; // Problème technique ou demande client
+                submitTimelineEvent(option, isIssue);
+            }
+        };
+        
+        window.closeTimelineModal = function() {
+            const modal = document.getElementById('timelineModal');
+            if (modal) {
+                modal.remove();
+            }
+        };
+    }
+
+    function submitTimelineEvent(description, isIssue = false) {
+        showLoading('Ajout en cours...');
+        
+        fetch('/maitre-hotel/api/add-timeline/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                event_id: eventId,
+                action_type: isIssue ? 'service_issue' : 'other',
+                description: description,
+                is_issue: isIssue
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                showToast('Ajouté à la timeline!', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast('Erreur lors de l\'ajout', 'error');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            showToast('Erreur de connexion', 'error');
+        });
+    }
+
+    // Prendre une photo
+    function takePhoto() {
+        vibrate();
+        document.getElementById('photoInput').click();
+    }
+
+    // Gérer l'upload de photo
+    function handlePhotoUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        // Demander une légende
+        const caption = prompt('Légende pour cette photo (optionnel):') || '';
+        
+        const formData = new FormData();
+        formData.append('photo', file);
+        formData.append('event_id', eventId);
+        formData.append('photo_type', 'service');
+        formData.append('caption', caption);
+        
+        showLoading('Upload de la photo...');
+        
+        fetch('/maitre-hotel/api/upload-photo/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                showToast('Photo ajoutée!', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast('Erreur lors de l\'upload', 'error');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            showToast('Erreur lors de l\'upload', 'error');
+        });
+        
+        // Reset de l'input
+        event.target.value = '';
+    }
+
+    // Voir une photo en grand
+    function viewPhoto(url, caption) {
+        vibrate();
+        const modal = document.getElementById('photoModal');
+        const img = document.getElementById('modalPhoto');
+        
+        img.src = url;
+        img.alt = caption;
+        modal.classList.add('active');
+    }
+
+    // Fermer le modal photo
+    function closePhotoModal() {
+        const modal = document.getElementById('photoModal');
+        modal.classList.remove('active');
+    }
+
+    // Menu rapide
+    function quickMenu() {
+        vibrate([25, 25, 25]);
+        
+        const actions = [
+            { icon: 'fas fa-plus', text: 'Ajouter note', action: 'addTimelineEvent()' },
+            { icon: 'fas fa-camera', text: 'Prendre photo', action: 'takePhoto()' },
+            { icon: 'fas fa-phone', text: 'Appeler client', action: 'callClient()' },
+            { icon: 'fas fa-flag-checkered', text: 'Terminer événement', action: 'completeEvent()' }
+        ];
+        
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            z-index: 10001;
+            border-radius: 25px 25px 0 0;
+            padding: 25px 20px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.2);
+        `;
+        
+        modal.innerHTML = `
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="width: 40px; height: 4px; background: #ddd; border-radius: 2px; margin: 0 auto;"></div>
+            </div>
+            <h3 style="margin: 0 0 20px 0; text-align: center; color: var(--mh-dark);">Actions rapides</h3>
+            ${actions.map(action => `
+                <button onclick="${action.action}; closeQuickMenu();" 
+                        style="
+                            width: 100%;
+                            padding: 15px;
+                            margin-bottom: 12px;
+                            border: none;
+                            border-radius: 15px;
+                            background: rgba(142, 68, 173, 0.1);
+                            color: var(--mh-dark);
+                            font-size: 0.9rem;
+                            font-weight: 600;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            gap: 15px;
+                            transition: all 0.3s ease;
+                        "
+                        onmouseover="this.style.background='rgba(142,68,173,0.2)'"
+                        onmouseout="this.style.background='rgba(142,68,173,0.1)'">
+                    <i class="${action.icon}" style="color: var(--mh-primary); width: 20px;"></i>
+                    ${action.text}
+                </button>
+            `).join('')}
+            <button onclick="closeQuickMenu()" 
+                    style="
+                        width: 100%;
+                        padding: 12px;
+                        border: none;
+                        border-radius: 12px;
+                        background: var(--mh-light);
+                        color: var(--mh-dark);
+                        font-weight: 600;
+                        cursor: pointer;
+                        margin-top: 10px;
+                    ">
+                Annuler
+            </button>
+        `;
+        
+        document.body.appendChild(modal);
+        modal.id = 'quickMenuModal';
+        
+        // Animation d'apparition
+        setTimeout(() => {
+            modal.style.transform = 'translateY(0)';
+        }, 10);
+        
+        window.closeQuickMenu = function() {
+            const modal = document.getElementById('quickMenuModal');
+            if (modal) {
+                modal.style.transform = 'translateY(100%)';
+                setTimeout(() => modal.remove(), 300);
+            }
+        };
+    }
+
+    // Toast notification
+    function showToast(message, type = 'info', duration = 3000) {
+        const existingToasts = document.querySelectorAll('.toast-mobile');
+        existingToasts.forEach(toast => toast.remove());
+        
+        const toast = document.createElement('div');
+        toast.className = 'toast-mobile';
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 25px;
+            border-radius: 30px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+            z-index: 9999;
+            color: white;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            animation: slideUp 0.5s ease;
+        `;
+        
+        // Couleurs selon le type
+        switch(type) {
+            case 'success':
+                toast.style.background = 'linear-gradient(135deg, var(--mh-success), #58d68d)';
+                break;
+            case 'error':
+                toast.style.background = 'linear-gradient(135deg, var(--mh-danger), #ec7063)';
+                break;
+            case 'warning':
+                toast.style.background = 'linear-gradient(135deg, var(--mh-warning), #f7dc6f)';
+                toast.style.color = 'var(--mh-dark)';
+                break;
+            default:
+                toast.style.background = 'linear-gradient(135deg, var(--mh-info), #5dade2)';
+        }
+        
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, duration);
+    }
+
+    // Loading indicator
+    function showLoading(message = 'Chargement...') {
+        const loading = document.createElement('div');
+        loading.id = 'loadingIndicator';
+        loading.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            backdrop-filter: blur(5px);
+        `;
+        loading.innerHTML = `
+            <div style="
+                width: 30px;
+                height: 30px;
+                border: 3px solid rgba(255,255,255,0.3);
+                border-radius: 50%;
+                border-top-color: white;
+                animation: spin 1s ease-in-out infinite;
+                margin-bottom: 20px;
+            "></div>
+            <div style="font-weight: 600; font-size: 1.1rem;">${message}</div>
+        `;
+        document.body.appendChild(loading);
+    }
+
+    function hideLoading() {
+        const loading = document.getElementById('loadingIndicator');
+        if (loading) {
+            loading.remove();
+        }
+    }
+
+    // Styles pour animations
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideUp {
+            from {
+                transform: translateX(-50%) translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Détail événement initialisé pour:', eventId);
+        
+        // Gestion du swipe pour retour
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        document.addEventListener('touchstart', function(event) {
+            touchStartX = event.changedTouches[0].screenX;
+        });
+        
+        document.addEventListener('touchend', function(event) {
+            touchEndX = event.changedTouches[0].screenX;
+            handleSwipe();
+        });
+        
+        function handleSwipe() {
+            const swipeThreshold = 100;
+            const diff = touchStartX - touchEndX;
+            
+            if (Math.abs(diff) > swipeThreshold) {
+                if (diff < 0) {
+                    // Swipe vers la droite - retour
+                    if (touchStartX < 50) {
+                        vibrate([25, 25]);
+                        goBack();
+                    }
+                }
+            }
+        }
+        
+        // Gestion des raccourcis clavier pour les tests
+        document.addEventListener('keydown', function(event) {
+            if (event.ctrlKey || event.metaKey) {
+                switch(event.key) {
+                    case 's':
+                        event.preventDefault();
+                        if (eventStatus === 'confirmed') startEvent();
+                        break;
+                    case 'e':
+                        event.preventDefault();
+                        if (eventStatus === 'in_progress') completeEvent();
+                        break;
+                    case 'n':
+                        event.preventDefault();
+                        if (eventStatus === 'in_progress') addTimelineEvent();
+                        break;
+                    case 'p':
+                        event.preventDefault();
+                        if (eventStatus === 'in_progress') takePhoto();
+                        break;
+                }
+            }
+        });
+
+        // Actualisation automatique si événement en cours
+        if (eventStatus === 'in_progress') {
+            setInterval(() => {
+                if (navigator.onLine && document.visibilityState === 'visible') {
+                    // Vérifier s'il y a des mises à jour
+                    fetch(`/maitre-hotel/event/${eventId}/?ajax=1`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status !== eventStatus) {
+                                location.reload();
+                            }
+                        })
+                        .catch(error => console.error('Erreur actualisation:', error));
+                }
+            }, 2 * 60 * 1000); // Toutes les 2 minutes
+        }
+    });
+
+    // Gestion de la visibilité de la page
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible' && eventStatus === 'in_progress') {
+            // Page redevenue visible pendant un événement en cours
+            // Vérifier les mises à jour
+            console.log('Page visible - vérification des mises à jour');
+        }
+    });
+</script>
+{% endblock %}

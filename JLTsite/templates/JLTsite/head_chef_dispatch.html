@@ -1,0 +1,934 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Dispatch {{ dispatch_date|date:"d/m/Y" }} - Chef de Cuisine{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --chef-primary: #8B4513;
+        --chef-secondary: #DEB887;
+        --chef-accent: #CD853F;
+        --chef-dark: #654321;
+        --chef-light: #FFF8DC;
+        --success: #28a745;
+        --warning: #ffc107;
+        --danger: #dc3545;
+        --info: #17a2b8;
+    }
+
+    .dispatch-header {
+        background: linear-gradient(135deg, var(--chef-primary) 0%, var(--chef-dark) 100%);
+        color: white;
+        padding: 2rem 0;
+    }
+
+    .date-selector-bar {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .date-navigation {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .btn-date-nav {
+        padding: 8px 12px;
+        background: var(--chef-light);
+        color: var(--chef-dark);
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-date-nav:hover {
+        background: var(--chef-accent);
+        color: white;
+    }
+
+    .current-date {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--chef-dark);
+        padding: 0 1rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-print-all {
+        padding: 10px 20px;
+        background: var(--chef-primary);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-print-all:hover {
+        background: var(--chef-dark);
+        transform: translateY(-2px);
+    }
+
+    .department-dispatch {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 2rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        page-break-inside: avoid;
+    }
+
+    .department-header {
+        background: linear-gradient(135deg, var(--chef-light) 0%, #f8f9fa 100%);
+        padding: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 3px solid var(--chef-accent);
+    }
+
+    .department-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--chef-dark);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .department-stats {
+        display: flex;
+        gap: 1.5rem;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--chef-primary);
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+        text-transform: uppercase;
+    }
+
+    .department-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-department {
+        padding: 8px 16px;
+        border-radius: 6px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+    }
+
+    .btn-print {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-complete {
+        background: var(--success);
+        color: white;
+    }
+
+    .progress-section {
+        padding: 1rem 1.5rem;
+        background: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .progress-bar-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .progress-bar {
+        flex: 1;
+        height: 20px;
+        background: #e9ecef;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--chef-accent) 0%, var(--chef-primary) 100%);
+        transition: width 0.5s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .dispatch-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .dispatch-table thead {
+        background: #f8f9fa;
+    }
+
+    .dispatch-table th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--chef-dark);
+        font-size: 0.9rem;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .dispatch-table td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #e9ecef;
+        vertical-align: middle;
+    }
+
+    .dispatch-table tbody tr {
+        transition: background 0.3s ease;
+    }
+
+    .dispatch-table tbody tr:hover {
+        background: var(--chef-light);
+    }
+
+    .order-number {
+        font-weight: 600;
+        color: var(--chef-primary);
+    }
+
+    .customer-cell {
+        font-weight: 500;
+    }
+
+    .company-name {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+
+    .product-name {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .quantity-badge {
+        padding: 6px 12px;
+        background: var(--chef-accent);
+        color: white;
+        border-radius: 15px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .time-badge {
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .time-morning { background: #fff3cd; color: #856404; }
+    .time-lunch { background: #cce5ff; color: #004085; }
+    .time-afternoon { background: #d1ecf1; color: #0c5460; }
+
+    .checkbox-cell {
+        text-align: center;
+    }
+
+    .item-checkbox {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+    }
+
+    .priority-indicator {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 0.5rem;
+    }
+
+    .priority-high { background: var(--danger); }
+    .priority-normal { background: var(--warning); }
+    .priority-low { background: var(--success); }
+
+    .notes-cell {
+        max-width: 200px;
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+
+    .empty-department {
+        padding: 2rem;
+        text-align: center;
+        color: #6c757d;
+    }
+
+    .summary-section {
+        background: var(--chef-light);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .summary-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .summary-icon {
+        font-size: 2rem;
+        color: var(--chef-accent);
+        margin-bottom: 0.5rem;
+    }
+
+    .summary-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--chef-dark);
+    }
+
+    .summary-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+
+    @media print {
+        .date-selector-bar,
+        .btn-department,
+        .dispatch-header nav,
+        .checkbox-cell {
+            display: none !important;
+        }
+        
+        .department-dispatch {
+            page-break-inside: avoid;
+            margin-bottom: 2rem;
+        }
+        
+        .department-header {
+            background: none !important;
+            border-bottom: 2px solid black;
+        }
+        
+        body {
+            font-size: 12pt;
+        }
+        
+        .dispatch-table {
+            font-size: 10pt;
+        }
+    }
+
+    .legend {
+        background: white;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap;
+        font-size: 0.9rem;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<section class="dispatch-header">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb" style="background: transparent;">
+                <li class="breadcrumb-item"><a href="{% url 'head_chef_dashboard' %}" style="color: var(--chef-secondary);">Dashboard</a></li>
+                <li class="breadcrumb-item active" style="color: white;">Dispatch</li>
+            </ol>
+        </nav>
+        <h1><i class="fas fa-clipboard-check"></i> Dispatch de production</h1>
+        <p class="mb-0">Organisation de la production par département</p>
+    </div>
+</section>
+
+<!-- Contenu principal -->
+<section class="py-4" style="background: #f8f9fa;">
+    <div class="container">
+        <!-- Sélecteur de date -->
+        <div class="date-selector-bar">
+            <div class="date-navigation">
+                <button class="btn-date-nav" onclick="changeDate(-1)">
+                    <i class="fas fa-chevron-left"></i> Jour précédent
+                </button>
+                <span class="current-date">
+                    <i class="fas fa-calendar"></i> {{ dispatch_date|date:"l d F Y" }}
+                </span>
+                <button class="btn-date-nav" onclick="changeDate(1)">
+                    Jour suivant <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            
+            <div class="action-buttons">
+                <input type="date" id="dateSelector" value="{{ dispatch_date|date:'Y-m-d' }}" 
+                       class="filter-control" onchange="goToDate(this.value)">
+                <button onclick="printAll()" class="btn-print-all">
+                    <i class="fas fa-print"></i> Imprimer tout
+                </button>
+            </div>
+        </div>
+
+        <!-- Résumé global -->
+        <div class="summary-section">
+            <h3><i class="fas fa-chart-pie"></i> Résumé de la journée</h3>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <i class="fas fa-shopping-cart summary-icon"></i>
+                    <div class="summary-value">
+                        {{ departments_data|length }}
+                    </div>
+                    <div class="summary-label">Départements actifs</div>
+                </div>
+                <div class="summary-card">
+                    <i class="fas fa-utensils summary-icon"></i>
+                    <div class="summary-value">
+                        {% with total=0 %}
+                        {% for dept_code, dept in departments_data.items %}
+                            {{ dept.total_items|add:total }}
+                        {% endfor %}
+                        {% endwith %}
+                    </div>
+                    <div class="summary-label">Articles à produire</div>
+                </div>
+                <div class="summary-card">
+                    <i class="fas fa-check-circle summary-icon"></i>
+                    <div class="summary-value">
+                        {% with completed=0 %}
+                        {% for dept_code, dept in departments_data.items %}
+                            {{ dept.completed_items|add:completed }}
+                        {% endfor %}
+                        {% endwith %}
+                    </div>
+                    <div class="summary-label">Articles complétés</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Légende -->
+        <div class="legend">
+            <div class="legend-item">
+                <span class="priority-indicator priority-high"></span>
+                <span>Priorité haute (livraison avant 10h)</span>
+            </div>
+            <div class="legend-item">
+                <span class="priority-indicator priority-normal"></span>
+                <span>Priorité normale (10h-14h)</span>
+            </div>
+            <div class="legend-item">
+                <span class="priority-indicator priority-low"></span>
+                <span>Priorité basse (après 14h)</span>
+            </div>
+        </div>
+
+        <!-- Dispatch par département -->
+        {% for dept_code, dept in departments_data.items %}
+        <div class="department-dispatch" id="dept-{{ dept_code }}">
+            <div class="department-header">
+                <div>
+                    <h3 class="department-title">
+                        <i class="fas fa-utensils"></i> {{ dept.name }}
+                    </h3>
+                </div>
+                
+                <div class="department-stats">
+                    <div class="stat-item">
+                        <div class="stat-value">{{ dept.total_items }}</div>
+                        <div class="stat-label">Articles</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ dept.completed_items }}</div>
+                        <div class="stat-label">Complétés</div>
+                    </div>
+                </div>
+                
+                <div class="department-actions">
+                    <button onclick="printDepartment('{{ dept_code }}')" class="btn-department btn-print">
+                        <i class="fas fa-print"></i> Imprimer
+                    </button>
+                    <button onclick="markDepartmentComplete('{{ dept_code }}')" class="btn-department btn-complete">
+                        <i class="fas fa-check"></i> Tout marquer
+                    </button>
+                </div>
+            </div>
+
+            <!-- Barre de progression -->
+            {% if dept.total_items > 0 %}
+            <div class="progress-section">
+                <div class="progress-bar-container">
+                    <span style="font-weight: 600; color: var(--chef-dark);">Progression:</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{ dept.production.progress_percentage }}%;">
+                            {{ dept.production.progress_percentage }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Table des items -->
+            {% if dept.items %}
+            <table class="dispatch-table">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">✓</th>
+                        <th>Commande</th>
+                        <th>Client</th>
+                        <th>Produit</th>
+                        <th>Quantité</th>
+                        <th>Heure</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in dept.items %}
+                    <tr data-item-id="{{ item.id }}">
+                        <td class="checkbox-cell">
+                            <input type="checkbox" 
+                                   class="item-checkbox" 
+                                   data-item-id="{{ item.id }}"
+                                   {% if item.is_completed %}checked{% endif %}
+                                   onchange="toggleItem({{ item.id }})">
+                        </td>
+                        <td>
+                            <span class="order-number">{{ item.order_item.order.order_number }}</span>
+                        </td>
+                        <td>
+                            <div class="customer-cell">
+                                {{ item.order_item.order.first_name }} {{ item.order_item.order.last_name }}
+                                {% if item.order_item.order.company %}
+                                <div class="company-name">{{ item.order_item.order.company }}</div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="product-name">
+                                {% if item.is_priority %}
+                                <span class="priority-indicator priority-high"></span>
+                                {% elif item.order_item.order.delivery_time.hour < 14 %}
+                                <span class="priority-indicator priority-normal"></span>
+                                {% else %}
+                                <span class="priority-indicator priority-low"></span>
+                                {% endif %}
+                                {{ item.order_item.product_name }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="quantity-badge">{{ item.quantity_to_produce }}</span>
+                        </td>
+                        <td>
+                            {% with hour=item.order_item.order.delivery_time.hour %}
+                            <span class="time-badge {% if hour < 10 %}time-morning{% elif hour < 14 %}time-lunch{% else %}time-afternoon{% endif %}">
+                                {{ item.order_item.order.delivery_time|time:"H:i" }}
+                            </span>
+                            {% endwith %}
+                        </td>
+                        <td class="notes-cell">
+                            {% if item.order_item.notes %}
+                                <small>{{ item.order_item.notes|truncatewords:10 }}</small>
+                            {% endif %}
+                            {% if item.production_notes %}
+                                <small style="color: var(--chef-accent);">
+                                    <i class="fas fa-sticky-note"></i> {{ item.production_notes|truncatewords:10 }}
+                                </small>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-department">
+                <i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                <p>Aucun article à produire pour ce département aujourd'hui</p>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <!-- Si aucune production -->
+        {% if not departments_data %}
+        <div style="background: white; border-radius: 12px; padding: 3rem; text-align: center; color: #6c757d;">
+            <i class="fas fa-calendar-times" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+            <h4>Aucune production prévue</h4>
+            <p>Il n'y a aucune commande à préparer pour le {{ dispatch_date|date:"d/m/Y" }}</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<script>
+// Fonction pour changer de date
+function changeDate(days) {
+    const currentDate = new Date('{{ dispatch_date|date:"Y-m-d" }}');
+    currentDate.setDate(currentDate.getDate() + days);
+    const newDate = currentDate.toISOString().split('T')[0];
+    window.location.href = `{% url 'head_chef_dispatch' %}?date=${newDate}`;
+}
+
+// Fonction pour aller à une date spécifique
+function goToDate(date) {
+    window.location.href = `{% url 'head_chef_dispatch' %}?date=${date}`;
+}
+
+// Fonction pour imprimer tout le dispatch
+function printAll() {
+    window.print();
+}
+
+// Fonction pour imprimer un département spécifique
+function printDepartment(deptCode) {
+    // Masquer tous les autres départements temporairement
+    const allDepts = document.querySelectorAll('.department-dispatch');
+    const targetDept = document.getElementById(`dept-${deptCode}`);
+    
+    allDepts.forEach(dept => {
+        if (dept !== targetDept) {
+            dept.style.display = 'none';
+        }
+    });
+    
+    // Masquer aussi les éléments non nécessaires
+    document.querySelector('.date-selector-bar').style.display = 'none';
+    document.querySelector('.summary-section').style.display = 'none';
+    document.querySelector('.legend').style.display = 'none';
+    
+    // Imprimer
+    window.print();
+    
+    // Restaurer l'affichage
+    allDepts.forEach(dept => {
+        dept.style.display = '';
+    });
+    document.querySelector('.date-selector-bar').style.display = '';
+    document.querySelector('.summary-section').style.display = '';
+    document.querySelector('.legend').style.display = '';
+}
+
+// Fonction pour marquer un item comme complété
+function toggleItem(itemId) {
+    const checkbox = document.querySelector(`input[data-item-id="${itemId}"]`);
+    const isChecked = checkbox.checked;
+    
+    fetch(`/kitchen/api/production-item/${itemId}/toggle/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ completed: isChecked })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Mettre à jour la barre de progression
+            updateProgress(data.department, data.progress);
+            
+            // Animation visuelle
+            const row = checkbox.closest('tr');
+            if (isChecked) {
+                row.style.background = '#d4f4dd';
+                setTimeout(() => {
+                    row.style.background = '';
+                }, 1000);
+            }
+        } else {
+            // Reverser si erreur
+            checkbox.checked = !isChecked;
+            alert('Erreur lors de la mise à jour');
+        }
+    })
+    .catch(error => {
+        checkbox.checked = !isChecked;
+        console.error('Erreur:', error);
+    });
+}
+
+// Fonction pour marquer tout un département comme complété
+function markDepartmentComplete(deptCode) {
+    if (!confirm('Marquer tous les articles de ce département comme complétés?')) {
+        return;
+    }
+    
+    const dept = document.getElementById(`dept-${deptCode}`);
+    const checkboxes = dept.querySelectorAll('.item-checkbox:not(:checked)');
+    
+    if (checkboxes.length === 0) {
+        alert('Tous les articles sont déjà complétés');
+        return;
+    }
+    
+    // Marquer visuellement tous les checkboxes
+    checkboxes.forEach(cb => cb.checked = true);
+    
+    // Envoyer la requête au serveur
+    fetch(`/kitchen/api/department/${deptCode}/complete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+            date: '{{ dispatch_date|date:"Y-m-d" }}'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Mettre à jour la barre de progression à 100%
+            updateProgress(deptCode, 100);
+            
+            // Animation de succès
+            dept.style.background = '#d4f4dd';
+            setTimeout(() => {
+                dept.style.background = '';
+            }, 2000);
+            
+            // Afficher notification
+            showNotification('Département complété avec succès!', 'success');
+        } else {
+            // Reverser les checkboxes si erreur
+            checkboxes.forEach(cb => cb.checked = false);
+            alert('Erreur: ' + data.error);
+        }
+    })
+    .catch(error => {
+        checkboxes.forEach(cb => cb.checked = false);
+        console.error('Erreur:', error);
+    });
+}
+
+// Fonction pour mettre à jour la barre de progression
+function updateProgress(deptCode, percentage) {
+    const dept = document.getElementById(`dept-${deptCode}`);
+    const progressFill = dept.querySelector('.progress-fill');
+    const statsCompleted = dept.querySelector('.stat-value:nth-child(2)');
+    
+    if (progressFill) {
+        progressFill.style.width = `${percentage}%`;
+        progressFill.textContent = `${percentage}%`;
+    }
+    
+    // Mettre à jour les statistiques
+    const totalItems = parseInt(dept.querySelector('.stat-value:first-child').textContent);
+    const completedItems = Math.round(totalItems * percentage / 100);
+    if (statsCompleted) {
+        statsCompleted.textContent = completedItems;
+    }
+}
+
+// Fonction pour afficher une notification
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <i class="fas fa-check-circle"></i> ${message}
+    `;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#28a745' : '#17a2b8'};
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+        z-index: 9999;
+        animation: slideIn 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Fonction de recherche/filtre dans le dispatch
+function filterDispatch() {
+    const searchInput = document.createElement('input');
+    searchInput.type = 'text';
+    searchInput.placeholder = 'Rechercher un produit ou client...';
+    searchInput.className = 'filter-control';
+    searchInput.style.cssText = 'margin-left: 1rem; width: 300px;';
+    
+    // Ajouter le champ de recherche
+    document.querySelector('.action-buttons').appendChild(searchInput);
+    
+    searchInput.addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        
+        document.querySelectorAll('.dispatch-table tbody tr').forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+    });
+}
+
+// Raccourcis clavier
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+        switch(e.key) {
+            case 'p':
+                e.preventDefault();
+                printAll();
+                break;
+            case 'f':
+                e.preventDefault();
+                filterDispatch();
+                break;
+            case 'ArrowLeft':
+                e.preventDefault();
+                changeDate(-1);
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                changeDate(1);
+                break;
+        }
+    }
+});
+
+// Auto-refresh toutes les 30 secondes pour voir les mises à jour
+setInterval(function() {
+    // Ne rafraîchir que si aucune checkbox n'est en cours de modification
+    if (!document.querySelector('.item-checkbox:focus')) {
+        fetch(window.location.href)
+            .then(response => response.text())
+            .then(html => {
+                // Mettre à jour uniquement les barres de progression
+                const parser = new DOMParser();
+                const newDoc = parser.parseFromString(html, 'text/html');
+                
+                document.querySelectorAll('.progress-fill').forEach((bar, index) => {
+                    const newBar = newDoc.querySelectorAll('.progress-fill')[index];
+                    if (newBar) {
+                        bar.style.width = newBar.style.width;
+                        bar.textContent = newBar.textContent;
+                    }
+                });
+            });
+    }
+}, 30000);
+
+// Styles d'animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+    
+    .item-checkbox {
+        transition: all 0.3s ease;
+    }
+    
+    .item-checkbox:checked {
+        transform: scale(1.2);
+    }
+    
+    tr[data-item-id] {
+        transition: background 0.3s ease;
+    }
+    
+    .dispatch-table tbody tr:has(.item-checkbox:checked) {
+        opacity: 0.7;
+        text-decoration: line-through;
+    }
+`;
+document.head.appendChild(style);
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', function() {
+    // Ajouter un indicateur de date si c'est aujourd'hui
+    const today = new Date().toISOString().split('T')[0];
+    const currentDate = '{{ dispatch_date|date:"Y-m-d" }}';
+    
+    if (today === currentDate) {
+        const badge = document.createElement('span');
+        badge.textContent = "Aujourd'hui";
+        badge.style.cssText = `
+            background: var(--success);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            margin-left: 1rem;
+        `;
+        document.querySelector('.current-date').appendChild(badge);
+    }
+});
+</script>
+{% endblock %}

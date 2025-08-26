@@ -1,0 +1,907 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Production {{ department_name }} - Julien-Leblanc Traiteur{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Variables CSS pour chef de département */
+    :root {
+        --dept-primary: #4682B4;
+        --dept-primary-hover: #5F9EA0;
+        --dept-secondary: #B0E0E6;
+        --dept-accent: #1E90FF;
+        --dept-dark: #2F4F4F;
+        --dept-light: #F0F8FF;
+        --dept-gray: #6c757d;
+        --dept-gray-light: #e9ecef;
+        --dept-white: #ffffff;
+        --dept-success: #20B2AA;
+        --dept-warning: #FFD700;
+        --dept-danger: #DC143C;
+    }
+
+    /* Header */
+    .dept-header {
+        background: linear-gradient(135deg, var(--dept-primary) 0%, var(--dept-dark) 100%);
+        padding: 2rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .dept-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 60%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(30, 144, 255, 0.1) 0%, transparent 70%);
+        animation: float 20s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(10deg); }
+    }
+    
+    .dept-title {
+        color: white;
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .dept-badge {
+        background: var(--dept-accent);
+        color: white;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .dept-subtitle {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Navigation */
+    .dept-nav {
+        background: var(--dept-dark);
+        border-bottom: 3px solid var(--dept-accent);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+    
+    .dept-nav-tabs {
+        display: flex;
+        gap: 0;
+        margin: 0;
+        padding: 0;
+        overflow-x: auto;
+    }
+    
+    .dept-nav-tab {
+        padding: 1rem 1.5rem;
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        border-bottom: 3px solid transparent;
+        position: relative;
+    }
+    
+    .dept-nav-tab:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+    }
+    
+    .dept-nav-tab.active {
+        background: rgba(30, 144, 255, 0.1);
+        color: var(--dept-accent);
+        border-bottom-color: var(--dept-accent);
+    }
+    
+    /* Content */
+    .dept-content {
+        background: var(--dept-light);
+        padding: 2rem 0;
+        min-height: calc(100vh - 300px);
+    }
+    
+    /* Date Selector */
+    .date-selector-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        border-top: 4px solid var(--dept-accent);
+    }
+    
+    .date-controls {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .date-input {
+        padding: 10px 15px;
+        border: 2px solid var(--dept-gray-light);
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .date-input:focus {
+        outline: none;
+        border-color: var(--dept-accent);
+        box-shadow: 0 0 0 3px rgba(30, 144, 255, 0.1);
+    }
+    
+    .date-btn {
+        padding: 10px 15px;
+        background: var(--dept-accent);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .date-btn:hover {
+        background: var(--dept-primary-hover);
+        transform: translateY(-2px);
+    }
+    
+    /* Production Stats */
+    .production-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        text-align: center;
+        border-top: 4px solid var(--dept-accent);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+    
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        background: var(--dept-light);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        color: var(--dept-accent);
+        margin: 0 auto 1rem;
+    }
+    
+    .stat-value {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: var(--dept-dark);
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: var(--dept-gray);
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+    
+    /* Production Items */
+    .production-section {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+    
+    .production-header {
+        background: linear-gradient(135deg, var(--dept-light) 0%, #f8f9fa 100%);
+        padding: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--dept-gray-light);
+    }
+    
+    .production-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--dept-dark);
+    }
+    
+    .filter-controls {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+    
+    .filter-select {
+        padding: 8px 12px;
+        border: 2px solid var(--dept-gray-light);
+        border-radius: 6px;
+        background: white;
+        font-size: 0.9rem;
+    }
+    
+    .filter-select:focus {
+        outline: none;
+        border-color: var(--dept-accent);
+    }
+    
+    /* Production Item Card */
+    .production-item {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--dept-gray-light);
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .production-item:hover {
+        background: var(--dept-light);
+    }
+    
+    .production-item:last-child {
+        border-bottom: none;
+    }
+    
+    .production-item.priority {
+        border-left: 5px solid var(--dept-danger);
+        background: rgba(220, 20, 60, 0.02);
+    }
+    
+    .production-item.completed {
+        background: rgba(32, 178, 170, 0.1);
+        border-left: 5px solid var(--dept-success);
+    }
+    
+    .item-header {
+        display: flex;
+        justify-content: between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+    
+    .item-info {
+        flex: 1;
+    }
+    
+    .item-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--dept-dark);
+        margin-bottom: 0.25rem;
+    }
+    
+    .item-details {
+        color: var(--dept-gray);
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .item-meta {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+    }
+    
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        color: var(--dept-gray);
+    }
+    
+    .order-badge {
+        background: var(--dept-accent);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .priority-badge {
+        background: var(--dept-danger);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+    
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-align: center;
+    }
+    
+    .status-not-started {
+        background: var(--dept-gray-light);
+        color: var(--dept-gray);
+    }
+    
+    .status-in-progress {
+        background: rgba(255, 215, 0, 0.2);
+        color: #b8860b;
+    }
+    
+    .status-completed {
+        background: rgba(32, 178, 170, 0.2);
+        color: var(--dept-success);
+    }
+    
+    /* Progress Bar */
+    .item-progress {
+        margin: 1rem 0;
+    }
+    
+    .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: var(--dept-gray-light);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 0.5rem;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--dept-accent) 0%, var(--dept-success) 100%);
+        transition: width 0.5s ease;
+        border-radius: 4px;
+    }
+    
+    .progress-text {
+        font-size: 0.85rem;
+        color: var(--dept-gray);
+        text-align: center;
+    }
+    
+    /* Action Buttons */
+    .item-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .action-btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    .btn-start {
+        background: var(--dept-accent);
+        color: white;
+    }
+    
+    .btn-complete {
+        background: var(--dept-success);
+        color: white;
+    }
+    
+    .btn-issue {
+        background: var(--dept-warning);
+        color: var(--dept-dark);
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    /* Notes Section */
+    .item-notes {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: rgba(240, 248, 255, 0.5);
+        border-radius: 8px;
+        border-left: 4px solid var(--dept-accent);
+    }
+    
+    .notes-title {
+        font-weight: 600;
+        color: var(--dept-dark);
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .notes-text {
+        color: var(--dept-gray);
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--dept-gray);
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+        color: var(--dept-accent);
+    }
+    
+    .empty-state-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--dept-dark);
+    }
+    
+    .empty-state-text {
+        font-size: 1.1rem;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .production-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .filter-controls {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .item-meta {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .item-actions {
+            flex-direction: column;
+        }
+        
+        .date-controls {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Department Header -->
+<section class="dept-header">
+    <div class="container">
+        <h1 class="dept-title">
+            <i class="fas fa-clipboard-list"></i> 
+            Production
+            <span class="dept-badge">{{ department_name }}</span>
+        </h1>
+        <p class="dept-subtitle">Gestion de la production du département {{ department_name }}</p>
+    </div>
+</section>
+
+<!-- Department Navigation -->
+<nav class="dept-nav">
+    <div class="container">
+        <div class="dept-nav-tabs">
+            <a href="{% url 'department_chef_dashboard' %}" class="dept-nav-tab">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a href="{% url 'department_chef_orders' %}" class="dept-nav-tab active">
+                <i class="fas fa-clipboard-list"></i> Production
+            </a>
+            <a href="{% url 'department_product_orders' %}" class="dept-nav-tab">
+                <i class="fas fa-shopping-cart"></i> Commandes Produits
+            </a>
+            <a href="/kitchen/department/inventory/" class="dept-nav-tab">
+                <i class="fas fa-warehouse"></i> Stock
+            </a>
+            <a href="{% url 'kitchen_notifications' %}" class="dept-nav-tab">
+                <i class="fas fa-bell"></i> Notifications
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- Content -->
+<section class="dept-content">
+    <div class="container">
+        <!-- Date Selector -->
+        <div class="date-selector-card">
+            <div class="date-controls">
+                <form method="GET" style="display: flex; align-items: center; gap: 1rem;">
+                    <label for="date" style="font-weight: 600; color: var(--dept-dark);">
+                        <i class="fas fa-calendar-alt"></i> Date de production :
+                    </label>
+                    <input type="date" 
+                           name="date" 
+                           value="{{ selected_date|date:'Y-m-d' }}" 
+                           class="date-input"
+                           onchange="this.form.submit()">
+                    <a href="{% url 'department_chef_orders' %}" class="date-btn">
+                        <i class="fas fa-calendar-day"></i>
+                        Aujourd'hui
+                    </a>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Production Statistics -->
+        <div class="production-stats">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-list-check"></i>
+                </div>
+                <div class="stat-value">{{ total_items }}</div>
+                <div class="stat-label">Total articles</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-value">{{ completed_items }}</div>
+                <div class="stat-label">Terminés</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-value">{{ pending_items }}</div>
+                <div class="stat-label">En attente</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-percentage"></i>
+                </div>
+                <div class="stat-value">{{ progress_percentage }}%</div>
+                <div class="stat-label">Progression</div>
+            </div>
+        </div>
+        
+        <!-- Production Items -->
+        <div class="production-section">
+            <div class="production-header">
+                <h3 class="production-title">
+                    Articles à produire - {{ selected_date|date:"l d F Y" }}
+                    {% if status_filter %}
+                        <span style="font-size: 0.8rem; background: var(--dept-accent); color: white; padding: 4px 12px; border-radius: 15px; margin-left: 1rem;">
+                            {% if status_filter == 'pending' %}En attente
+                            {% elif status_filter == 'in_progress' %}En cours
+                            {% elif status_filter == 'completed' %}Terminés
+                            {% elif status_filter == 'priority' %}Prioritaires
+                            {% endif %}
+                        </span>
+                    {% endif %}
+                </h3>
+                <div class="filter-controls">
+                    <select class="filter-select" onchange="applyStatusFilter(this.value)">
+                        <option value="">Tous les articles</option>
+                        <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>En attente</option>
+                        <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>En cours</option>
+                        <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Terminés</option>
+                        <option value="priority" {% if status_filter == 'priority' %}selected{% endif %}>Prioritaires</option>
+                    </select>
+                    {% if status_filter %}
+                    <a href="{% url 'department_chef_orders' %}?date={{ selected_date|date:'Y-m-d' }}" 
+                       style="background: var(--dept-gray); color: white; padding: 8px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem;">
+                        <i class="fas fa-times"></i> Effacer filtre
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+            {% if production_items %}
+                {% for item in production_items %}
+                <div class="production-item {% if item.is_priority %}priority{% endif %} {% if item.is_completed %}completed{% endif %}"
+                     data-status="{% if item.is_completed %}completed{% elif item.started_at %}in_progress{% else %}pending{% endif %}"
+                     data-priority="{% if item.is_priority %}priority{% endif %}">
+                    
+                    <div class="item-header">
+                        <div class="item-info">
+                            <div class="item-name">{{ item.order_item.product_name }}</div>
+                            <div class="item-details">
+                                Quantité: <strong>{{ item.quantity_to_produce }}</strong> unités
+                                {% if item.order_item.notes %}
+                                    • Notes: {{ item.order_item.notes|truncatechars:50 }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: right;">
+                            {% if item.is_priority %}
+                                <span class="priority-badge">
+                                    <i class="fas fa-exclamation"></i> PRIORITAIRE
+                                </span>
+                            {% endif %}
+                            
+                            <div style="margin-top: 0.5rem;">
+                                {% if item.is_completed %}
+                                    <span class="status-badge status-completed">
+                                        <i class="fas fa-check"></i> Terminé
+                                    </span>
+                                {% elif item.started_at %}
+                                    <span class="status-badge status-in-progress">
+                                        <i class="fas fa-play"></i> En cours
+                                    </span>
+                                {% else %}
+                                    <span class="status-badge status-not-started">
+                                        <i class="fas fa-pause"></i> En attente
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="item-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-hashtag"></i>
+                            <span class="order-badge">{{ item.order_item.order.order_number }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-user"></i>
+                            {{ item.order_item.order.first_name }} {{ item.order_item.order.last_name }}
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-clock"></i>
+                            Livraison: {{ item.order_item.order.delivery_date|date:"d/m" }} à {{ item.order_item.order.delivery_time|time:"H:i" }}
+                        </div>
+                        {% if item.produced_by %}
+                        <div class="meta-item">
+                            <i class="fas fa-chef-hat"></i>
+                            Produit par: {{ item.produced_by.get_full_name }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    <div class="item-progress">
+                        <div class="progress-bar">
+                            {% if item.is_completed %}
+                                <div class="progress-fill" style="width: 100%;"></div>
+                            {% elif item.started_at %}
+                                <div class="progress-fill" style="width: 50%;"></div>
+                            {% else %}
+                                <div class="progress-fill" style="width: 0%;"></div>
+                            {% endif %}
+                        </div>
+                        <div class="progress-text">
+                            {{ item.quantity_produced }}/{{ item.quantity_to_produce }} unités
+                            {% if item.started_at and item.completed_at %}
+                                • Durée: {{ item.completed_at|timesince:item.started_at }}
+                            {% elif item.started_at %}
+                                • En cours depuis {{ item.started_at|timesince }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="item-actions">
+                        {% if not item.is_completed %}
+                            {% if not item.started_at %}
+                                <button class="action-btn btn-start" onclick="startProduction({{ item.id }})">
+                                    <i class="fas fa-play"></i> Commencer
+                                </button>
+                            {% endif %}
+                            
+                            <button class="action-btn btn-complete" onclick="completeProduction({{ item.id }})">
+                                <i class="fas fa-check"></i> Marquer terminé
+                            </button>
+                            
+                            <button class="action-btn btn-issue" onclick="reportIssue({{ item.id }})">
+                                <i class="fas fa-exclamation-triangle"></i> Signaler problème
+                            </button>
+                        {% else %}
+                            <span style="color: var(--dept-success); font-weight: 600;">
+                                <i class="fas fa-check-circle"></i> Terminé le {{ item.completed_at|date:"d/m à H:i" }}
+                            </span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Notes -->
+                    {% if item.production_notes or item.quality_notes or item.issue_description %}
+                    <div class="item-notes">
+                        {% if item.production_notes %}
+                            <div class="notes-title">Notes de production:</div>
+                            <div class="notes-text">{{ item.production_notes }}</div>
+                        {% endif %}
+                        
+                        {% if item.quality_notes %}
+                            <div class="notes-title">Notes qualité:</div>
+                            <div class="notes-text">{{ item.quality_notes }}</div>
+                        {% endif %}
+                        
+                        {% if item.issue_description %}
+                            <div class="notes-title" style="color: var(--dept-danger);">⚠️ Problème signalé:</div>
+                            <div class="notes-text" style="color: var(--dept-danger);">{{ item.issue_description }}</div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-calendar-times"></i>
+                    </div>
+                    <h4 class="empty-state-title">Aucune production ce jour</h4>
+                    <p class="empty-state-text">Pas d'articles à produire pour votre département le {{ selected_date|date:"d F Y" }}.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<script>
+function filterItems(status) {
+    const items = document.querySelectorAll('.production-item');
+    items.forEach(item => {
+        if (status === 'all') {
+            item.style.display = 'block';
+        } else if (status === 'priority' && item.dataset.priority === 'priority') {
+            item.style.display = 'block';
+        } else if (item.dataset.status === status) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+function applyStatusFilter(status) {
+    // Construire l'URL avec le filtre
+    const currentDate = '{{ selected_date|date:"Y-m-d" }}';
+    let url = '{% url "department_chef_orders" %}?date=' + currentDate;
+    
+    if (status) {
+        url += '&status=' + status;
+    }
+    
+    // Rediriger vers l'URL avec le filtre
+    window.location.href = url;
+}
+
+function getCsrfToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+           document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
+           '{{ csrf_token }}';
+}
+
+function startProduction(itemId) {
+    if (confirm('Commencer la production de cet article ?')) {
+        fetch(`/kitchen/cook/start-item/${itemId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCsrfToken(),
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erreur: ' + (data.error || 'Erreur inconnue'));
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            alert('Erreur de connexion');
+        });
+    }
+}
+
+function completeProduction(itemId) {
+    const quantity = prompt('Quantité produite:');
+    if (quantity && !isNaN(quantity) && parseInt(quantity) > 0) {
+        fetch(`/kitchen/cook/complete-item/${itemId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCsrfToken(),
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                quantity: parseInt(quantity),
+                notes: ''
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erreur: ' + (data.error || 'Erreur inconnue'));
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            alert('Erreur de connexion');
+        });
+    }
+}
+
+function reportIssue(itemId) {
+    const issue = prompt('Décrivez le problème:');
+    if (issue && issue.trim()) {
+        fetch(`/kitchen/cook/report-issue/${itemId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCsrfToken(),
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                description: issue.trim()
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Problème signalé avec succès');
+                location.reload();
+            } else {
+                alert('Erreur: ' + (data.error || 'Erreur inconnue'));
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            alert('Erreur de connexion');
+        });
+    }
+}
+</script>
+{% endblock %}

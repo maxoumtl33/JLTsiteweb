@@ -1,0 +1,787 @@
+{% extends 'JLTsite/base_driver.html' %}
+{% load static %}
+
+{% block title %}Valider livraison - {{ delivery.delivery_number }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Interface 100% mobile pour validation de livraison */
+    :root {
+        --validate-primary: #2ecc71;
+        --validate-secondary: #27ae60;
+        --validate-info: #3498db;
+        --validate-warning: #f39c12;
+        --validate-danger: #e74c3c;
+        --validate-dark: #2c3e50;
+        --validate-light: #ecf0f1;
+    }
+
+    * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        background: var(--validate-light);
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    /* Header mobile fixe */
+    .validation-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        padding: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        z-index: 1000;
+    }
+
+    .back-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--validate-dark);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1rem;
+    }
+
+    .delivery-number-badge {
+        background: var(--validate-primary);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        margin-left: 10px;
+    }
+
+    /* Container principal */
+    .validation-container {
+        padding-top: 70px;
+        padding-bottom: 100px;
+        min-height: 100vh;
+    }
+
+    /* Card client */
+    .customer-card {
+        background: white;
+        margin: 15px;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    .customer-name {
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: var(--validate-dark);
+        margin-bottom: 10px;
+    }
+
+    .customer-info {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #666;
+        font-size: 0.95rem;
+    }
+
+    .info-item i {
+        width: 20px;
+        color: var(--validate-info);
+    }
+
+    .info-item a {
+        color: var(--validate-info);
+        text-decoration: none;
+    }
+
+    /* Actions rapides */
+    .quick-actions {
+        display: flex;
+        gap: 10px;
+        margin: 15px;
+    }
+
+    .action-btn {
+        flex: 1;
+        padding: 15px;
+        border: none;
+        border-radius: 12px;
+        background: white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        color: var(--validate-dark);
+    }
+
+    .action-btn:active {
+        transform: scale(0.95);
+    }
+
+    .action-btn i {
+        font-size: 1.5rem;
+    }
+
+    .action-btn.call {
+        background: var(--validate-warning);
+        color: white;
+    }
+
+    .action-btn.navigate {
+        background: var(--validate-info);
+        color: white;
+    }
+
+    .action-btn span {
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    /* Section détails livraison */
+    .delivery-details {
+        background: white;
+        margin: 15px;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--validate-dark);
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .items-list {
+        background: var(--validate-light);
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+    }
+
+    .item-line {
+        padding: 8px 0;
+        border-bottom: 1px dashed #ddd;
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.95rem;
+    }
+
+    .item-line:last-child {
+        border-bottom: none;
+    }
+
+    /* Instructions spéciales */
+    .special-instructions {
+        background: #fff3cd;
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 4px solid var(--validate-warning);
+        margin: 15px;
+    }
+
+    .special-instructions h4 {
+        margin: 0 0 10px 0;
+        color: #856404;
+        font-size: 1rem;
+    }
+
+    /* Section validation */
+    .validation-section {
+        background: white;
+        margin: 15px;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    /* Upload photo */
+    .photo-upload {
+        border: 2px dashed var(--validate-primary);
+        border-radius: 12px;
+        padding: 30px;
+        text-align: center;
+        margin-bottom: 20px;
+        cursor: pointer;
+        transition: all 0.3s;
+        background: #f0fff4;
+    }
+
+    .photo-upload:active {
+        transform: scale(0.98);
+    }
+
+    .photo-upload i {
+        font-size: 3rem;
+        color: var(--validate-primary);
+        margin-bottom: 10px;
+    }
+
+    .photo-upload p {
+        margin: 0;
+        color: var(--validate-dark);
+        font-weight: 500;
+    }
+
+    .photo-preview {
+        display: none;
+        margin-top: 15px;
+    }
+
+    .photo-preview img {
+        width: 100%;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    /* Signature pad */
+    .signature-pad {
+        border: 2px solid #ddd;
+        border-radius: 12px;
+        background: white;
+        margin-bottom: 10px;
+        position: relative;
+    }
+
+    #signatureCanvas {
+        width: 100%;
+        height: 200px;
+        touch-action: none;
+    }
+
+    .signature-clear {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: white;
+        border: 1px solid #ddd;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 0.85rem;
+        cursor: pointer;
+    }
+
+    /* Textarea mobile */
+    .form-control-mobile {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-family: inherit;
+        resize: vertical;
+        transition: border-color 0.3s;
+    }
+
+    .form-control-mobile:focus {
+        outline: none;
+        border-color: var(--validate-primary);
+    }
+
+    /* Boutons de validation */
+    .validation-buttons {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        padding: 15px;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        display: flex;
+        gap: 10px;
+        z-index: 999;
+    }
+
+    .btn-validate {
+        flex: 2;
+        padding: 15px;
+        border: none;
+        border-radius: 10px;
+        background: var(--validate-primary);
+        color: white;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .btn-issue {
+        flex: 1;
+        padding: 15px;
+        border: none;
+        border-radius: 10px;
+        background: var(--validate-danger);
+        color: white;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .btn-validate:active,
+    .btn-issue:active {
+        transform: scale(0.95);
+    }
+
+    /* Modal problème */
+    .issue-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 9999;
+    }
+
+    .issue-modal.show {
+        display: block;
+    }
+
+    .issue-content {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-radius: 20px 20px 0 0;
+        padding: 20px;
+        max-height: 80vh;
+        overflow-y: auto;
+        animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translateY(100%);
+        }
+        to {
+            transform: translateY(0);
+        }
+    }
+
+    .issue-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .issue-options {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .issue-option {
+        padding: 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .issue-option:active {
+        transform: scale(0.98);
+    }
+
+    .issue-option.selected {
+        border-color: var(--validate-danger);
+        background: #fff5f5;
+    }
+
+    /* Loading spinner */
+    .loading-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255,255,255,0.9);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .loading-overlay.show {
+        display: flex;
+    }
+
+    .spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid var(--validate-light);
+        border-top-color: var(--validate-primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Ajustements iPhone X+ */
+    @supports (padding: max(0px)) {
+        .validation-buttons {
+            padding-bottom: max(15px, env(safe-area-inset-bottom));
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="validation-header">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+        <a href="{% url 'driver_dashboard' %}" class="back-button">
+            <i class="fas fa-arrow-left"></i> Retour
+        </a>
+        <span class="delivery-number-badge">{{ delivery.delivery_number }}</span>
+    </div>
+</div>
+
+<!-- Container principal -->
+<div class="validation-container">
+    <!-- Informations client -->
+    <div class="customer-card">
+        <div class="customer-name">{{ delivery.customer_name }}</div>
+        {% if delivery.company %}
+        <div style="color: #666; margin-bottom: 10px;">{{ delivery.company }}</div>
+        {% endif %}
+        
+        <div class="customer-info">
+            <div class="info-item">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>{{ delivery.delivery_address }}, {{ delivery.delivery_postal_code }} {{ delivery.delivery_city }}</span>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-clock"></i>
+                <span>{{ delivery.scheduled_time_start|time:"H:i" }} - {{ delivery.scheduled_time_end|time:"H:i" }}</span>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-phone"></i>
+                <a href="tel:{{ delivery.customer_phone }}">{{ delivery.customer_phone }}</a>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-envelope"></i>
+                <a href="mailto:{{ delivery.customer_email }}">{{ delivery.customer_email }}</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="quick-actions">
+        <a href="tel:{{ delivery.customer_phone }}" class="action-btn call">
+            <i class="fas fa-phone"></i>
+            <span>Appeler</span>
+        </a>
+        <div class="action-btn navigate" onclick="openNavigation()">
+            <i class="fas fa-directions"></i>
+            <span>Navigation</span>
+        </div>
+    </div>
+
+    <!-- Instructions spéciales -->
+    {% if delivery.delivery_instructions or delivery.access_code %}
+    <div class="special-instructions">
+        <h4><i class="fas fa-exclamation-triangle"></i> Instructions importantes</h4>
+        {% if delivery.delivery_instructions %}
+        <p style="margin: 10px 0;">{{ delivery.delivery_instructions }}</p>
+        {% endif %}
+        {% if delivery.access_code %}
+        <p style="margin: 10px 0;"><strong>Code d'accès:</strong> <code style="background: white; padding: 2px 8px; border-radius: 4px;">{{ delivery.access_code }}</code></p>
+        {% endif %}
+        {% if delivery.parking_info %}
+        <p style="margin: 10px 0;"><strong>Stationnement:</strong> {{ delivery.parking_info }}</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Détails de la livraison -->
+    <div class="delivery-details">
+        <h3 class="section-title">
+            <i class="fas fa-box"></i> Contenu de la livraison
+        </h3>
+        <div class="items-list">
+            {{ delivery.items_description }}
+        </div>
+        <div style="display: flex; justify-content: space-between; color: #666;">
+            <span><i class="fas fa-cube"></i> {{ delivery.total_packages }} colis</span>
+            {% if delivery.weight %}
+            <span><i class="fas fa-weight"></i> {{ delivery.weight }} kg</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Section validation -->
+    <form id="validationForm" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="validate">
+        
+        <div class="validation-section">
+            <h3 class="section-title">
+                <i class="fas fa-camera"></i> Photo de livraison
+            </h3>
+            
+            <div class="photo-upload" onclick="document.getElementById('photoInput').click()">
+                <i class="fas fa-camera"></i>
+                <p>Prendre une photo</p>
+                <input type="file" id="photoInput" name="delivery_photo" accept="image/*" capture="camera" style="display: none;" onchange="previewPhoto(this)">
+            </div>
+            
+            <div class="photo-preview" id="photoPreview">
+                <img id="previewImage" src="" alt="Preview">
+            </div>
+        </div>
+
+        <div class="validation-section">
+            <h3 class="section-title">
+                <i class="fas fa-signature"></i> Signature du client
+            </h3>
+            
+            <div class="signature-pad">
+                <canvas id="signatureCanvas"></canvas>
+                <button type="button" class="signature-clear" onclick="clearSignature()">
+                    <i class="fas fa-eraser"></i> Effacer
+                </button>
+            </div>
+            <input type="hidden" name="signature" id="signatureData">
+        </div>
+
+        <div class="validation-section">
+            <h3 class="section-title">
+                <i class="fas fa-comment"></i> Notes de livraison
+            </h3>
+            <textarea name="delivery_notes" class="form-control-mobile" rows="3" 
+                      placeholder="Notes optionnelles..."></textarea>
+        </div>
+    </form>
+</div>
+
+<!-- Boutons de validation fixes -->
+<div class="validation-buttons">
+    <button type="button" class="btn-issue" onclick="showIssueModal()">
+        <i class="fas fa-exclamation"></i> Problème
+    </button>
+    <button type="submit" form="validationForm" class="btn-validate">
+        <i class="fas fa-check-circle"></i> Valider la livraison
+    </button>
+</div>
+
+<!-- Modal problème -->
+<div class="issue-modal" id="issueModal">
+    <div class="issue-content">
+        <div class="issue-header">
+            <h3>Signaler un problème</h3>
+            <button onclick="hideIssueModal()" style="border: none; background: none; font-size: 1.5rem;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <form id="issueForm" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="report_issue">
+            
+            <div class="issue-options">
+                <div class="issue-option" onclick="selectIssue(this, 'absent')">
+                    <i class="fas fa-user-slash"></i> Client absent
+                </div>
+                <div class="issue-option" onclick="selectIssue(this, 'wrong_address')">
+                    <i class="fas fa-map-marked-alt"></i> Mauvaise adresse
+                </div>
+                <div class="issue-option" onclick="selectIssue(this, 'refused')">
+                    <i class="fas fa-ban"></i> Livraison refusée
+                </div>
+                <div class="issue-option" onclick="selectIssue(this, 'access')">
+                    <i class="fas fa-lock"></i> Problème d'accès
+                </div>
+                <div class="issue-option" onclick="selectIssue(this, 'other')">
+                    <i class="fas fa-question-circle"></i> Autre problème
+                </div>
+            </div>
+            
+            <input type="hidden" name="issue_type" id="issueType">
+            
+            <div style="margin-top: 20px;">
+                <textarea name="issue_description" class="form-control-mobile" rows="4" 
+                          placeholder="Description du problème..." required></textarea>
+            </div>
+            
+            <button type="submit" class="btn-validate" style="width: 100%; margin-top: 20px;">
+                Signaler le problème
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Canvas pour signature
+    const canvas = document.getElementById('signatureCanvas');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    
+    // Ajuster la taille du canvas
+    function resizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+    }
+    
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    
+    // Gestion de la signature
+    function startDrawing(e) {
+        isDrawing = true;
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+        const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+    }
+    
+    function draw(e) {
+        if (!isDrawing) return;
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+        const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+        ctx.lineTo(x, y);
+        ctx.stroke();
+    }
+    
+    function stopDrawing() {
+        if (isDrawing) {
+            isDrawing = false;
+            // Sauvegarder la signature
+            document.getElementById('signatureData').value = canvas.toDataURL();
+        }
+    }
+    
+    // Events tactiles et souris
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('touchstart', startDrawing);
+    canvas.addEventListener('touchmove', draw);
+    canvas.addEventListener('touchend', stopDrawing);
+    
+    // Effacer signature
+    function clearSignature() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        document.getElementById('signatureData').value = '';
+    }
+    
+    // Preview photo
+    function previewPhoto(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('previewImage').src = e.target.result;
+                document.getElementById('photoPreview').style.display = 'block';
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+    
+    // Navigation
+    function openNavigation() {
+        const address = encodeURIComponent('{{ delivery.delivery_address }}, {{ delivery.delivery_postal_code }} {{ delivery.delivery_city }}');
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        
+        if (isIOS) {
+            window.location.href = `maps://maps.apple.com/?q=${address}`;
+        } else {
+            window.location.href = `geo:0,0?q=${address}`;
+        }
+    }
+    
+    // Modal problème
+    function showIssueModal() {
+        document.getElementById('issueModal').classList.add('show');
+    }
+    
+    function hideIssueModal() {
+        document.getElementById('issueModal').classList.remove('show');
+    }
+    
+    function selectIssue(element, type) {
+        document.querySelectorAll('.issue-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+        element.classList.add('selected');
+        document.getElementById('issueType').value = type;
+    }
+    
+    // Soumission du formulaire
+    document.getElementById('validationForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Vérifier la signature
+        if (!document.getElementById('signatureData').value) {
+            alert('Veuillez obtenir la signature du client');
+            return;
+        }
+        
+        // Afficher le loader
+        document.getElementById('loadingOverlay').classList.add('show');
+        
+        // Soumettre
+        this.submit();
+    });
+    
+    // Géolocalisation
+    if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            // Ajouter les coordonnées au formulaire
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            const latInput = document.createElement('input');
+            latInput.type = 'hidden';
+            latInput.name = 'latitude';
+            latInput.value = lat;
+            document.getElementById('validationForm').appendChild(latInput);
+            
+            const lngInput = document.createElement('input');
+            lngInput.type = 'hidden';
+            lngInput.name = 'longitude';
+            lngInput.value = lng;
+            document.getElementById('validationForm').appendChild(lngInput);
+        });
+    }
+</script>
+{% endblock %}

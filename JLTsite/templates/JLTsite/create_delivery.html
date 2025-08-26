@@ -1,0 +1,679 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+
+{% block title %}Créer une livraison - Commande #{{ order.order_number }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --delivery-primary: #4a90e2;
+        --delivery-secondary: #357abd;
+        --delivery-success: #5cb85c;
+        --delivery-warning: #f0ad4e;
+        --delivery-danger: #d9534f;
+        --delivery-light: #e8f4f8;
+    }
+
+    .create-delivery-container {
+        background: linear-gradient(135deg, var(--delivery-light) 0%, #ffffff 100%);
+        min-height: 100vh;
+        padding: 30px 0;
+    }
+
+    .delivery-form-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+
+    .form-header {
+        background: linear-gradient(135deg, var(--delivery-primary), var(--delivery-secondary));
+        color: white;
+        padding: 25px;
+        margin-bottom: 0;
+    }
+
+    .form-header h2 {
+        margin: 0;
+        font-size: 1.8rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .order-summary {
+        background: #f8f9fa;
+        border-left: 4px solid var(--delivery-primary);
+        padding: 20px;
+        margin: 20px;
+        border-radius: 8px;
+    }
+
+    .order-summary h4 {
+        color: var(--delivery-primary);
+        margin-bottom: 15px;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .info-row:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: #666;
+    }
+
+    .info-value {
+        color: #333;
+    }
+
+    .checklist-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 500;
+        margin: 20px;
+    }
+
+    .checklist-complete {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .checklist-incomplete {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeeba;
+    }
+
+    .checklist-none {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .form-section {
+        padding: 20px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .form-section:last-child {
+        border-bottom: none;
+    }
+
+    .section-title {
+        color: var(--delivery-primary);
+        font-size: 1.2rem;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: #555;
+        margin-bottom: 8px;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 10px 12px;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--delivery-primary);
+        box-shadow: 0 0 0 0.2rem rgba(74, 144, 226, 0.25);
+    }
+
+    .priority-select {
+        position: relative;
+    }
+
+    .priority-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-left: 10px;
+    }
+
+    .priority-low { background: #e0e0e0; color: #666; }
+    .priority-normal { background: #d1ecf1; color: #0c5460; }
+    .priority-high { background: #fff3cd; color: #856404; }
+    .priority-urgent { background: #f8d7da; color: #721c24; }
+
+    .items-preview {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .item-line {
+        padding: 8px 0;
+        border-bottom: 1px dashed #e0e0e0;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .item-line:last-child {
+        border-bottom: none;
+    }
+
+    .pickup-option {
+        background: #e8f4f8;
+        border: 2px solid var(--delivery-primary);
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+
+    .custom-checkbox {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    .custom-checkbox input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        margin-right: 10px;
+        cursor: pointer;
+    }
+
+    .action-buttons {
+        background: #f8f9fa;
+        padding: 25px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 2px solid #e0e0e0;
+    }
+
+    .btn-action {
+        padding: 12px 30px;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-cancel {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-cancel:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+    }
+
+    .btn-create {
+        background: var(--delivery-success);
+        color: white;
+        font-size: 1.1rem;
+    }
+
+    .btn-create:hover {
+        background: #4ca84c;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(92, 184, 92, 0.3);
+    }
+
+    .btn-create:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+
+    .alert-custom {
+        border-radius: 10px;
+        padding: 15px 20px;
+        margin: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .loading-spinner {
+        display: none;
+        margin-left: 10px;
+    }
+
+    .loading-spinner.active {
+        display: inline-block;
+    }
+
+    /* Animation de validation */
+    @keyframes checkmark {
+        0% { transform: scale(0); }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); }
+    }
+
+    .validation-success {
+        animation: checkmark 0.5s ease;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .action-buttons {
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .btn-action {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="create-delivery-container">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="delivery-form-card">
+                    <!-- En-tête -->
+                    <div class="form-header">
+                        <h2>
+                            <i class="fas fa-truck"></i>
+                            Créer une livraison pour la commande #{{ order.order_number }}
+                        </h2>
+                        <p class="mb-0 mt-2">{{ order.delivery_date|date:"d/m/Y" }} - {{ order.first_name }} {{ order.last_name }}</p>
+                    </div>
+
+                    <!-- Statut de la checklist -->
+                    {% if has_checklist %}
+                        {% if checklist_status == 'completed' %}
+                        <div class="checklist-status checklist-complete">
+                            <i class="fas fa-check-circle"></i>
+                            Checklist complétée - Prêt pour livraison
+                        </div>
+                        {% else %}
+                        <div class="checklist-status checklist-incomplete">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Checklist en cours ({{ order.checklist.progress_percentage }}%)
+                        </div>
+                        {% endif %}
+                    {% else %}
+                    <div class="checklist-status checklist-none">
+                        <i class="fas fa-times-circle"></i>
+                        Aucune checklist associée à cette commande
+                    </div>
+                    {% endif %}
+
+                    <!-- Résumé de la commande -->
+                    <div class="order-summary">
+                        <h4><i class="fas fa-info-circle"></i> Informations de la commande</h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="info-row">
+                                    <span class="info-label">Client:</span>
+                                    <span class="info-value">{{ order.first_name }} {{ order.last_name }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Entreprise:</span>
+                                    <span class="info-value">{{ order.company|default:"—" }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Téléphone:</span>
+                                    <span class="info-value">{{ order.phone }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Email:</span>
+                                    <span class="info-value">{{ order.email }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-row">
+                                    <span class="info-label">Adresse:</span>
+                                    <span class="info-value">{{ order.delivery_address }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Code postal:</span>
+                                    <span class="info-value">{{ order.delivery_postal_code }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Ville:</span>
+                                    <span class="info-value">{{ order.delivery_city }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Montant total:</span>
+                                    <span class="info-value"><strong>{{ order.total }} $</strong></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Formulaire de création -->
+                    <form method="POST" id="createDeliveryForm">
+                        {% csrf_token %}
+                        
+                        <!-- Section Planning -->
+                        <div class="form-section">
+                            <h3 class="section-title">
+                                <i class="fas fa-calendar-alt"></i>
+                                Planning de la livraison
+                            </h3>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="scheduled_date">Date de livraison *</label>
+                                        <input type="date" 
+                                               class="form-control" 
+                                               id="scheduled_date" 
+                                               name="scheduled_date" 
+                                               value="{{ order.delivery_date|date:'Y-m-d' }}" 
+                                               required>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="scheduled_time_start">Heure de début *</label>
+                                        <input type="time" 
+                                               class="form-control" 
+                                               id="scheduled_time_start" 
+                                               name="scheduled_time_start" 
+                                               value="{{ order.delivery_time|time:'H:i' }}" 
+                                               required>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="scheduled_time_end">Heure de fin *</label>
+                                        <input type="time" 
+                                               class="form-control" 
+                                               id="scheduled_time_end" 
+                                               name="scheduled_time_end" 
+                                               value="{{ order.delivery_time|time:'H:i' }}" 
+                                               required>
+                                        <small class="text-muted">Estimation de la fenêtre de livraison</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section Détails -->
+                        <div class="form-section">
+                            <h3 class="section-title">
+                                <i class="fas fa-box"></i>
+                                Détails de la livraison
+                            </h3>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="priority">Priorité *</label>
+                                        <select class="form-select form-control" id="priority" name="priority" required>
+                                            <option value="low">Basse</option>
+                                            <option value="normal" selected>Normale</option>
+                                            <option value="high">Haute</option>
+                                            <option value="urgent">Urgente</option>
+                                        </select>
+                                        <div id="priority-indicator" class="mt-2"></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="total_packages">Nombre de colis *</label>
+                                        <input type="number" 
+                                               class="form-control" 
+                                               id="total_packages" 
+                                               name="total_packages" 
+                                               value="1" 
+                                               min="1" 
+                                               required>
+                                        <small class="text-muted">Nombre total de colis à livrer</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="estimated_weight">Poids estimé (kg)</label>
+                                        <input type="number" 
+                                               class="form-control" 
+                                               id="estimated_weight" 
+                                               name="estimated_weight" 
+                                               step="0.1" 
+                                               min="0">
+                                        <small class="text-muted">Optionnel</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Articles de la commande -->
+                            <div class="form-group mt-3">
+                                <label>Articles à livrer</label>
+                                <div class="items-preview">
+                                    {% for item in order.items.all %}
+                                    <div class="item-line">
+                                        <span>{{ item.quantity }}x {{ item.product_name }}</span>
+                                        <span class="text-muted">{{ item.subtotal }} $</span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section Instructions -->
+                        <div class="form-section">
+                            <h3 class="section-title">
+                                <i class="fas fa-sticky-note"></i>
+                                Instructions et notes
+                            </h3>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="delivery_instructions">Instructions de livraison</label>
+                                        <textarea class="form-control" 
+                                                  id="delivery_instructions" 
+                                                  name="delivery_instructions" 
+                                                  rows="4" 
+                                                  placeholder="Instructions spéciales pour le livreur...">{{ order.delivery_notes }}</textarea>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="access_code">Code d'accès</label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="access_code" 
+                                               name="access_code" 
+                                               placeholder="Code porte, digicode...">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="parking_info">Informations stationnement</label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="parking_info" 
+                                               name="parking_info" 
+                                               placeholder="Où se garer, restrictions...">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Option de récupération -->
+                        <div class="form-section">
+                            <div class="pickup-option">
+                                <h3 class="section-title">
+                                    <i class="fas fa-undo"></i>
+                                    Récupération
+                                </h3>
+                                <div class="custom-checkbox">
+                                    <input type="checkbox" 
+                                           id="create_pickup" 
+                                           name="create_pickup"
+                                           onchange="togglePickupInfo()">
+                                    <label for="create_pickup">
+                                        Planifier une récupération après la livraison
+                                        <small class="text-muted d-block">
+                                            Pour récupérer du matériel, des contenants, etc.
+                                        </small>
+                                    </label>
+                                </div>
+                                <div id="pickup-info" style="display: none;" class="mt-3">
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle"></i>
+                                        Une fois la livraison créée, vous pourrez planifier la date et l'heure de récupération.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Boutons d'action -->
+                        <div class="action-buttons">
+                            <a href="{% url 'delivery_manager_dashboard' %}" class="btn-action btn-cancel">
+                                <i class="fas fa-times"></i>
+                                Annuler
+                            </a>
+                            <button type="submit" class="btn-action btn-create" id="submitBtn">
+                                <i class="fas fa-check"></i>
+                                Créer la livraison
+                                <span class="loading-spinner">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                </span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', function() {
+        // Calculer automatiquement l'heure de fin (+30 minutes)
+        const startTimeInput = document.getElementById('scheduled_time_start');
+        const endTimeInput = document.getElementById('scheduled_time_end');
+        
+        startTimeInput.addEventListener('change', function() {
+            const startTime = this.value;
+            if (startTime) {
+                const [hours, minutes] = startTime.split(':');
+                const date = new Date();
+                date.setHours(parseInt(hours));
+                date.setMinutes(parseInt(minutes) + 30);
+                
+                const endHours = String(date.getHours()).padStart(2, '0');
+                const endMinutes = String(date.getMinutes()).padStart(2, '0');
+                endTimeInput.value = `${endHours}:${endMinutes}`;
+            }
+        });
+
+        // Mise à jour de l'indicateur de priorité
+        const prioritySelect = document.getElementById('priority');
+        const priorityIndicator = document.getElementById('priority-indicator');
+        
+        function updatePriorityIndicator() {
+            const priority = prioritySelect.value;
+            const indicators = {
+                'low': '<span class="priority-badge priority-low">Basse priorité</span>',
+                'normal': '<span class="priority-badge priority-normal">Priorité normale</span>',
+                'high': '<span class="priority-badge priority-high">Priorité haute - À traiter rapidement</span>',
+                'urgent': '<span class="priority-badge priority-urgent">URGENT - À traiter immédiatement</span>'
+            };
+            priorityIndicator.innerHTML = indicators[priority];
+        }
+        
+        prioritySelect.addEventListener('change', updatePriorityIndicator);
+        updatePriorityIndicator();
+
+        // Validation du formulaire
+        const form = document.getElementById('createDeliveryForm');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        form.addEventListener('submit', function(e) {
+            // Afficher le spinner
+            submitBtn.querySelector('.loading-spinner').classList.add('active');
+            submitBtn.disabled = true;
+            
+            // Validation des dates
+            const scheduledDate = document.getElementById('scheduled_date').value;
+            const today = new Date().toISOString().split('T')[0];
+            
+            if (scheduledDate < today) {
+                e.preventDefault();
+                alert('La date de livraison ne peut pas être dans le passé.');
+                submitBtn.querySelector('.loading-spinner').classList.remove('active');
+                submitBtn.disabled = false;
+                return false;
+            }
+            
+            // Validation des heures
+            const startTime = document.getElementById('scheduled_time_start').value;
+            const endTime = document.getElementById('scheduled_time_end').value;
+            
+            if (endTime <= startTime) {
+                e.preventDefault();
+                alert('L\'heure de fin doit être après l\'heure de début.');
+                submitBtn.querySelector('.loading-spinner').classList.remove('active');
+                submitBtn.disabled = false;
+                return false;
+            }
+        });
+    });
+
+    // Toggle pickup info
+    function togglePickupInfo() {
+        const checkbox = document.getElementById('create_pickup');
+        const info = document.getElementById('pickup-info');
+        
+        if (checkbox.checked) {
+            info.style.display = 'block';
+        } else {
+            info.style.display = 'none';
+        }
+    }
+
+    // Fonction pour afficher une notification
+    function showNotification(message, type = 'success') {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        `;
+        document.body.appendChild(alertDiv);
+        
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 5000);
+    }
+
+    // Gérer le retour après succès
+    {% if messages %}
+        {% for message in messages %}
+            showNotification('{{ message }}', '{% if message.tags %}{{ message.tags }}{% else %}info{% endif %}');
+        {% endfor %}
+    {% endif %}
+</script>
+{% endblock %}

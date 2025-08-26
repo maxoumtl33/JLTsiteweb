@@ -1,0 +1,1106 @@
+{% extends 'JLTsite/base_driver.html' %}
+{% load static %}
+
+{% block title %}Dashboard Livreur - {{ selected_date|date:"d/m/Y" }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Interface 100% mobile-first pour livreurs */
+    :root {
+        --driver-primary: #2ecc71;
+        --driver-secondary: #27ae60;
+        --driver-info: #3498db;
+        --driver-warning: #f39c12;
+        --driver-danger: #e74c3c;
+        --driver-dark: #2c3e50;
+        --driver-light: #ecf0f1;
+    }
+
+    * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        background: var(--driver-light);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+        font-size: 16px; /* Base font size pour mobile */
+    }
+
+    /* Header mobile fixe avec sélecteur de date */
+    .mobile-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: var(--driver-primary);
+        color: white;
+        padding: 15px;
+        z-index: 1000;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    .header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .mobile-header h1 {
+        margin: 0;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .date-selector-mobile {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(255,255,255,0.1);
+        padding: 8px 12px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+    }
+
+    .date-selector-mobile input {
+        background: transparent;
+        border: none;
+        color: white;
+        font-size: 0.9rem;
+        outline: none;
+        width: 120px;
+    }
+
+    .date-selector-mobile input::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+        cursor: pointer;
+    }
+
+    .today-btn {
+        background: rgba(255,255,255,0.2);
+        border: none;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        cursor: pointer;
+    }
+
+    .driver-info {
+        font-size: 0.85rem;
+        opacity: 0.9;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    /* Container principal avec padding pour header fixe */
+    .mobile-container {
+        padding-top: 120px;
+        padding-bottom: 80px;
+        min-height: 100vh;
+    }
+
+    /* Stats cards mobile */
+    .mobile-stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        padding: 15px;
+    }
+
+    .stat-card-mobile {
+        background: white;
+        border-radius: 12px;
+        padding: 15px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+        cursor: pointer;
+    }
+
+    .stat-card-mobile:active {
+        transform: scale(0.95);
+    }
+
+    .stat-icon {
+        font-size: 2rem;
+        margin-bottom: 8px;
+    }
+
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: var(--driver-dark);
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        color: #7f8c8d;
+        margin-top: 5px;
+    }
+
+    /* Route active */
+    .active-route {
+        background: white;
+        margin: 15px;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+    }
+
+    .route-header-mobile {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid var(--driver-light);
+    }
+
+    .route-status {
+        display: inline-block;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .route-status.planned {
+        background: var(--driver-info);
+        color: white;
+    }
+
+    .route-status.in_progress {
+        background: var(--driver-warning);
+        color: white;
+    }
+
+    .route-status.completed {
+        background: var(--driver-primary);
+        color: white;
+    }
+
+    /* Liste des livraisons mobile */
+    .delivery-list-mobile {
+        margin: 15px;
+    }
+
+    .delivery-card-mobile {
+        background: white;
+        border-radius: 15px;
+        padding: 15px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        border-left: 4px solid var(--driver-primary);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .delivery-card-mobile:active {
+        transform: scale(0.98);
+        box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+    }
+
+    .delivery-card-mobile.urgent {
+        border-left-color: var(--driver-danger);
+        background: #fff5f5;
+    }
+
+    .delivery-card-mobile.completed {
+        border-left-color: var(--driver-primary);
+        background: #f0fff4;
+        opacity: 0.7;
+    }
+
+    .delivery-card-mobile.failed {
+        border-left-color: var(--driver-danger);
+        background: #fff5f5;
+    }
+
+    .delivery-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 10px;
+    }
+
+    .delivery-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        background: var(--driver-primary);
+        color: white;
+        border-radius: 50%;
+        font-weight: bold;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+
+    .delivery-time {
+        font-size: 0.85rem;
+        color: var(--driver-dark);
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .customer-name {
+        font-weight: 600;
+        font-size: 1rem;
+        color: var(--driver-dark);
+        margin-bottom: 5px;
+    }
+
+    .delivery-address {
+        font-size: 0.9rem;
+        color: #7f8c8d;
+        margin-bottom: 10px;
+        line-height: 1.4;
+        display: flex;
+        align-items: flex-start;
+        gap: 5px;
+    }
+
+    .delivery-instructions {
+        font-size: 0.85rem;
+        color: var(--driver-warning);
+        margin-top: 8px;
+        background: #fff8e1;
+        padding: 8px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .delivery-actions {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-top: 15px;
+    }
+
+    .delivery-actions.two-buttons {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .delivery-actions.one-button {
+        grid-template-columns: 1fr;
+    }
+
+    .btn-mobile {
+        padding: 10px;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        -webkit-appearance: none;
+        min-height: 40px;
+    }
+
+    .btn-mobile:active {
+        transform: scale(0.95);
+    }
+
+    .btn-validate {
+        background: var(--driver-primary);
+        color: white;
+    }
+
+    .btn-navigate {
+        background: var(--driver-info);
+        color: white;
+    }
+
+    .btn-call {
+        background: var(--driver-warning);
+        color: white;
+    }
+
+    .btn-issue {
+        background: var(--driver-danger);
+        color: white;
+    }
+
+    .btn-start-route {
+        background: var(--driver-primary);
+        color: white;
+        padding: 15px;
+        width: 100%;
+        font-size: 1rem;
+    }
+
+    /* Statut de livraison */
+    .delivery-status {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 0.75rem;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-weight: 600;
+    }
+
+    .delivery-status.delivered {
+        background: var(--driver-primary);
+        color: white;
+    }
+
+    .delivery-status.failed {
+        background: var(--driver-danger);
+        color: white;
+    }
+
+    /* Bottom navigation */
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        display: flex;
+        justify-content: space-around;
+        padding: 8px 0;
+        z-index: 999;
+    }
+
+    .nav-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 8px;
+        color: #7f8c8d;
+        text-decoration: none;
+        transition: color 0.2s;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .nav-item.active {
+        color: var(--driver-primary);
+    }
+
+    .nav-item i {
+        font-size: 1.5rem;
+        margin-bottom: 4px;
+    }
+
+    .nav-item span {
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .nav-badge {
+        position: absolute;
+        top: 5px;
+        right: 25%;
+        background: var(--driver-danger);
+        color: white;
+        border-radius: 50%;
+        width: 18px;
+        height: 18px;
+        font-size: 0.7rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+
+    /* Floating action button */
+    .fab {
+        position: fixed;
+        bottom: 90px;
+        right: 20px;
+        width: 56px;
+        height: 56px;
+        background: var(--driver-primary);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(46, 204, 113, 0.4);
+        cursor: pointer;
+        z-index: 998;
+        transition: all 0.3s;
+        border: none;
+    }
+
+    .fab:active {
+        transform: scale(0.9);
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: #bdc3c7;
+        margin-bottom: 20px;
+    }
+
+    .empty-state h3 {
+        color: #7f8c8d;
+        font-weight: 500;
+        margin-bottom: 10px;
+    }
+
+    .empty-state p {
+        color: #95a5a6;
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+
+    /* Toast notification */
+    .toast-mobile {
+        position: fixed;
+        bottom: 100px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 15px 25px;
+        border-radius: 25px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        z-index: 9999;
+        animation: slideUp 0.3s ease;
+        color: white;
+        font-weight: 600;
+    }
+
+    .toast-success {
+        background: var(--driver-primary);
+    }
+
+    .toast-error {
+        background: var(--driver-danger);
+    }
+
+    .toast-warning {
+        background: var(--driver-warning);
+    }
+
+    /* Loading spinner */
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translateX(-50%) translateY(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+    }
+
+    /* Responsive pour tablettes */
+    @media (min-width: 768px) {
+        .mobile-container {
+            max-width: 768px;
+            margin: 0 auto;
+        }
+
+        .mobile-stats {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        .delivery-list-mobile {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+    }
+
+    /* Mode sombre automatique */
+    @media (prefers-color-scheme: light) {
+        body {
+            background: #f8f9fa;
+        }
+
+        .stat-card-mobile,
+        .active-route,
+        .delivery-card-mobile,
+        .bottom-nav {
+            background: #2c2c2c;
+            color: white;
+        }
+
+        .customer-name,
+        .delivery-time {
+            color: white;
+        }
+
+        .delivery-address {
+            color: #b0b0b0;
+        }
+    }
+
+    /* Ajustements pour iPhone X et plus */
+    @supports (padding: max(0px)) {
+        .bottom-nav {
+            padding-bottom: max(8px, env(safe-area-inset-bottom));
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header mobile fixe -->
+<div class="mobile-header">
+    <div class="header-top">
+        <h1>
+            <i class="fas fa-truck"></i>
+            Dashboard Livreur
+        </h1>
+        <div class="date-selector-mobile">
+            <input type="date" id="dateSelector" value="{{ selected_date|date:'Y-m-d' }}" 
+                   onchange="changeDate(this.value)">
+            <button class="today-btn" onclick="goToToday()">Aujourd'hui</button>
+        </div>
+    </div>
+    <div class="driver-info">
+        <span>{{ driver.get_full_name }}</span>
+        <span>{{ selected_date|date:"d/m/Y" }}</span>
+    </div>
+</div>
+
+<!-- Container principal -->
+<div class="mobile-container">
+    <!-- Statistiques -->
+    <div class="mobile-stats">
+        <div class="stat-card-mobile">
+            <div class="stat-icon text-primary">
+                <i class="fas fa-box"></i>
+            </div>
+            <div class="stat-value">{{ stats.total }}</div>
+            <div class="stat-label">Total</div>
+        </div>
+        
+        <div class="stat-card-mobile">
+            <div class="stat-icon text-success">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-value">{{ stats.completed }}</div>
+            <div class="stat-label">Complétées</div>
+        </div>
+        
+        <div class="stat-card-mobile">
+            <div class="stat-icon text-warning">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-value">{{ stats.pending }}</div>
+            <div class="stat-label">En attente</div>
+        </div>
+        
+        <div class="stat-card-mobile">
+            <div class="stat-icon text-danger">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="stat-value">{{ stats.failed }}</div>
+            <div class="stat-label">Problèmes</div>
+        </div>
+    </div>
+
+    <!-- Route active -->
+    {% if current_route %}
+    <div class="active-route">
+        <div class="route-header-mobile">
+            <div>
+                <h3 style="margin: 0; font-size: 1.1rem;">{{ current_route.route_number }}</h3>
+                <small class="text-muted">Départ: {{ current_route.start_time|time:"H:i" }}</small>
+            </div>
+            <span class="route-status {{ current_route.status }}">
+                {% if current_route.status == 'in_progress' %}
+                    En cours
+                {% elif current_route.status == 'completed' %}
+                    Terminée
+                {% else %}
+                    Planifiée
+                {% endif %}
+            </span>
+        </div>
+        
+        {% if current_route.status == 'planned' %}
+        <button class="btn-mobile btn-start-route" onclick="startRoute({{ current_route.id }})">
+            <i class="fas fa-play"></i> Démarrer la route
+        </button>
+        {% elif current_route.status == 'in_progress' %}
+        <div style="text-align: center; color: var(--driver-warning); font-weight: 600;">
+            <i class="fas fa-route"></i> Route en cours - {{ current_route.completed_deliveries }}/{{ current_route.total_deliveries }} livrées
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="active-route">
+        <div style="text-align: center; padding: 20px;">
+            <i class="fas fa-calendar-times" style="font-size: 3rem; color: #bdc3c7; margin-bottom: 15px;"></i>
+            <h3 style="color: #7f8c8d; margin: 0;">Aucune route assignée</h3>
+            <p style="color: #95a5a6; margin: 5px 0 0 0;">Contactez votre responsable pour plus d'informations</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Liste des livraisons -->
+    <div class="delivery-list-mobile">
+        {% for delivery in deliveries %}
+        <div class="delivery-card-mobile 
+                    {% if delivery.priority == 'urgent' %}urgent{% endif %} 
+                    {% if delivery.status == 'delivered' %}completed{% endif %}
+                    {% if delivery.status == 'failed' %}failed{% endif %}" 
+             onclick="openDeliveryDetail({{ delivery.id }})">
+             
+            {% if delivery.status == 'delivered' %}
+                <div class="delivery-status delivered">Livrée</div>
+            {% elif delivery.status == 'failed' %}
+                <div class="delivery-status failed">Échec</div>
+            {% endif %}
+            
+            <div class="delivery-header">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="delivery-number">{{ forloop.counter }}</span>
+                    <div>
+                        <div class="delivery-time">
+                            <i class="fas fa-clock"></i> {{ delivery.scheduled_time_start|time:"H:i" }}
+                        </div>
+                        {% if delivery.priority == 'urgent' %}
+                        <span style="color: var(--driver-danger); font-size: 0.75rem; font-weight: 600;">
+                            <i class="fas fa-exclamation-triangle"></i> URGENT
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="customer-name">{{ delivery.customer_name }}</div>
+            {% if delivery.company %}
+            <div style="font-size: 0.85rem; color: #7f8c8d; margin-bottom: 5px;">
+                <i class="fas fa-building"></i> {{ delivery.company }}
+            </div>
+            {% endif %}
+            
+            <div class="delivery-address">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>{{ delivery.delivery_address }}, {{ delivery.delivery_postal_code }} {{ delivery.delivery_city }}</span>
+            </div>
+            
+            {% if delivery.delivery_instructions %}
+            <div class="delivery-instructions">
+                <i class="fas fa-info-circle"></i>
+                <span>{{ delivery.delivery_instructions|truncatechars:60 }}</span>
+            </div>
+            {% endif %}
+            
+            <div class="delivery-actions 
+                        {% if delivery.status == 'delivered' %}one-button{% else %}three-buttons{% endif %}">
+                {% if delivery.status == 'delivered' %}
+                    <div style="text-align: center; color: var(--driver-primary); font-weight: 600; padding: 10px;">
+                        <i class="fas fa-check-circle"></i> Livrée à {{ delivery.delivered_at|time:"H:i" }}
+                    </div>
+                {% elif delivery.status == 'failed' %}
+                    <button class="btn-mobile btn-issue" onclick="event.stopPropagation(); retryDelivery({{ delivery.id }})">
+                        <i class="fas fa-redo"></i> Réessayer
+                    </button>
+                {% else %}
+                    <button class="btn-mobile btn-navigate" onclick="event.stopPropagation(); navigateTo({{ delivery.id }})">
+                        <i class="fas fa-directions"></i> GPS
+                    </button>
+                    <button class="btn-mobile btn-call" onclick="event.stopPropagation(); callCustomer('{{ delivery.customer_phone }}')">
+                        <i class="fas fa-phone"></i> Appel
+                    </button>
+                    <button class="btn-mobile btn-validate" onclick="event.stopPropagation(); validateDelivery({{ delivery.id }})">
+                        <i class="fas fa-check"></i> Valider
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <i class="fas fa-box-open"></i>
+            <h3>Aucune livraison</h3>
+            <p>Vous n'avez pas de livraisons assignées pour le {{ selected_date|date:"d/m/Y" }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Floating Action Button -->
+{% if current_route and current_route.status == 'in_progress' %}
+<button class="fab" onclick="completeRoute()">
+    <i class="fas fa-flag-checkered"></i>
+</button>
+{% endif %}
+
+<!-- Bottom Navigation -->
+<div class="bottom-nav">
+    <a href="{% url 'driver_dashboard' %}" class="nav-item active">
+        <i class="fas fa-home"></i>
+        <span>Accueil</span>
+    </a>
+    <a href="{% url 'driver_planning' %}" class="nav-item">
+        <i class="fas fa-calendar"></i>
+        <span>Planning</span>
+    </a>
+    <a href="{% url 'driver_notifications' %}" class="nav-item">
+        <i class="fas fa-bell"></i>
+        <span>Notifications</span>
+        {% if notifications_count > 0 %}
+        <span class="nav-badge">{{ notifications_count }}</span>
+        {% endif %}
+    </a>
+    <a href="{% url 'driver_profile' %}" class="nav-item">
+        <i class="fas fa-user"></i>
+        <span>Profil</span>
+    </a>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Variables globales
+    const deliveryData = {
+        {% for delivery in deliveries %}
+        {{ delivery.id }}: {
+            id: {{ delivery.id }},
+            customer_name: '{{ delivery.customer_name|escapejs }}',
+            customer_phone: '{{ delivery.customer_phone|escapejs }}',
+            delivery_address: '{{ delivery.delivery_address|escapejs }}',
+            delivery_postal_code: '{{ delivery.delivery_postal_code|escapejs }}',
+            delivery_city: '{{ delivery.delivery_city|escapejs }}',
+            latitude: {{ delivery.latitude|default:"null" }},
+            longitude: {{ delivery.longitude|default:"null" }},
+            status: '{{ delivery.status }}',
+            priority: '{{ delivery.priority }}'
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    };
+
+    // Vibration API pour feedback haptique
+    function vibrate(pattern = [50]) {
+        if ('vibrate' in navigator) {
+            navigator.vibrate(pattern);
+        }
+    }
+
+    // Démarrer une route
+    function startRoute(routeId) {
+        vibrate();
+        if (confirm('Démarrer la route maintenant?')) {
+            showLoading('Démarrage en cours...');
+            
+            fetch(`/delivery/route/${routeId}/start/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    showToast('Route démarrée avec succès!', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showToast(data.message || 'Erreur lors du démarrage', 'error');
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                console.error('Erreur:', error);
+                showToast('Erreur de connexion', 'error');
+            });
+        }
+    }
+
+    // Valider une livraison
+    function validateDelivery(deliveryId) {
+        vibrate([50, 50, 50]);
+        window.location.href = `/driver/delivery/${deliveryId}/validate/`;
+    }
+
+    // Navigation GPS
+    function navigateTo(deliveryId) {
+        vibrate();
+        const delivery = deliveryData[deliveryId];
+        if (!delivery) {
+            showToast('Informations de livraison non trouvées', 'error');
+            return;
+        }
+
+        let navigationUrl;
+        
+        // Si on a les coordonnées GPS, les utiliser
+        if (delivery.latitude && delivery.longitude) {
+            const coords = `${delivery.latitude},${delivery.longitude}`;
+            
+            // Détection iOS vs Android
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isAndroid = /Android/.test(navigator.userAgent);
+            
+            if (isIOS) {
+                // Apple Maps avec coordonnées
+                navigationUrl = `maps://maps.apple.com/?daddr=${coords}&dirflg=d`;
+            } else if (isAndroid) {
+                // Google Maps avec coordonnées
+                navigationUrl = `google.navigation:q=${coords}&mode=d`;
+            } else {
+                // Fallback - Google Maps web
+                navigationUrl = `https://www.google.com/maps/dir/?api=1&destination=${coords}&travelmode=driving`;
+            }
+        } else {
+            // Fallback avec adresse
+            const address = encodeURIComponent(`${delivery.delivery_address}, ${delivery.delivery_postal_code} ${delivery.delivery_city}`);
+            
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            if (isIOS) {
+                navigationUrl = `maps://maps.apple.com/?daddr=${address}&dirflg=d`;
+            } else {
+                navigationUrl = `https://www.google.com/maps/dir/?api=1&destination=${address}&travelmode=driving`;
+            }
+        }
+
+        // Essayer d'ouvrir l'app de navigation
+        window.location.href = navigationUrl;
+        
+        // Après un délai, proposer l'alternative web si l'app ne s'ouvre pas
+        setTimeout(() => {
+            if (confirm('Ouvrir dans Google Maps web?')) {
+                const webUrl = delivery.latitude && delivery.longitude 
+                    ? `https://www.google.com/maps/dir/?api=1&destination=${delivery.latitude},${delivery.longitude}&travelmode=driving`
+                    : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(delivery.delivery_address + ', ' + delivery.delivery_postal_code + ' ' + delivery.delivery_city)}&travelmode=driving`;
+                window.open(webUrl, '_blank');
+            }
+        }, 2000);
+    }
+
+    // Appeler le client
+    function callCustomer(phone) {
+        vibrate();
+        if (phone) {
+            window.location.href = `tel:${phone}`;
+        } else {
+            showToast('Numéro de téléphone non disponible', 'warning');
+        }
+    }
+
+    // Ouvrir le détail d'une livraison
+    function openDeliveryDetail(deliveryId) {
+        vibrate();
+        window.location.href = `/driver/delivery/${deliveryId}/validate/`;
+    }
+
+    // Terminer la route
+    function completeRoute() {
+        vibrate([100, 50, 100]);
+        
+        // Vérifier s'il reste des livraisons non complétées
+        const pendingDeliveries = Object.values(deliveryData).filter(d => 
+            d.status !== 'delivered' && d.status !== 'failed'
+        ).length;
+        
+        if (pendingDeliveries > 0) {
+            if (!confirm(`Il reste ${pendingDeliveries} livraison(s) non complétée(s). Terminer quand même la route?`)) {
+                return;
+            }
+        }
+        
+        if (confirm('Terminer la route?')) {
+            showLoading('Finalisation en cours...');
+            
+            fetch(`/delivery/route/{{ current_route.id }}/complete/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    showToast('Route terminée avec succès!', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showToast(data.message || 'Impossible de terminer la route', 'error');
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                console.error('Erreur:', error);
+                showToast('Erreur de connexion', 'error');
+            });
+        }
+    }
+
+    // Réessayer une livraison échouée
+    function retryDelivery(deliveryId) {
+        vibrate();
+        if (confirm('Réessayer cette livraison?')) {
+            showLoading('Mise à jour...');
+            
+            fetch(`/delivery/api/${deliveryId}/retry/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    showToast('Livraison remise en attente', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast('Erreur lors de la mise à jour', 'error');
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                console.error('Erreur:', error);
+                showToast('Erreur de connexion', 'error');
+            });
+        }
+    }
+
+    // Changer la date
+    function changeDate(date) {
+        showLoading('Chargement...');
+        window.location.href = `{% url 'driver_dashboard' %}?date=${date}`;
+    }
+
+    function goToToday() {
+        const today = new Date().toISOString().split('T')[0];
+        changeDate(today);
+    }
+
+    // Toast notification améliorée
+    function showToast(message, type = 'info', duration = 3000) {
+        // Supprimer les toasts existants
+        const existingToasts = document.querySelectorAll('.toast-mobile');
+        existingToasts.forEach(toast => toast.remove());
+        
+        const toast = document.createElement('div');
+        toast.className = `toast-mobile toast-${type}`;
+        toast.textContent = message;
+        
+        document.body.appendChild(toast);
+        
+        // Auto-suppression
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, duration);
+    }
+
+    // Loading indicator
+    function showLoading(message = 'Chargement...') {
+        const loading = document.createElement('div');
+        loading.id = 'loadingIndicator';
+        loading.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        `;
+        loading.innerHTML = `
+            <div class="loading-spinner" style="margin-bottom: 15px;"></div>
+            <div style="font-weight: 600;">${message}</div>
+        `;
+        document.body.appendChild(loading);
+    }
+
+    function hideLoading() {
+        const loading = document.getElementById('loadingIndicator');
+        if (loading) {
+            loading.remove();
+        }
+    }
+
+    // Détection de perte de connexion
+    function updateConnectionStatus() {
+        if (navigator.onLine) {
+            document.body.classList.remove('offline');
+        } else {
+            document.body.classList.add('offline');
+            showToast('Connexion perdue - Mode hors ligne', 'warning', 5000);
+        }
+    }
+
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Dashboard livreur initialisé');
+        
+        // Écouter les changements de connexion
+        window.addEventListener('online', updateConnectionStatus);
+        window.addEventListener('offline', updateConnectionStatus);
+        
+        // Demander la permission pour les notifications
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+
+        // Service Worker pour mode offline (optionnel)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/sw.js').catch(console.error);
+        }
+
+        // Actualisation automatique toutes les 5 minutes si en ligne
+        setInterval(() => {
+            if (navigator.onLine && document.visibilityState === 'visible') {
+                location.reload();
+            }
+        }, 5 * 60 * 1000);
+    });
+
+    // Gestion de la visibilité de la page
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible') {
+            // Page redevenue visible, actualiser les données
+            updateConnectionStatus();
+        }
+    });
+</script>
+{% endblock %}

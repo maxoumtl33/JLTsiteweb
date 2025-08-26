@@ -314,7 +314,7 @@ def admin_dashboard(request):
         alerts.append({
             'type': 'warning',
             'message': f'{pending_orders} commande(s) en attente de confirmation',
-            'link': '/admin/orders/?status=pending'
+            'link': '/admin-dashboard/orders/?status=pending'
         })
     
     # Stock faible
@@ -322,7 +322,7 @@ def admin_dashboard(request):
         alerts.append({
             'type': 'danger',
             'message': f'{low_stock_products} produit(s) avec stock faible',
-            'link': '/admin/products/low-stock/'
+            'link': '/admin-dashboard/products/low-stock/'
         })
     
     # Commandes du jour
@@ -330,8 +330,19 @@ def admin_dashboard(request):
         alerts.append({
             'type': 'info',
             'message': f'{orders_today} commandes aujourd\'hui!',
-            'link': '/admin/orders/?date=today'
+            'link': '/admin-dashboard/orders/?date=today'
         })
+    
+    # AJOUTER: Statistiques des événements
+    total_events = EventContract.objects.count()
+    pending_events = EventContract.objects.filter(
+        status__in=['draft', 'confirmed'],
+        maitre_hotel__isnull=True
+    ).count()
+    
+    events_today = EventContract.objects.filter(
+        event_start_time__date=timezone.now().date()
+    ).count()
     
     context = {
         'period': period,
@@ -344,6 +355,9 @@ def admin_dashboard(request):
             'new_customers': new_customers,
             'total_customers': total_customers,
             'low_stock_products': low_stock_products,
+            'total_events': total_events,
+            'pending_events_count': pending_events,
+            'events_today': events_today,
         },
         'charts': {
             'sales': {
@@ -501,6 +515,8 @@ def admin_order_detail(request, order_number):
     }
     
     return render(request, 'JLTsite/order_detail.html', context)
+
+
 @user_passes_test(admin_required)
 def admin_order_invoice(request, order_number):
     """Générer une facture PDF"""
@@ -2145,3 +2161,541 @@ def admin_get_customer_info(request):
             'success': False,
             'message': 'Client introuvable'
         }, status=404)
+    
+# Ajouter dans admin_views.py
+
+@user_passes_test(admin_required)
+def admin_create_event_from_order(request, order_number):
+    """Créer un événement à partir d'une commande"""
+    order = get_object_or_404(Order, order_number=order_number)
+    
+    # Vérifier qu'il n'y a pas déjà un événement pour cette commande
+    if hasattr(order, 'event_contract'):
+        messages.warning(request, 'Un événement existe déjà pour cette commande')
+        return redirect('admin_order_detail', order_number=order.order_number)
+    
+    # Récupérer tous les maîtres d'hôtel disponibles
+    maitre_hotels = User.objects.filter(role='maitre_hotel', is_active=True).order_by('first_name', 'last_name')
+    
+    if request.method == 'POST':
+        try:
+            # Récupérer les données du formulaire
+            event_name = request.POST.get('event_name')
+            event_description = request.POST.get('event_description', '')
+            maitre_hotel_id = request.POST.get('maitre_hotel')
+            priority = request.POST.get('priority', 'normal')
+            
+            # Dates et heures
+            setup_start = request.POST.get('setup_start_time')
+            event_start = request.POST.get('event_start_time')
+            event_end = request.POST.get('event_end_time')
+            cleanup_end = request.POST.get('cleanup_end_time')
+            
+            # Lieu
+            venue_name = request.POST.get('venue_name', '')
+            venue_contact = request.POST.get('venue_contact', '')
+            venue_phone = request.POST.get('venue_phone', '')
+            venue_instructions = request.POST.get('venue_instructions', '')
+            
+            # Équipements et exigences
+            equipment_needed = request.POST.get('equipment_needed', '')
+            special_requirements = request.POST.get('special_requirements', '')
+            
+            # Valider que le maître d'hôtel existe
+            maitre_hotel = None
+            if maitre_hotel_id:
+                maitre_hotel = get_object_or_404(User, id=maitre_hotel_id, role='maitre_hotel')
+            
+            # Créer l'événement
+            event_contract = EventContract.objects.create(
+                order=order,
+                maitre_hotel=maitre_hotel,
+                event_name=event_name,
+                event_description=event_description,
+                priority=priority,
+                status='confirmed',  # Les événements créés depuis les ventes sont confirmés
+                
+                # Dates (parser les strings en datetime)
+                setup_start_time=datetime.strptime(setup_start, '%Y-%m-%dT%H:%M'),
+                event_start_time=datetime.strptime(event_start, '%Y-%m-%dT%H:%M'),
+                event_end_time=datetime.strptime(event_end, '%Y-%m-%dT%H:%M'),
+                cleanup_end_time=datetime.strptime(cleanup_end, '%Y-%m-%dT%H:%M'),
+                
+                # Lieu
+                venue_name=venue_name,
+                venue_contact=venue_contact,
+                venue_phone=venue_phone,
+                venue_instructions=venue_instructions,
+                
+                # Équipements
+                equipment_needed=equipment_needed,
+                special_requirements=special_requirements,
+                
+                # Métadonnées
+                created_by=request.user,
+                is_validated=True  # Validé automatiquement par les ventes
+            )
+            
+            # Ajouter une entrée initiale à la timeline
+            EventTimeline.objects.create(
+                event=event_contract,
+                timestamp=timezone.now(),
+                action_type='other',
+                description=f'Événement créé par {request.user.get_full_name()} depuis la commande #{order.order_number}',
+                created_by=request.user
+            )
+            
+            # Assigner le personnel si spécifié
+            staff_members = request.POST.getlist('staff_members')
+            for staff_id in staff_members:
+                if staff_id:
+                    staff_member = User.objects.get(id=staff_id, role='staff')
+                    EventStaffAssignment.objects.create(
+                        event=event_contract,
+                        staff_member=staff_member,
+                        role=request.POST.get(f'staff_role_{staff_id}', 'assistant'),
+                        arrival_time=event_contract.setup_start_time,
+                        departure_time=event_contract.cleanup_end_time,
+                        hourly_rate=Decimal(request.POST.get(f'staff_rate_{staff_id}', '20.00'))
+                    )
+            
+            # Créer une notification pour le maître d'hôtel assigné
+            if maitre_hotel:
+                EventNotifications.objects.create(
+                    recipient=maitre_hotel,
+                    event=event_contract,
+                    type='new_event',
+                    title='Nouvel événement assigné',
+                    message=f'L\'événement "{event_name}" vous a été assigné pour le {event_contract.event_start_time.strftime("%d/%m/%Y à %H:%M")}',
+                    is_urgent=priority == 'urgent'
+                )
+            
+            # Créer une notification pour l'admin
+            admin_users = User.objects.filter(role='admin')
+            for admin_user in admin_users:
+                EventNotifications.objects.create(
+                    recipient=admin_user,
+                    event=event_contract,
+                    type='new_event',
+                    title='Nouvel événement créé',
+                    message=f'Événement "{event_name}" créé par {request.user.get_full_name()}' + 
+                           (f' et assigné à {maitre_hotel.get_full_name()}' if maitre_hotel else ''),
+                    is_urgent=False
+                )
+            
+            messages.success(request, f'Événement "{event_name}" créé avec succès!' + 
+                           (f' Assigné à {maitre_hotel.get_full_name()}.' if maitre_hotel else ''))
+            
+            return redirect('admin_order_detail', order_number=order.order_number)
+            
+        except Exception as e:
+            messages.error(request, f'Erreur lors de la création: {str(e)}')
+    
+    # Récupérer le personnel disponible
+    staff_members = User.objects.filter(role='staff', is_active=True).order_by('first_name', 'last_name')
+    
+    # Données par défaut basées sur la commande
+    default_data = {
+        'event_name': f'Événement pour {order.first_name} {order.last_name}',
+        'event_start_time': order.delivery_date.strftime('%Y-%m-%d') + 'T' + order.delivery_time.strftime('%H:%M'),
+        'venue_address': order.delivery_address + ', ' + order.delivery_postal_code + ' ' + order.delivery_city,
+    }
+    
+    context = {
+        'order': order,
+        'maitre_hotels': maitre_hotels,
+        'staff_members': staff_members,
+        'default_data': default_data,
+    }
+    
+    return render(request, 'JLTsite/admin_create_event.html', context)
+
+@user_passes_test(admin_required)
+def admin_events_list(request):
+    """Liste des événements pour les ventes/admin"""
+    
+    # Filtres
+    status = request.GET.get('status')
+    maitre_hotel_id = request.GET.get('maitre_hotel')
+    date_filter = request.GET.get('date')
+    search = request.GET.get('search')
+    
+    # Base queryset
+    events = EventContract.objects.all().select_related(
+        'order', 'maitre_hotel', 'created_by'
+    ).prefetch_related('staff_assignments')
+    
+    # Appliquer les filtres
+    if status:
+        events = events.filter(status=status)
+    
+    if maitre_hotel_id:
+        events = events.filter(maitre_hotel_id=maitre_hotel_id)
+    
+    if date_filter == 'today':
+        events = events.filter(event_start_time__date=timezone.now().date())
+    elif date_filter == 'week':
+        events = events.filter(
+            event_start_time__date__gte=timezone.now().date(),
+            event_start_time__date__lte=timezone.now().date() + timedelta(days=7)
+        )
+    elif date_filter == 'month':
+        events = events.filter(
+            event_start_time__date__gte=timezone.now().date(),
+            event_start_time__date__lte=timezone.now().date() + timedelta(days=30)
+        )
+    
+    if search:
+        events = events.filter(
+            Q(event_name__icontains=search) |
+            Q(contract_number__icontains=search) |
+            Q(order__order_number__icontains=search) |
+            Q(order__first_name__icontains=search) |
+            Q(order__last_name__icontains=search)
+        )
+    
+    # Ordonner par date d'événement
+    events = events.order_by('event_start_time')
+    
+    # Pagination
+    paginator = Paginator(events, 20)
+    page = request.GET.get('page')
+    events_page = paginator.get_page(page)
+    
+    # Statistiques
+    all_events = EventContract.objects.all()
+    stats = {
+        'total': all_events.count(),
+        'draft': all_events.filter(status='draft').count(),
+        'confirmed': all_events.filter(status='confirmed').count(),
+        'in_progress': all_events.filter(status='in_progress').count(),
+        'completed': all_events.filter(status='completed').count(),
+        'today': all_events.filter(event_start_time__date=timezone.now().date()).count(),
+    }
+    
+    # Maîtres d'hôtel pour le filtre
+    maitre_hotels = User.objects.filter(role='maitre_hotel', is_active=True).order_by('first_name', 'last_name')
+    
+    context = {
+        'events': events_page,
+        'stats': stats,
+        'maitre_hotels': maitre_hotels,
+        'current_status': status,
+        'current_maitre_hotel': maitre_hotel_id,
+        'current_date': date_filter,
+        'search_query': search,
+    }
+    
+    return render(request, 'JLTsite/admin_events_list.html', context)
+
+@user_passes_test(admin_required)
+def admin_event_detail(request, contract_id):
+    """Détail d'un événement pour les ventes/admin"""
+    event = get_object_or_404(EventContract, id=contract_id)
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'assign_maitre_hotel':
+            maitre_hotel_id = request.POST.get('maitre_hotel_id')
+            if maitre_hotel_id:
+                maitre_hotel = get_object_or_404(User, id=maitre_hotel_id, role='maitre_hotel')
+                old_maitre_hotel = event.maitre_hotel
+                event.maitre_hotel = maitre_hotel
+                event.save()
+                
+                # Créer notification pour le nouveau maître d'hôtel
+                EventNotifications.objects.create(
+                    recipient=maitre_hotel,
+                    event=event,
+                    type='event_updated',
+                    title='Événement assigné',
+                    message=f'L\'événement "{event.event_name}" vous a été assigné',
+                    is_urgent=event.priority == 'urgent'
+                )
+                
+                # Timeline
+                EventTimeline.objects.create(
+                    event=event,
+                    timestamp=timezone.now(),
+                    action_type='other',
+                    description=f'Maître d\'hôtel changé: {old_maitre_hotel.get_full_name() if old_maitre_hotel else "Aucun"} → {maitre_hotel.get_full_name()}',
+                    created_by=request.user
+                )
+                
+                messages.success(request, f'Événement assigné à {maitre_hotel.get_full_name()}')
+            
+        elif action == 'update_priority':
+            new_priority = request.POST.get('priority')
+            old_priority = event.priority
+            event.priority = new_priority
+            event.save()
+            
+            # Timeline
+            EventTimeline.objects.create(
+                event=event,
+                timestamp=timezone.now(),
+                action_type='other',
+                description=f'Priorité changée: {old_priority} → {new_priority}',
+                created_by=request.user
+            )
+            
+            messages.success(request, 'Priorité mise à jour')
+        
+        elif action == 'add_staff':
+            staff_id = request.POST.get('staff_id')
+            role = request.POST.get('role', 'assistant')
+            hourly_rate = request.POST.get('hourly_rate', '20.00')
+            
+            if staff_id:
+                staff_member = get_object_or_404(User, id=staff_id, role='staff')
+                
+                # Vérifier que cette personne n'est pas déjà assignée
+                if not event.staff_assignments.filter(staff_member=staff_member).exists():
+                    EventStaffAssignment.objects.create(
+                        event=event,
+                        staff_member=staff_member,
+                        role=role,
+                        arrival_time=event.setup_start_time,
+                        departure_time=event.cleanup_end_time,
+                        hourly_rate=Decimal(hourly_rate)
+                    )
+                    
+                    messages.success(request, f'{staff_member.get_full_name()} ajouté à l\'équipe')
+                else:
+                    messages.warning(request, 'Cette personne est déjà assignée à l\'événement')
+        
+        return redirect('admin_event_detail', contract_id=event.id)
+    
+    # Récupérer les données pour l'affichage
+    timeline = event.timeline.all().order_by('-timestamp')[:20]
+    photos = event.photos.all().order_by('-taken_at')[:10]
+    staff_assignments = event.staff_assignments.all().select_related('staff_member')
+    
+    # Maîtres d'hôtel disponibles
+    maitre_hotels = User.objects.filter(role='maitre_hotel', is_active=True).order_by('first_name', 'last_name')
+    
+    # Personnel disponible (non déjà assigné)
+    assigned_staff_ids = staff_assignments.values_list('staff_member_id', flat=True)
+    available_staff = User.objects.filter(
+        role='staff', 
+        is_active=True
+    ).exclude(id__in=assigned_staff_ids).order_by('first_name', 'last_name')
+    
+    context = {
+        'event': event,
+        'timeline': timeline,
+        'photos': photos,
+        'staff_assignments': staff_assignments,
+        'maitre_hotels': maitre_hotels,
+        'available_staff': available_staff,
+        'can_edit': True,  # Les ventes peuvent toujours éditer
+    }
+    
+    return render(request, 'JLTsite/admin_event_detail.html', context)
+
+@user_passes_test(admin_required)
+@require_POST
+def admin_change_event_status(request):
+    """Changer le statut d'un événement via AJAX"""
+    try:
+        data = json.loads(request.body)
+        event_id = data.get('event_id')
+        new_status = data.get('status')
+        
+        # Valider le statut
+        valid_statuses = ['draft', 'confirmed', 'in_progress', 'completed', 'cancelled']
+        if new_status not in valid_statuses:
+            return JsonResponse({
+                'success': False,
+                'message': 'Statut invalide'
+            }, status=400)
+        
+        # Import dynamique pour éviter les erreurs circulaires
+        from .models import EventContract, EventTimeline, EventNotifications
+        
+        event = get_object_or_404(EventContract, id=event_id)
+        old_status = event.status
+        event.status = new_status
+        event.save()
+        
+        # Ajouter à la timeline
+        EventTimeline.objects.create(
+            event=event,
+            timestamp=timezone.now(),
+            action_type='other',
+            description=f'Statut changé de {old_status} à {new_status} par {request.user.get_full_name()}',
+            created_by=request.user
+        )
+        
+        # Notifier le maître d'hôtel si assigné
+        if event.maitre_hotel and new_status in ['in_progress', 'completed']:
+            EventNotifications.objects.create(
+                recipient=event.maitre_hotel,
+                event=event,
+                type='event_updated',
+                title=f'Événement {new_status}',
+                message=f'L\'événement "{event.event_name}" est maintenant: {dict(event.STATUS_CHOICES).get(new_status, new_status)}',
+                is_urgent=False
+            )
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Statut mis à jour: {dict(event.STATUS_CHOICES).get(new_status, new_status)}',
+            'new_status': new_status
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        }, status=500)
+
+# Aussi ajouter la vue pour l'assignation rapide
+@user_passes_test(admin_required)
+@require_POST
+def admin_quick_assign_maitre_hotel(request):
+    """Assignation rapide d'un maître d'hôtel via AJAX"""
+    try:
+        data = json.loads(request.body)
+        event_id = data.get('event_id')
+        maitre_hotel_id = data.get('maitre_hotel_id')
+        
+        # Import dynamique
+        from .models import EventContract, EventTimeline, EventNotifications
+        
+        event = get_object_or_404(EventContract, id=event_id)
+        
+        if maitre_hotel_id:
+            maitre_hotel = get_object_or_404(User, id=maitre_hotel_id, role='maitre_hotel')
+            old_maitre_hotel = event.maitre_hotel
+            event.maitre_hotel = maitre_hotel
+            event.save()
+            
+            # Notification
+            EventNotifications.objects.create(
+                recipient=maitre_hotel,
+                event=event,
+                type='new_event' if not old_maitre_hotel else 'event_updated',
+                title='Événement assigné',
+                message=f'L\'événement "{event.event_name}" vous a été assigné pour le {event.event_start_time.strftime("%d/%m/%Y à %H:%M")}',
+                is_urgent=event.priority in ['high', 'urgent']
+            )
+            
+            # Timeline
+            EventTimeline.objects.create(
+                event=event,
+                timestamp=timezone.now(),
+                action_type='other',
+                description=f'Assigné à {maitre_hotel.get_full_name()} par {request.user.get_full_name()}',
+                created_by=request.user
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Événement assigné à {maitre_hotel.get_full_name()}',
+                'maitre_hotel_name': maitre_hotel.get_full_name()
+            })
+        else:
+            # Désassigner
+            old_maitre_hotel = event.maitre_hotel
+            event.maitre_hotel = None
+            event.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Maître d\'hôtel désassigné',
+                'maitre_hotel_name': None
+            })
+            
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        }, status=500)
+    
+@user_passes_test(admin_required)
+@require_POST
+def admin_remove_staff_from_event(request, contract_id, assignment_id):
+    """Retirer un membre du personnel d'un événement"""
+    try:
+        event = get_object_or_404(EventContract, id=contract_id)
+        assignment = get_object_or_404(EventStaffAssignment, id=assignment_id, event=event)
+        
+        staff_name = assignment.staff_member.get_full_name()
+        assignment.delete()
+        
+        # Timeline
+        EventTimeline.objects.create(
+            event=event,
+            timestamp=timezone.now(),
+            action_type='other',
+            description=f'{staff_name} retiré de l\'équipe par {request.user.get_full_name()}',
+            created_by=request.user
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'{staff_name} retiré de l\'équipe'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        }, status=500)
+        
+    try:
+        data = json.loads(request.body)
+        event_id = data.get('event_id')
+        maitre_hotel_id = data.get('maitre_hotel_id')
+        
+        event = get_object_or_404(EventContract, id=event_id)
+        
+        if maitre_hotel_id:
+            maitre_hotel = get_object_or_404(User, id=maitre_hotel_id, role='maitre_hotel')
+            old_maitre_hotel = event.maitre_hotel
+            event.maitre_hotel = maitre_hotel
+            event.save()
+            
+            # Notification
+            EventNotifications.objects.create(
+                recipient=maitre_hotel,
+                event=event,
+                type='new_event' if not old_maitre_hotel else 'event_updated',
+                title='Événement assigné',
+                message=f'L\'événement "{event.event_name}" vous a été assigné pour le {event.event_start_time.strftime("%d/%m/%Y à %H:%M")}',
+                is_urgent=event.priority in ['high', 'urgent']
+            )
+            
+            # Timeline
+            EventTimeline.objects.create(
+                event=event,
+                timestamp=timezone.now(),
+                action_type='other',
+                description=f'Assigné à {maitre_hotel.get_full_name()} par {request.user.get_full_name()}',
+                created_by=request.user
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Événement assigné à {maitre_hotel.get_full_name()}',
+                'maitre_hotel_name': maitre_hotel.get_full_name()
+            })
+        else:
+            # Désassigner
+            old_maitre_hotel = event.maitre_hotel
+            event.maitre_hotel = None
+            event.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Maître d\'hôtel désassigné',
+                'maitre_hotel_name': None
+            })
+            
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        }, status=500)

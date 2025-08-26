@@ -1,0 +1,852 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Checklist #{{ checklist.order.order_number }} - Julien-Leblanc Traiteur{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Styles optimisés pour tablette */
+    :root {
+        --checklist-primary: #3498db;
+        --checklist-success: #27ae60;
+        --checklist-warning: #f39c12;
+        --checklist-danger: #e74c3c;
+        --checklist-dark: #2c3e50;
+        --checklist-light: #ecf0f1;
+    }
+    
+    body {
+        background: #f5f7fa;
+    }
+    
+    /* Header fixe */
+    .checklist-detail-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(135deg, var(--checklist-dark) 0%, var(--checklist-primary) 100%);
+        color: white;
+        padding: 1rem;
+        z-index: 1000;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    
+    .order-info {
+        flex: 1;
+    }
+    
+    .order-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.3rem;
+    }
+    
+    .order-details {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    
+    /* Progress bar fixe */
+    .progress-section {
+        position: fixed;
+        top: 80px;
+        left: 0;
+        right: 0;
+        background: white;
+        padding: 1rem;
+        border-bottom: 2px solid var(--checklist-light);
+        z-index: 999;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .progress-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }
+    
+    .progress-bar-wrapper {
+        flex: 1;
+    }
+    
+    .progress-bar {
+        height: 20px;
+        background: var(--checklist-light);
+        border-radius: 10px;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(to right, var(--checklist-primary), var(--checklist-success));
+        transition: width 0.5s ease;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 10px;
+    }
+    
+    .progress-text {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--checklist-dark);
+    }
+    
+    /* Contenu principal avec padding pour header fixe */
+    .checklist-content {
+        margin-top: 160px;
+        padding: 1rem;
+        max-width: 1400px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    /* Catégories */
+    .category-section {
+        background: white;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .category-header {
+        background: var(--checklist-primary);
+        color: white;
+        padding: 1rem 1.5rem;
+        font-size: 1.2rem;
+        font-weight: 600;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .category-count {
+        background: rgba(255,255,255,0.2);
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+    }
+    
+    /* Items de checklist - GROS pour tablette */
+    .checklist-item {
+        padding: 1.5rem;
+        border-bottom: 2px solid var(--checklist-light);
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        transition: all 0.3s ease;
+        min-height: 100px;
+    }
+    
+    .checklist-item:hover {
+        background: #f8f9fa;
+    }
+    
+    .checklist-item.checked {
+        background: #d4f4dd;
+        opacity: 0.8;
+    }
+    
+    .checklist-item.has-issue {
+        background: #ffe6e6;
+    }
+    
+    /* Checkbox géant pour tablette */
+    .check-box {
+        width: 60px;
+        height: 60px;
+        border: 3px solid var(--checklist-primary);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+    }
+    
+    .check-box:hover {
+        transform: scale(1.1);
+        background: var(--checklist-light);
+    }
+    
+    .check-box.checked {
+        background: var(--checklist-success);
+        border-color: var(--checklist-success);
+    }
+    
+    .check-icon {
+        font-size: 2rem;
+        color: white;
+        display: none;
+    }
+    
+    .check-box.checked .check-icon {
+        display: block;
+    }
+    
+    /* Infos de l'item */
+    .item-info {
+        flex: 1;
+    }
+    
+    .item-name {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--checklist-dark);
+        margin-bottom: 0.5rem;
+    }
+    
+    .item-details {
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .item-detail {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #666;
+        font-size: 1rem;
+    }
+    
+    .item-detail i {
+        color: var(--checklist-primary);
+    }
+    
+    /* Quantité */
+    .quantity-control {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: white;
+        border: 2px solid var(--checklist-light);
+        border-radius: 10px;
+        padding: 0.5rem;
+    }
+    
+    .quantity-btn {
+        width: 50px;
+        height: 50px;
+        border: none;
+        background: var(--checklist-primary);
+        color: white;
+        border-radius: 8px;
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .quantity-btn:hover {
+        background: var(--checklist-dark);
+        transform: scale(1.1);
+    }
+    
+    .quantity-btn:disabled {
+        background: var(--checklist-light);
+        cursor: not-allowed;
+    }
+    
+    .quantity-value {
+        font-size: 1.3rem;
+        font-weight: 700;
+        min-width: 80px;
+        text-align: center;
+    }
+    
+    /* Boutons d'action */
+    .item-actions {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .btn-action {
+        padding: 12px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-issue {
+        background: var(--checklist-warning);
+        color: white;
+    }
+    
+    .btn-issue:hover {
+        background: #e67e22;
+        transform: translateY(-2px);
+    }
+    
+    .btn-note {
+        background: var(--checklist-light);
+        color: var(--checklist-dark);
+    }
+    
+    .btn-note:hover {
+        background: #bdc3c7;
+    }
+    
+    /* Footer fixe avec boutons */
+    .checklist-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        padding: 1rem;
+        border-top: 2px solid var(--checklist-light);
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        z-index: 998;
+    }
+    
+    .footer-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .btn-footer {
+        flex: 1;
+        padding: 18px;
+        border: none;
+        border-radius: 10px;
+        font-size: 1.2rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-complete {
+        background: var(--checklist-success);
+        color: white;
+    }
+    
+    .btn-complete:hover:not(:disabled) {
+        background: #229954;
+        transform: translateY(-2px);
+    }
+    
+    .btn-complete:disabled {
+        background: var(--checklist-light);
+        color: #999;
+        cursor: not-allowed;
+    }
+    
+    .btn-back {
+        background: var(--checklist-light);
+        color: var(--checklist-dark);
+    }
+    
+    .btn-back:hover {
+        background: #bdc3c7;
+    }
+    
+    /* Modal pour problèmes */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .modal.active {
+        display: flex;
+    }
+    
+    .modal-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 15px;
+        width: 90%;
+        max-width: 500px;
+    }
+    
+    .modal-header {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: var(--checklist-dark);
+    }
+    
+    .modal-textarea {
+        width: 100%;
+        min-height: 150px;
+        padding: 1rem;
+        border: 2px solid var(--checklist-light);
+        border-radius: 10px;
+        font-size: 1.1rem;
+        resize: vertical;
+    }
+    
+    .modal-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .modal-btn {
+        flex: 1;
+        padding: 15px;
+        border: none;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .checklist-content {
+            padding: 0.5rem;
+        }
+        
+        .check-box {
+            width: 50px;
+            height: 50px;
+        }
+        
+        .item-name {
+            font-size: 1.1rem;
+        }
+        
+        .quantity-btn {
+            width: 45px;
+            height: 45px;
+        }
+    }
+    
+    /* Badge validé par */
+    .validated-by {
+        display: inline-block;
+        background: var(--checklist-success);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+    }
+    
+    /* Animation de validation */
+    @keyframes checkAnimation {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.3); }
+        100% { transform: scale(1); }
+    }
+    
+    .check-box.animating {
+        animation: checkAnimation 0.3s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header fixe -->
+<div class="checklist-detail-header">
+    <div class="header-content">
+        <div class="order-info">
+            <div class="order-title">
+                <i class="fas fa-clipboard-check"></i> 
+                Commande #{{ checklist.order.order_number }}
+            </div>
+            <div class="order-details">
+                <i class="fas fa-calendar"></i> {{ checklist.order.delivery_date|date:"d/m/Y" }} 
+                <i class="fas fa-clock" style="margin-left: 1rem;"></i> {{ checklist.order.delivery_time|time:"H:i" }}
+                <i class="fas fa-user" style="margin-left: 1rem;"></i> {{ checklist.order.first_name }} {{ checklist.order.last_name }}
+            </div>
+        </div>
+        <div>
+            {% if checklist.priority == 1 %}
+            <span style="background: var(--checklist-danger); padding: 8px 15px; border-radius: 20px;">
+                <i class="fas fa-exclamation-triangle"></i> URGENT
+            </span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Progress bar fixe -->
+<div class="progress-section">
+    <div class="progress-container">
+        <div class="progress-text">
+            <span id="completedCount">{{ checklist.completed_items }}</span>/{{ checklist.total_items }} validés
+        </div>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar" style="width: {{ checklist.progress_percentage }}%;">
+                    <span style="color: white; font-weight: bold;">
+                        <span id="progressPercent">{{ checklist.progress_percentage }}</span>%
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div>
+            {% if checklist.status == 'pending' %}
+            <form method="POST" style="display: inline;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="start">
+                <button type="submit" class="btn-action" style="background: var(--checklist-primary); color: white;">
+                    <i class="fas fa-play"></i> Démarrer
+                </button>
+            </form>
+            {% elif checklist.status == 'in_progress' %}
+            <span style="color: var(--checklist-success); font-weight: 600;">
+                <i class="fas fa-spinner fa-spin"></i> En cours
+            </span>
+            {% else %}
+            <span style="color: var(--checklist-success); font-weight: 600;">
+                <i class="fas fa-check-circle"></i> Complétée
+            </span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Contenu principal -->
+<div class="checklist-content">
+    {% for category, items in items_by_category.items %}
+    <div class="category-section">
+        <div class="category-header">
+            <span>{{ category }}</span>
+            <span class="category-count">
+                <span class="category-checked-{{ forloop.counter }}">
+                    {{ items|length|default:"0" }}
+                </span> items
+            </span>
+        </div>
+        
+        {% for item in items %}
+        <div class="checklist-item {% if item.is_checked %}checked{% endif %} {% if item.has_issue %}has-issue{% endif %}" 
+             id="item-{{ item.id }}">
+            
+            <!-- Checkbox -->
+            <div class="check-box {% if item.is_checked %}checked{% endif %}" 
+                 onclick="toggleItem({{ item.id }}, this)">
+                <i class="fas fa-check check-icon"></i>
+            </div>
+            
+            <!-- Infos -->
+            <div class="item-info">
+                <div class="item-name">{{ item.inventory_item.name }}</div>
+                <div class="item-details">
+                    <div class="item-detail">
+                        <i class="fas fa-boxes"></i>
+                        <span class="quantity-needed">{{ item.quantity_needed }}</span> {{ item.inventory_item.unit }}
+                    </div>
+                    {% if item.inventory_item.stock_quantity %}
+                    <div class="item-detail">
+                        <i class="fas fa-warehouse"></i>
+                        Stock: {{ item.inventory_item.stock_quantity }}
+                    </div>
+                    {% endif %}
+                    {% if item.notes %}
+                    <div class="item-detail">
+                        <i class="fas fa-sticky-note"></i>
+                        {{ item.notes }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% if item.is_checked and item.checked_by %}
+                <div class="validated-by">
+                    <i class="fas fa-user-check"></i> 
+                    Validé par {{ item.checked_by.get_full_name }} à {{ item.checked_at|time:"H:i" }}
+                </div>
+                {% endif %}
+                {% if item.has_issue %}
+                <div style="margin-top: 0.5rem; padding: 10px; background: var(--checklist-danger); color: white; border-radius: 5px;">
+                    <i class="fas fa-exclamation-triangle"></i> {{ item.issue_description }}
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Contrôle quantité -->
+            <div class="quantity-control">
+                <button class="quantity-btn" onclick="changeQuantity({{ item.id }}, -1)">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <div class="quantity-value" id="qty-{{ item.id }}">
+                    {{ item.quantity_prepared|default:item.quantity_needed }}
+                </div>
+                <button class="quantity-btn" onclick="changeQuantity({{ item.id }}, 1)">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+            
+            <!-- Actions -->
+            <div class="item-actions">
+                <button class="btn-action btn-issue" onclick="reportIssue({{ item.id }})">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    {% if item.has_issue %}Modifier{% else %}Signaler{% endif %}
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+    
+    <!-- Espace pour le footer fixe -->
+    <div style="height: 100px;"></div>
+</div>
+
+<!-- Footer fixe -->
+<div class="checklist-footer">
+    <div class="footer-content">
+        <button class="btn-footer btn-back" onclick="window.location.href='{% url 'checklist_dashboard' %}'">
+            <i class="fas fa-arrow-left"></i> Retour
+        </button>
+        {% if checklist.status == 'in_progress' %}
+        <form method="POST" action="{% url 'complete_checklist' checklist.id %}" style="flex: 2;">
+            {% csrf_token %}
+            <button type="submit" class="btn-footer btn-complete" 
+                    id="completeBtn"
+                    {% if checklist.progress_percentage < 100 %}disabled{% endif %}>
+                <i class="fas fa-check-circle"></i>
+                Terminer la checklist
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal pour signaler un problème -->
+<div class="modal" id="issueModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <i class="fas fa-exclamation-triangle" style="color: var(--checklist-warning);"></i>
+            Signaler un problème
+        </div>
+        <textarea class="modal-textarea" id="issueDescription" 
+                  placeholder="Décrivez le problème rencontré..."></textarea>
+        <div class="modal-buttons">
+            <button class="modal-btn" style="background: var(--checklist-light);" 
+                    onclick="closeIssueModal()">Annuler</button>
+            <button class="modal-btn" style="background: var(--checklist-warning); color: white;" 
+                    onclick="submitIssue()">Signaler</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentItemId = null;
+    let quantities = {};
+    
+    // Initialiser les quantités
+    {% for category, items in items_by_category.items %}
+        {% for item in items %}
+        quantities[{{ item.id }}] = {{ item.quantity_prepared|default:item.quantity_needed }};
+        {% endfor %}
+    {% endfor %}
+    
+    // Toggle validation d'un item
+    function toggleItem(itemId, element) {
+        const isChecked = element.classList.contains('checked');
+        const action = isChecked ? 'uncheck' : 'check';
+        
+        // Animation
+        element.classList.add('animating');
+        setTimeout(() => element.classList.remove('animating'), 300);
+        
+        // Requête AJAX
+        fetch('{% url "validate_checklist_item" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                item_id: itemId,
+                action: action,
+                quantity: quantities[itemId]
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Mettre à jour l'UI
+                const itemElement = document.getElementById(`item-${itemId}`);
+                
+                if (data.item_checked) {
+                    element.classList.add('checked');
+                    itemElement.classList.add('checked');
+                } else {
+                    element.classList.remove('checked');
+                    itemElement.classList.remove('checked');
+                }
+                
+                // Mettre à jour la progress bar
+                updateProgress(data.progress, data.completed_items);
+                
+                // Activer/désactiver le bouton de complétion
+                const completeBtn = document.getElementById('completeBtn');
+                if (completeBtn) {
+                    completeBtn.disabled = data.progress < 100;
+                }
+                
+                // Feedback visuel
+                showToast(data.message, 'success');
+            } else {
+                showToast(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showToast('Erreur de connexion', 'error');
+        });
+    }
+    
+    // Changer la quantité
+    function changeQuantity(itemId, delta) {
+        const currentQty = quantities[itemId] || 1;
+        const newQty = Math.max(0, currentQty + delta);
+        quantities[itemId] = newQty;
+        document.getElementById(`qty-${itemId}`).textContent = newQty;
+    }
+    
+    // Signaler un problème
+    function reportIssue(itemId) {
+        currentItemId = itemId;
+        document.getElementById('issueModal').classList.add('active');
+    }
+    
+    function closeIssueModal() {
+        document.getElementById('issueModal').classList.remove('active');
+        document.getElementById('issueDescription').value = '';
+        currentItemId = null;
+    }
+    
+    function submitIssue() {
+        const description = document.getElementById('issueDescription').value;
+        
+        if (!description.trim()) {
+            showToast('Veuillez décrire le problème', 'warning');
+            return;
+        }
+        
+        fetch('{% url "report_checklist_issue" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                item_id: currentItemId,
+                description: description
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                closeIssueModal();
+                // Marquer visuellement l'item
+                document.getElementById(`item-${currentItemId}`).classList.add('has-issue');
+            } else {
+                showToast(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showToast('Erreur de connexion', 'error');
+        });
+    }
+    
+    // Mettre à jour la progress bar
+    function updateProgress(percentage, completed) {
+        document.getElementById('progressBar').style.width = percentage + '%';
+        document.getElementById('progressPercent').textContent = percentage;
+        document.getElementById('completedCount').textContent = completed;
+    }
+    
+    // Toast notifications
+    function showToast(message, type) {
+        // Créer l'élément toast
+        const toast = document.createElement('div');
+        toast.className = 'toast toast-' + type;
+        toast.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'times-circle' : 'info-circle'}"></i>
+            ${message}
+        `;
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: ${type === 'success' ? 'var(--checklist-success)' : type === 'error' ? 'var(--checklist-danger)' : 'var(--checklist-warning)'};
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            z-index: 3000;
+            animation: slideUp 0.3s ease;
+        `;
+        
+        document.body.appendChild(toast);
+        
+        // Supprimer après 3 secondes
+        setTimeout(() => {
+            toast.style.animation = 'slideDown 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+    
+    // Animation CSS
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideUp {
+            from { bottom: -100px; opacity: 0; }
+            to { bottom: 100px; opacity: 1; }
+        }
+        @keyframes slideDown {
+            from { bottom: 100px; opacity: 1; }
+            to { bottom: -100px; opacity: 0; }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Raccourcis clavier pour tablette avec clavier
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+            // Valider le premier item non validé
+            const unchecked = document.querySelector('.check-box:not(.checked)');
+            if (unchecked) {
+                unchecked.click();
+            }
+        }
+    });
+</script>
+{% endblock %}

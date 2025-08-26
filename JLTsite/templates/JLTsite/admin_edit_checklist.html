@@ -1,0 +1,779 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+
+{% block title %}Modifier Checklist - Commande #{{ order.order_number }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Styles similaires à admin_create_checklist avec quelques ajustements */
+    :root {
+        --jlt-yellow: #F4C843;
+        --jlt-yellow-hover: #e6b835;
+        --jlt-black: #1a1a1a;
+        --jlt-gray: #6c757d;
+        --jlt-gray-light: #e9ecef;
+        --checklist-primary: #3498db;
+        --checklist-success: #27ae60;
+        --checklist-warning: #f39c12;
+        --checklist-danger: #e74c3c;
+    }
+    
+    .edit-checklist-header {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        padding: 2rem 0;
+        color: white;
+    }
+    
+    .header-title {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .checklist-status-badge {
+        background: rgba(244, 200, 67, 0.2);
+        color: var(--jlt-yellow);
+        padding: 8px 20px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .order-info-bar {
+        background: rgba(244, 200, 67, 0.1);
+        padding: 1rem;
+        border-radius: 10px;
+        margin-top: 1rem;
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .order-info-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: rgba(255,255,255,0.9);
+    }
+    
+    /* Progress Overview */
+    .progress-overview {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin: 2rem 0;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+    }
+    
+    .progress-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--jlt-black);
+        margin-bottom: 1.5rem;
+    }
+    
+    .progress-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .progress-stat {
+        text-align: center;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 10px;
+    }
+    
+    .progress-stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--checklist-primary);
+    }
+    
+    .progress-stat-label {
+        color: var(--jlt-gray);
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+    
+    .progress-bar-large {
+        height: 30px;
+        background: var(--jlt-gray-light);
+        border-radius: 15px;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(to right, var(--checklist-primary), var(--checklist-success));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        transition: width 0.5s ease;
+    }
+    
+    /* Form Container */
+    .form-container {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin: 2rem 0;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid var(--jlt-gray-light);
+    }
+    
+    .form-section:last-child {
+        border-bottom: none;
+    }
+    
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--jlt-black);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .section-title i {
+        color: var(--jlt-yellow);
+    }
+    
+    /* Current Items List */
+    .items-list {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin: 2rem 0;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+    }
+    
+    .item-card {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border: 1px solid var(--jlt-gray-light);
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .item-card:hover {
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        transform: translateX(5px);
+    }
+    
+    .item-card.checked {
+        background: #d4f4dd;
+        border-color: var(--checklist-success);
+    }
+    
+    .item-card.has-issue {
+        background: #ffe6e6;
+        border-color: var(--checklist-danger);
+    }
+    
+    .item-status {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.2rem;
+    }
+    
+    .item-status.checked {
+        background: var(--checklist-success);
+        color: white;
+    }
+    
+    .item-status.unchecked {
+        background: var(--jlt-gray-light);
+        color: var(--jlt-gray);
+    }
+    
+    .item-status.issue {
+        background: var(--checklist-danger);
+        color: white;
+    }
+    
+    .item-details {
+        flex: 1;
+    }
+    
+    .item-name {
+        font-weight: 600;
+        color: var(--jlt-black);
+        margin-bottom: 0.3rem;
+    }
+    
+    .item-info {
+        color: var(--jlt-gray);
+        font-size: 0.9rem;
+    }
+    
+    .item-badge {
+        padding: 3px 10px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        margin-left: 0.5rem;
+    }
+    
+    .badge-quantity {
+        background: var(--checklist-primary);
+        color: white;
+    }
+    
+    .badge-validated {
+        background: var(--checklist-success);
+        color: white;
+    }
+    
+    .item-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .btn-item {
+        padding: 8px 15px;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-edit {
+        background: var(--jlt-gray-light);
+        color: var(--jlt-black);
+    }
+    
+    .btn-edit:hover {
+        background: var(--jlt-yellow);
+    }
+    
+    .btn-delete {
+        background: #ffe6e6;
+        color: var(--checklist-danger);
+    }
+    
+    .btn-delete:hover {
+        background: var(--checklist-danger);
+        color: white;
+    }
+    
+    /* Add New Items Section */
+    .add-items-section {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+    }
+    
+    .add-items-title {
+        font-weight: 600;
+        color: var(--jlt-black);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .add-items-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+        max-height: 300px;
+        overflow-y: auto;
+        padding: 1rem;
+        background: white;
+        border-radius: 8px;
+    }
+    
+    .add-item-option {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem;
+        border: 1px solid var(--jlt-gray-light);
+        border-radius: 5px;
+        transition: all 0.3s ease;
+    }
+    
+    .add-item-option:hover {
+        background: var(--jlt-gray-light);
+    }
+    
+    .add-item-option input[type="checkbox"] {
+        margin-right: 0.5rem;
+    }
+    
+    /* Action Buttons */
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: space-between;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 2px solid var(--jlt-gray-light);
+    }
+    
+    .action-group {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .btn {
+        padding: 12px 30px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-primary {
+        background: var(--jlt-yellow);
+        color: var(--jlt-black);
+    }
+    
+    .btn-primary:hover {
+        background: var(--jlt-yellow-hover);
+        transform: translateY(-2px);
+    }
+    
+    .btn-secondary {
+        background: var(--jlt-gray-light);
+        color: var(--jlt-black);
+    }
+    
+    .btn-secondary:hover {
+        background: #dee2e6;
+    }
+    
+    .btn-success {
+        background: var(--checklist-success);
+        color: white;
+    }
+    
+    .btn-success:hover {
+        background: #229954;
+    }
+    
+    .btn-danger {
+        background: var(--checklist-danger);
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        background: #c0392b;
+    }
+    
+    /* Alerts */
+    .alert {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .alert-warning {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeeba;
+    }
+    
+    .alert-info {
+        background: #cce5ff;
+        color: #004085;
+        border: 1px solid #b8daff;
+    }
+    
+    /* Modal for edit item quantity */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+    }
+    
+    .modal.active {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .modal-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 15px;
+        max-width: 400px;
+        width: 90%;
+    }
+    
+    .modal-header {
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    .modal-body {
+        margin-bottom: 1.5rem;
+    }
+    
+    .modal-footer {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<section class="edit-checklist-header">
+    <div class="container">
+        <h1 class="header-title">
+            <i class="fas fa-edit"></i> 
+            Modifier la Checklist
+            <span class="checklist-status-badge">{{ checklist.get_status_display }}</span>
+        </h1>
+        <div class="order-info-bar">
+            <div class="order-info-item">
+                <i class="fas fa-hashtag"></i>
+                <strong>Commande:</strong> {{ order.order_number }}
+            </div>
+            <div class="order-info-item">
+                <i class="fas fa-user"></i>
+                <strong>Client:</strong> {{ order.first_name }} {{ order.last_name }}
+            </div>
+            <div class="order-info-item">
+                <i class="fas fa-calendar"></i>
+                <strong>Livraison:</strong> {{ order.delivery_date|date:"d/m/Y" }}
+            </div>
+            <div class="order-info-item">
+                <i class="fas fa-clock"></i>
+                <strong>Heure:</strong> {{ order.delivery_time|time:"H:i" }}
+            </div>
+            {% if checklist.assigned_to %}
+            <div class="order-info-item">
+                <i class="fas fa-user-check"></i>
+                <strong>Assignée à:</strong> {{ checklist.assigned_to.get_full_name }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Progress Overview -->
+<section class="progress-overview">
+    <div class="container">
+        <h2 class="progress-title">
+            <i class="fas fa-chart-line"></i> Progression de la checklist
+        </h2>
+        
+        <div class="progress-stats">
+            <div class="progress-stat">
+                <div class="progress-stat-value">{{ checklist.completed_items }}</div>
+                <div class="progress-stat-label">Items validés</div>
+            </div>
+            <div class="progress-stat">
+                <div class="progress-stat-value">{{ checklist.total_items }}</div>
+                <div class="progress-stat-label">Total items</div>
+            </div>
+            <div class="progress-stat">
+                <div class="progress-stat-value">{{ checklist.progress_percentage }}%</div>
+                <div class="progress-stat-label">Complété</div>
+            </div>
+            {% if checklist.started_at %}
+            <div class="progress-stat">
+                <div class="progress-stat-value">{{ checklist.get_time_spent }}</div>
+                <div class="progress-stat-label">Temps écoulé</div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="progress-bar-large">
+            <div class="progress-bar-fill" style="width: {{ checklist.progress_percentage }}%;">
+                {{ checklist.progress_percentage }}% Complété
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Current Items List -->
+<section class="items-list">
+    <div class="container">
+        <h2 class="section-title">
+            <i class="fas fa-list-check"></i>
+            Items actuels de la checklist
+        </h2>
+        
+        {% if checklist.items.all %}
+            {% for item in checklist.items.all %}
+            <div class="item-card {% if item.is_checked %}checked{% endif %} {% if item.has_issue %}has-issue{% endif %}">
+                <div class="item-status {% if item.is_checked %}checked{% elif item.has_issue %}issue{% else %}unchecked{% endif %}">
+                    {% if item.is_checked %}
+                        <i class="fas fa-check"></i>
+                    {% elif item.has_issue %}
+                        <i class="fas fa-exclamation"></i>
+                    {% else %}
+                        <i class="fas fa-clock"></i>
+                    {% endif %}
+                </div>
+                
+                <div class="item-details">
+                    <div class="item-name">
+                        {{ item.inventory_item.name }}
+                        <span class="item-badge badge-quantity">{{ item.quantity_needed }} {{ item.inventory_item.unit }}</span>
+                        {% if item.is_checked %}
+                        <span class="item-badge badge-validated">Validé</span>
+                        {% endif %}
+                    </div>
+                    <div class="item-info">
+                        Catégorie: {{ item.inventory_item.get_category_display }}
+                        {% if item.checked_by %}
+                        | Validé par {{ item.checked_by.get_full_name }} le {{ item.checked_at|date:"d/m/Y H:i" }}
+                        {% endif %}
+                    </div>
+                    {% if item.has_issue %}
+                    <div style="color: var(--checklist-danger); margin-top: 0.5rem;">
+                        <i class="fas fa-exclamation-triangle"></i> {{ item.issue_description }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="item-actions">
+                    <button class="btn-item btn-edit" onclick="editItemQuantity({{ item.id }}, {{ item.quantity_needed }})">
+                        <i class="fas fa-edit"></i> Modifier
+                    </button>
+                    <form method="POST" style="display: inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_item">
+                        <input type="hidden" name="item_id" value="{{ item.id }}">
+                        <button type="submit" class="btn-item btn-delete" onclick="return confirm('Supprimer cet item ?')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                Aucun item dans cette checklist. Ajoutez des items ci-dessous.
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Form to Edit Checklist Info -->
+<div class="container">
+    <form method="POST" class="form-container">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update_checklist">
+        
+        <div class="form-section">
+            <h2 class="section-title">
+                <i class="fas fa-info-circle"></i>
+                Informations de la checklist
+            </h2>
+            
+            <div class="form-group">
+                <label class="form-label" for="title">Titre</label>
+                <input type="text" 
+                       class="form-control" 
+                       id="title" 
+                       name="title" 
+                       value="{{ checklist.title }}"
+                       required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="assigned_to">Assignée à</label>
+                <select class="form-control" id="assigned_to" name="assigned_to">
+                    <option value="">-- Non assignée --</option>
+                    {% for manager in checklist_managers %}
+                    <option value="{{ manager.id }}" {% if checklist.assigned_to == manager %}selected{% endif %}>
+                        {{ manager.get_full_name }} ({{ manager.get_role_display }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Priorité</label>
+                <div style="display: flex; gap: 1rem;">
+                    <label style="cursor: pointer;">
+                        <input type="radio" name="priority" value="0" {% if checklist.priority == 0 %}checked{% endif %}>
+                        <span style="margin-left: 0.5rem;">Normale</span>
+                    </label>
+                    <label style="cursor: pointer;">
+                        <input type="radio" name="priority" value="1" {% if checklist.priority == 1 %}checked{% endif %}>
+                        <span style="margin-left: 0.5rem; color: var(--checklist-danger);">🔥 Urgente</span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="notes">Notes</label>
+                <textarea class="form-control" 
+                          id="notes" 
+                          name="notes" 
+                          rows="3">{{ checklist.notes }}</textarea>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Enregistrer les modifications
+            </button>
+        </div>
+    </form>
+    
+    <!-- Add New Items Section -->
+    <form method="POST" class="form-container">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_items">
+        
+        <div class="add-items-section">
+            <h3 class="add-items-title">
+                <i class="fas fa-plus-circle"></i>
+                Ajouter de nouveaux items
+            </h3>
+            
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                Sélectionnez les articles à ajouter à la checklist
+            </div>
+            
+            <div class="add-items-grid">
+                {% for item in inventory_items %}
+                <div class="add-item-option">
+                    <input type="checkbox" 
+                           name="new_items" 
+                           value="{{ item.id }}"
+                           id="new_item_{{ item.id }}">
+                    <label for="new_item_{{ item.id }}" style="cursor: pointer; flex: 1;">
+                        {{ item.name }} (Stock: {{ item.stock_quantity }} {{ item.unit }})
+                    </label>
+                    <input type="number" 
+                           name="new_quantity_{{ item.id }}" 
+                           value="1" 
+                           min="1"
+                           style="width: 60px;">
+                </div>
+                {% endfor %}
+            </div>
+            
+            <button type="submit" class="btn btn-success" style="margin-top: 1rem;">
+                <i class="fas fa-plus"></i> Ajouter les items sélectionnés
+            </button>
+        </div>
+    </form>
+    
+    <!-- Action Buttons -->
+    <div class="form-actions">
+        <div class="action-group">
+            <a href="{% url 'checklist_detail' checklist.id %}" class="btn btn-success" target="_blank">
+                <i class="fas fa-external-link-alt"></i> Voir la checklist
+            </a>
+            <a href="{% url 'admin_order_detail' order.order_number %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Retour à la commande
+            </a>
+        </div>
+        
+        {% if checklist.progress_percentage == 100 %}
+        <div class="action-group">
+            <span class="btn btn-success" style="cursor: default;">
+                <i class="fas fa-check-circle"></i> Checklist complétée
+            </span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal for editing item quantity -->
+<div class="modal" id="editModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <i class="fas fa-edit"></i> Modifier la quantité
+        </div>
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_item_quantity">
+            <input type="hidden" name="item_id" id="modal_item_id">
+            <div class="modal-body">
+                <label for="modal_quantity">Nouvelle quantité:</label>
+                <input type="number" 
+                       id="modal_quantity" 
+                       name="quantity" 
+                       min="1" 
+                       class="form-control"
+                       style="margin-top: 0.5rem;">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">
+                    Annuler
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    Enregistrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function editItemQuantity(itemId, currentQuantity) {
+        document.getElementById('modal_item_id').value = itemId;
+        document.getElementById('modal_quantity').value = currentQuantity;
+        document.getElementById('editModal').classList.add('active');
+    }
+    
+    function closeModal() {
+        document.getElementById('editModal').classList.remove('active');
+    }
+    
+    // Fermer le modal en cliquant en dehors
+    window.onclick = function(event) {
+        const modal = document.getElementById('editModal');
+        if (event.target == modal) {
+            closeModal();
+        }
+    }
+    
+    // Auto-refresh si la checklist est en cours
+    {% if checklist.status == 'in_progress' %}
+    setTimeout(function() {
+        location.reload();
+    }, 60000); // Refresh toutes les minutes
+    {% endif %}
+</script>
+{% endblock %}

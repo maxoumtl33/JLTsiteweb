@@ -1,0 +1,634 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Commandes de produits - Chef de Cuisine{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --chef-primary: #8B4513;
+        --chef-secondary: #DEB887;
+        --chef-accent: #CD853F;
+        --chef-dark: #654321;
+        --chef-light: #FFF8DC;
+        --success: #28a745;
+        --warning: #ffc107;
+        --danger: #dc3545;
+        --info: #17a2b8;
+    }
+
+    .product-orders-header {
+        background: linear-gradient(135deg, var(--chef-primary) 0%, var(--chef-dark) 100%);
+        color: white;
+        padding: 2rem 0;
+    }
+
+    .alert-banner {
+        background: #fff3cd;
+        border: 1px solid #ffeeba;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .alert-icon {
+        font-size: 1.5rem;
+        color: #856404;
+    }
+
+    .status-tabs {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        display: flex;
+        gap: 0.5rem;
+        overflow-x: auto;
+    }
+
+    .status-tab {
+        padding: 10px 20px;
+        border-radius: 20px;
+        text-decoration: none;
+        color: #6c757d;
+        font-weight: 600;
+        white-space: nowrap;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .status-tab:hover {
+        background: var(--chef-light);
+    }
+
+    .status-tab.active {
+        background: var(--chef-primary);
+        color: white;
+    }
+
+    .tab-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: var(--danger);
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 0.7rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+
+    .filters-bar {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .filter-select {
+        padding: 8px 15px;
+        border: 1px solid #ced4da;
+        border-radius: 8px;
+        background: white;
+        cursor: pointer;
+    }
+
+    .btn-new-order {
+        background: var(--success);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-new-order:hover {
+        background: #218838;
+        transform: translateY(-2px);
+    }
+
+    .orders-grid {
+        display: grid;
+        gap: 1.5rem;
+    }
+
+    .order-card {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+        position: relative;
+    }
+
+    .order-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    }
+
+    .order-card-header {
+        background: var(--chef-light);
+        padding: 1rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid var(--chef-accent);
+    }
+
+    .order-number {
+        font-weight: 700;
+        color: var(--chef-dark);
+        font-size: 1.1rem;
+    }
+
+    .order-status {
+        padding: 6px 12px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-draft { background: #e2e3e5; color: #383d41; }
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-approved { background: #d4f4dd; color: var(--success); }
+    .status-ordered { background: #cce5ff; color: #004085; }
+    .status-received { background: #d1ecf1; color: #0c5460; }
+    .status-cancelled { background: #f8d7da; color: var(--danger); }
+
+    .order-card-body {
+        padding: 1.5rem;
+    }
+
+    .order-info-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .order-info-row:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    .info-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .info-value {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .supplier-info {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+
+    .supplier-name {
+        font-weight: 600;
+        color: var(--chef-dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .supplier-contact {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    .items-summary {
+        background: var(--chef-light);
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+
+    .items-count {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--chef-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .total-amount {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--chef-dark);
+    }
+
+    .priority-badge {
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .priority-urgent { background: #f8d7da; color: var(--danger); }
+    .priority-high { background: #fff3cd; color: #856404; }
+    .priority-normal { background: #d1ecf1; color: #0c5460; }
+    .priority-low { background: #e2e3e5; color: #383d41; }
+
+    .order-actions {
+        padding: 1rem 1.5rem;
+        background: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+    }
+
+    .btn-action {
+        padding: 8px 16px;
+        border-radius: 6px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        color: white;
+        font-size: 0.9rem;
+    }
+
+    .btn-view { background: var(--info); }
+    .btn-approve { background: var(--success); }
+    .btn-reject { background: var(--danger); }
+
+    .btn-action:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        background: white;
+        border-radius: 12px;
+        color: #6c757d;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+
+    .pagination-section {
+        margin-top: 2rem;
+        display: flex;
+        justify-content: center;
+    }
+
+    .pagination {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .page-link {
+        padding: 8px 12px;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        color: var(--chef-primary);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        background: white;
+    }
+
+    .page-link:hover {
+        background: var(--chef-light);
+        border-color: var(--chef-accent);
+    }
+
+    .page-link.active {
+        background: var(--chef-primary);
+        color: white;
+        border-color: var(--chef-primary);
+    }
+
+    .urgent-indicator {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--danger);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    .date-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 6px 12px;
+        background: white;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        border: 1px solid #dee2e6;
+    }
+
+    .date-soon {
+        border-color: var(--warning);
+        color: #856404;
+        background: #fff3cd;
+    }
+
+    .date-overdue {
+        border-color: var(--danger);
+        color: var(--danger);
+        background: #f8d7da;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<section class="product-orders-header">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb" style="background: transparent;">
+                <li class="breadcrumb-item"><a href="{% url 'head_chef_dashboard' %}" style="color: var(--chef-secondary);">Dashboard</a></li>
+                <li class="breadcrumb-item active" style="color: white;">Commandes Produits</li>
+            </ol>
+        </nav>
+        <h1><i class="fas fa-shopping-cart"></i> Commandes de produits</h1>
+        <p class="mb-0">Gérez les commandes auprès des fournisseurs</p>
+    </div>
+</section>
+
+<!-- Contenu principal -->
+<section class="py-4" style="background: #f8f9fa;">
+    <div class="container">
+        <!-- Alerte si commandes en attente -->
+        {% if status_filter == 'pending' and product_orders %}
+        <div class="alert-banner">
+            <i class="fas fa-exclamation-triangle alert-icon"></i>
+            <div>
+                <strong>{{ product_orders|length }} commande{{ product_orders|length|pluralize }} en attente d'approbation</strong>
+                <p class="mb-0" style="font-size: 0.9rem;">Ces commandes nécessitent votre validation avant d'être envoyées aux fournisseurs.</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Onglets de statut -->
+        <div class="status-tabs">
+            <a href="?status=pending" class="status-tab {% if status_filter == 'pending' %}active{% endif %}">
+                En attente
+                {% if pending_count > 0 %}
+                <span class="tab-badge">{{ pending_count }}</span>
+                {% endif %}
+            </a>
+            <a href="?status=approved" class="status-tab {% if status_filter == 'approved' %}active{% endif %}">
+                Approuvées
+            </a>
+            <a href="?status=ordered" class="status-tab {% if status_filter == 'ordered' %}active{% endif %}">
+                Commandées
+            </a>
+            <a href="?status=received" class="status-tab {% if status_filter == 'received' %}active{% endif %}">
+                Reçues
+            </a>
+            <a href="?" class="status-tab {% if not status_filter %}active{% endif %}">
+                Toutes
+            </a>
+        </div>
+
+        <!-- Barre de filtres et actions -->
+        <div class="filters-bar">
+            <form method="get" style="display: flex; gap: 1rem;">
+                <input type="hidden" name="status" value="{{ status_filter }}">
+                <select name="department" class="filter-select" onchange="this.form.submit()">
+                    <option value="">Tous les départements</option>
+                    {% for dept_code, dept_name in departments %}
+                    <option value="{{ dept_code }}" {% if department_filter == dept_code %}selected{% endif %}>
+                        {{ dept_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+            
+            <a href="#" onclick="openNewOrderModal()" class="btn-new-order">
+                <i class="fas fa-plus"></i> Nouvelle commande
+            </a>
+        </div>
+
+        <!-- Liste des commandes -->
+        <div class="orders-grid">
+            {% for order in product_orders %}
+            <div class="order-card">
+                {% if order.priority == 'urgent' %}
+                <div class="urgent-indicator"></div>
+                {% endif %}
+                
+                <div class="order-card-header">
+                    <span class="order-number">{{ order.order_number }}</span>
+                    <span class="order-status status-{{ order.status }}">
+                        {{ order.get_status_display }}
+                    </span>
+                </div>
+                
+                <div class="order-card-body">
+                    <div class="supplier-info">
+                        <div class="supplier-name">
+                            <i class="fas fa-truck"></i> {{ order.supplier.name }}
+                        </div>
+                        {% if order.supplier.contact_name %}
+                        <div class="supplier-contact">
+                            Contact: {{ order.supplier.contact_name }}
+                            {% if order.supplier.phone %} - {{ order.supplier.phone }}{% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="order-info-row">
+                        <span class="info-label">Département:</span>
+                        <span class="info-value">{{ order.get_department_display }}</span>
+                    </div>
+                    
+                    <div class="order-info-row">
+                        <span class="info-label">Demandé par:</span>
+                        <span class="info-value">{{ order.requested_by.get_full_name }}</span>
+                    </div>
+                    
+                    <div class="order-info-row">
+                        <span class="info-label">Date souhaitée:</span>
+                        <span class="info-value">
+                            {% with days_until=order.needed_date|timeuntil:now %}
+                            <span class="date-indicator {% if days_until|slice:":1" == "0" %}date-overdue{% elif days_until|slice:":1" <= "3" %}date-soon{% endif %}">
+                                <i class="fas fa-calendar"></i>
+                                {{ order.needed_date|date:"d/m/Y" }}
+                            </span>
+                            {% endwith %}
+                        </span>
+                    </div>
+                    
+                    <div class="order-info-row">
+                        <span class="info-label">Priorité:</span>
+                        <span class="priority-badge priority-{{ order.priority }}">
+                            {{ order.get_priority_display }}
+                        </span>
+                    </div>
+                    
+                    <div class="items-summary">
+                        <div class="items-count">
+                            <i class="fas fa-boxes"></i> {{ order.items.count }} article{{ order.items.count|pluralize }}
+                        </div>
+                        <div class="total-amount">
+                            Total: ${{ order.total_amount|floatformat:2 }}
+                        </div>
+                    </div>
+                    
+                    {% if order.notes %}
+                    <div style="background: #f8f9fa; padding: 0.75rem; border-radius: 6px; margin-top: 1rem;">
+                        <small style="color: #6c757d;">
+                            <i class="fas fa-sticky-note"></i> {{ order.notes|truncatewords:20 }}
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="order-actions">
+                    <a href="{% url 'head_chef_product_order_detail' order.id %}" class="btn-action btn-view">
+                        <i class="fas fa-eye"></i> Détails
+                    </a>
+                    {% if order.status == 'pending' %}
+                    <button onclick="approveOrder({{ order.id }})" class="btn-action btn-approve">
+                        <i class="fas fa-check"></i> Approuver
+                    </button>
+                    <button onclick="rejectOrder({{ order.id }})" class="btn-action btn-reject">
+                        <i class="fas fa-times"></i> Rejeter
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state">
+                <i class="fas fa-shopping-cart"></i>
+                <h4>Aucune commande trouvée</h4>
+                <p>
+                    {% if status_filter %}
+                        Aucune commande avec le statut "{{ status_filter|capfirst }}"
+                    {% else %}
+                        Créez votre première commande de produits
+                    {% endif %}
+                </p>
+                <a href="#" onclick="openNewOrderModal()" class="btn-new-order" style="margin-top: 1rem;">
+                    <i class="fas fa-plus"></i> Nouvelle commande
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if product_orders.has_other_pages %}
+        <div class="pagination-section">
+            <div class="pagination">
+                {% if product_orders.has_previous %}
+                <a href="?page=1&{{ request.GET.urlencode }}" class="page-link">«</a>
+                <a href="?page={{ product_orders.previous_page_number }}&{{ request.GET.urlencode }}" class="page-link">‹</a>
+                {% endif %}
+                
+                {% for num in product_orders.paginator.page_range %}
+                    {% if product_orders.number == num %}
+                        <span class="page-link active">{{ num }}</span>
+                    {% elif num > product_orders.number|add:'-3' and num < product_orders.number|add:'3' %}
+                        <a href="?page={{ num }}&{{ request.GET.urlencode }}" class="page-link">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if product_orders.has_next %}
+                <a href="?page={{ product_orders.next_page_number }}&{{ request.GET.urlencode }}" class="page-link">›</a>
+                <a href="?page={{ product_orders.paginator.num_pages }}&{{ request.GET.urlencode }}" class="page-link">»</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<script>
+function approveOrder(orderId) {
+    if (confirm('Approuver cette commande?')) {
+        fetch(`/kitchen/head-chef/product-orders/${orderId}/approve/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erreur: ' + data.error);
+            }
+        });
+    }
+}
+
+function rejectOrder(orderId) {
+    const reason = prompt('Raison du rejet:');
+    if (reason) {
+        fetch(`/kitchen/head-chef/product-orders/${orderId}/reject/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `reason=${encodeURIComponent(reason)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erreur: ' + data.error);
+            }
+        });
+    }
+}
+
+function openNewOrderModal() {
+    // Rediriger vers la page de création ou ouvrir un modal
+    window.location.href = '/kitchen/head-chef/product-orders/new/';
+}
+
+// Auto-refresh pour les commandes en attente
+{% if status_filter == 'pending' %}
+setInterval(function() {
+    location.reload();
+}, 30000); // 30 secondes
+{% endif %}
+</script>
+{% endblock %}

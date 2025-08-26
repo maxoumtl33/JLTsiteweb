@@ -1,0 +1,578 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Inventaire - Chef de Cuisine{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --chef-primary: #8B4513;
+        --chef-secondary: #DEB887;
+        --chef-accent: #CD853F;
+        --chef-dark: #654321;
+        --chef-light: #FFF8DC;
+        --success: #28a745;
+        --warning: #ffc107;
+        --danger: #dc3545;
+    }
+
+    .inventory-header {
+        background: linear-gradient(135deg, var(--chef-primary) 0%, var(--chef-dark) 100%);
+        color: white;
+        padding: 2rem 0;
+    }
+
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .stat-icon.primary { background: var(--chef-light); color: var(--chef-primary); }
+    .stat-icon.warning { background: #fff3cd; color: var(--warning); }
+    .stat-icon.danger { background: #f8d7da; color: var(--danger); }
+    .stat-icon.success { background: #d4f4dd; color: var(--success); }
+
+    .stat-content {
+        flex: 1;
+    }
+
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--chef-dark);
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .filters-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .filter-group {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .filter-input {
+        padding: 8px 15px;
+        border: 1px solid #ced4da;
+        border-radius: 8px;
+        font-size: 0.95rem;
+    }
+
+    .filter-select {
+        padding: 8px 15px;
+        border: 1px solid #ced4da;
+        border-radius: 8px;
+        background: white;
+        cursor: pointer;
+    }
+
+    .btn-filter {
+        padding: 8px 20px;
+        background: var(--chef-primary);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-filter:hover {
+        background: var(--chef-dark);
+    }
+
+    .inventory-table-section {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+    }
+
+    .table-header {
+        background: var(--chef-light);
+        padding: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .inventory-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .inventory-table thead {
+        background: #f8f9fa;
+    }
+
+    .inventory-table th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--chef-dark);
+        border-bottom: 2px solid var(--chef-light);
+    }
+
+    .inventory-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .inventory-table tbody tr:hover {
+        background: #f8f9fa;
+    }
+
+    .stock-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 0.5rem;
+    }
+
+    .stock-ok { background: var(--success); }
+    .stock-low { background: var(--warning); }
+    .stock-out { background: var(--danger); }
+
+    .stock-badge {
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .badge-ok { background: #d4f4dd; color: var(--success); }
+    .badge-low { background: #fff3cd; color: #856404; }
+    .badge-out { background: #f8d7da; color: var(--danger); }
+
+    .action-btn {
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin: 0 2px;
+    }
+
+    .btn-edit {
+        background: #17a2b8;
+        color: white;
+    }
+
+    .btn-order {
+        background: var(--chef-accent);
+        color: white;
+    }
+
+    .btn-add {
+        background: var(--success);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .category-tag {
+        padding: 4px 10px;
+        background: var(--chef-light);
+        color: var(--chef-dark);
+        border-radius: 12px;
+        font-size: 0.85rem;
+    }
+
+    .quick-order-modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+    }
+
+    .modal-content {
+        background: white;
+        margin: 10% auto;
+        padding: 2rem;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 500px;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .close-btn {
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #6c757d;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--chef-dark);
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 1.5rem;
+    }
+
+    .page-link {
+        padding: 8px 12px;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        color: var(--chef-primary);
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .page-link:hover {
+        background: var(--chef-light);
+    }
+
+    .page-link.active {
+        background: var(--chef-primary);
+        color: white;
+        border-color: var(--chef-primary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<section class="inventory-header">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb" style="background: transparent;">
+                <li class="breadcrumb-item"><a href="{% url 'head_chef_dashboard' %}" style="color: var(--chef-secondary);">Dashboard</a></li>
+                <li class="breadcrumb-item active" style="color: white;">Inventaire</li>
+            </ol>
+        </nav>
+        <h1><i class="fas fa-warehouse"></i> Gestion de l'inventaire</h1>
+        <p class="mb-0">Gérez vos stocks et passez des commandes</p>
+    </div>
+</section>
+
+<!-- Contenu principal -->
+<section class="py-4" style="background: #f8f9fa;">
+    <div class="container">
+        <!-- Statistiques -->
+        <div class="stats-cards">
+            <div class="stat-card">
+                <div class="stat-icon primary">
+                    <i class="fas fa-boxes"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ stats.total_products }}</div>
+                    <div class="stat-label">Produits totaux</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ stats.low_stock_count }}</div>
+                    <div class="stat-label">Stock faible</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon danger">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ stats.out_of_stock }}</div>
+                    <div class="stat-label">Rupture de stock</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon success">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">${{ stats.total_value|floatformat:0 }}</div>
+                    <div class="stat-label">Valeur totale</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtres -->
+        <div class="filters-section">
+            <form method="get" class="filter-group">
+                <input type="text" 
+                       name="search" 
+                       placeholder="Rechercher un produit..." 
+                       class="filter-input"
+                       style="flex: 1; min-width: 200px;"
+                       value="{{ search_query }}">
+                
+                <select name="category" class="filter-select">
+                    <option value="">Toutes les catégories</option>
+                    {% for cat_code, cat_name in categories %}
+                    <option value="{{ cat_code }}" {% if category_filter == cat_code %}selected{% endif %}>
+                        {{ cat_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                
+                <label style="display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="checkbox" 
+                           name="low_stock" 
+                           value="1" 
+                           {% if low_stock_only %}checked{% endif %}>
+                    Stock faible uniquement
+                </label>
+                
+                <button type="submit" class="btn-filter">
+                    <i class="fas fa-filter"></i> Filtrer
+                </button>
+                
+                <a href="{% url 'head_chef_inventory' %}" class="btn-filter" style="background: #6c757d;">
+                    <i class="fas fa-redo"></i> Réinitialiser
+                </a>
+            </form>
+        </div>
+
+        <!-- Table d'inventaire -->
+        <div class="inventory-table-section">
+            <div class="table-header">
+                <h3 style="margin: 0;">Produits en stock</h3>
+                <a href="{% url 'head_chef_add_product' %}" class="btn-add">
+                    <i class="fas fa-plus"></i> Ajouter un produit
+                </a>
+            </div>
+
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Statut</th>
+                        <th>Produit</th>
+                        <th>Catégorie</th>
+                        <th>Stock actuel</th>
+                        <th>Stock min/max</th>
+                        <th>Unité</th>
+                        <th>Prix unitaire</th>
+                        <th>Valeur</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr>
+                        <td>
+                            {% if product.current_stock == 0 %}
+                                <span class="stock-indicator stock-out"></span>
+                                <span class="stock-badge badge-out">Rupture</span>
+                            {% elif product.is_low_stock %}
+                                <span class="stock-indicator stock-low"></span>
+                                <span class="stock-badge badge-low">Faible</span>
+                            {% else %}
+                                <span class="stock-indicator stock-ok"></span>
+                                <span class="stock-badge badge-ok">OK</span>
+                            {% endif %}
+                        </td>
+                        <td><strong>{{ product.name }}</strong></td>
+                        <td><span class="category-tag">{{ product.get_category_display }}</span></td>
+                        <td>
+                            <strong>{{ product.current_stock|floatformat:1 }}</strong>
+                        </td>
+                        <td>
+                            <small>Min: {{ product.min_stock|floatformat:1 }}</small><br>
+                            <small>Max: {{ product.max_stock|floatformat:1 }}</small>
+                        </td>
+                        <td>{{ product.get_unit_display }}</td>
+                        <td>${{ product.unit_price|floatformat:2 }}</td>
+                        <td>
+                            <strong>${{ product.current_stock|mul:product.unit_price|floatformat:2 }}</strong>
+                        </td>
+                        <td>
+                            <button onclick="quickOrder({{ product.id }})" class="action-btn btn-order" title="Commander">
+                                <i class="fas fa-cart-plus"></i>
+                            </button>
+                            <a href="{% url 'head_chef_edit_product' product.id %}" class="action-btn btn-edit" title="Modifier">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 2rem; color: #6c757d;">
+                            <i class="fas fa-box-open" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                            Aucun produit trouvé
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Pagination -->
+            {% if products.has_other_pages %}
+            <div class="pagination">
+                {% if products.has_previous %}
+                <a href="?page=1&{{ request.GET.urlencode }}" class="page-link">«</a>
+                <a href="?page={{ products.previous_page_number }}&{{ request.GET.urlencode }}" class="page-link">‹</a>
+                {% endif %}
+                
+                {% for num in products.paginator.page_range %}
+                    {% if products.number == num %}
+                        <span class="page-link active">{{ num }}</span>
+                    {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
+                        <a href="?page={{ num }}&{{ request.GET.urlencode }}" class="page-link">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if products.has_next %}
+                <a href="?page={{ products.next_page_number }}&{{ request.GET.urlencode }}" class="page-link">›</a>
+                <a href="?page={{ products.paginator.num_pages }}&{{ request.GET.urlencode }}" class="page-link">»</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Modal commande rapide -->
+<div id="quickOrderModal" class="quick-order-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Commande rapide</h3>
+            <span class="close-btn" onclick="closeQuickOrder()">&times;</span>
+        </div>
+        <form id="quickOrderForm" method="post" action="{% url 'head_chef_product_orders' %}">
+            {% csrf_token %}
+            <input type="hidden" name="product_id" id="quick_product_id">
+            
+            <div class="form-group">
+                <label class="form-label">Produit</label>
+                <input type="text" id="quick_product_name" class="form-control" readonly>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Quantité à commander</label>
+                <input type="number" name="quantity" class="form-control" required min="1">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Date souhaitée</label>
+                <input type="date" name="needed_date" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Notes</label>
+                <textarea name="notes" class="form-control" rows="3"></textarea>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <button type="button" onclick="closeQuickOrder()" class="btn-filter" style="background: #6c757d;">
+                    Annuler
+                </button>
+                <button type="submit" class="btn-filter">
+                    <i class="fas fa-check"></i> Commander
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Fonction pour ouvrir le modal de commande rapide
+function quickOrder(productId) {
+    // Récupérer les infos du produit via AJAX ou depuis le DOM
+    const row = event.target.closest('tr');
+    const productName = row.querySelector('td:nth-child(2)').textContent.trim();
+    
+    document.getElementById('quick_product_id').value = productId;
+    document.getElementById('quick_product_name').value = productName;
+    document.getElementById('quickOrderModal').style.display = 'block';
+    
+    // Date par défaut : demain
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    document.querySelector('input[name="needed_date"]').value = tomorrow.toISOString().split('T')[0];
+}
+
+// Fermer le modal
+function closeQuickOrder() {
+    document.getElementById('quickOrderModal').style.display = 'none';
+}
+
+// Fermer le modal en cliquant à l'extérieur
+window.onclick = function(event) {
+    const modal = document.getElementById('quickOrderModal');
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Template tag custom pour multiplication (à ajouter dans templatetags/)
+// {% load custom_filters %}
+</script>
+{% endblock %}

@@ -1,0 +1,1021 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Dashboard Cuisinier - {{ department_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Variables CSS pour la cuisine */
+    :root {
+        --kitchen-primary: #2E8B57;
+        --kitchen-primary-hover: #228B45;
+        --kitchen-secondary: #90EE90;
+        --kitchen-accent: #32CD32;
+        --kitchen-dark: #1e3a2e;
+        --kitchen-light: #f0f8f0;
+        --kitchen-gray: #6c757d;
+        --kitchen-gray-light: #e9ecef;
+        --kitchen-white: #ffffff;
+        --kitchen-danger: #dc3545;
+        --kitchen-warning: #ffc107;
+        --kitchen-success: #28a745;
+    }
+
+    /* Layout pour tablette */
+    body {
+        font-size: 16px;
+        line-height: 1.4;
+    }
+
+    .kitchen-header {
+        background: linear-gradient(135deg, var(--kitchen-primary) 0%, var(--kitchen-dark) 100%);
+        padding: 1rem 0;
+        color: white;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .kitchen-title {
+        font-size: 1.8rem;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .kitchen-badge {
+        background: var(--kitchen-accent);
+        color: var(--kitchen-dark);
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .kitchen-subtitle {
+        margin: 0.5rem 0 0 0;
+        opacity: 0.9;
+        font-size: 1rem;
+    }
+
+    /* Date Selector - adapté pour tablette */
+    .date-selector {
+        background: var(--kitchen-white);
+        padding: 1rem;
+        border-bottom: 2px solid var(--kitchen-secondary);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .date-input-group {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .date-input {
+        padding: 12px 16px;
+        border: 2px solid var(--kitchen-gray-light);
+        border-radius: 8px;
+        font-size: 1.1rem;
+        min-width: 200px;
+    }
+
+    .date-btn {
+        padding: 12px 20px;
+        background: var(--kitchen-primary);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-width: 120px;
+    }
+
+    .date-btn:hover {
+        background: var(--kitchen-primary-hover);
+        transform: translateY(-2px);
+    }
+
+    /* Quick Stats */
+    .quick-stats {
+        background: var(--kitchen-light);
+        padding: 1rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+    }
+
+    .stat-item {
+        background: var(--kitchen-white);
+        padding: 1rem;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        border-left: 4px solid var(--kitchen-accent);
+    }
+
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--kitchen-primary);
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: var(--kitchen-gray);
+        font-weight: 500;
+    }
+
+    /* Main Content */
+    .kitchen-content {
+        padding: 1.5rem;
+        background: var(--kitchen-light);
+        min-height: calc(100vh - 200px);
+    }
+
+    /* Production Items Grid - optimisé pour tablette */
+    .production-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .production-card {
+        background: var(--kitchen-white);
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .production-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        border-color: var(--kitchen-secondary);
+    }
+
+    .production-card.priority {
+        border-left: 6px solid var(--kitchen-danger);
+    }
+
+    .production-card.priority::before {
+        content: 'PRIORITÉ';
+        position: absolute;
+        top: -5px;
+        right: 15px;
+        background: var(--kitchen-danger);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 0 0 8px 8px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+    }
+
+    .production-card.completed {
+        background: #f8f9fa;
+        border-left: 6px solid var(--kitchen-success);
+        opacity: 0.8;
+    }
+
+    .production-card.in-progress {
+        border-left: 6px solid var(--kitchen-warning);
+        background: linear-gradient(135deg, #fff9e6 0%, white 100%);
+    }
+
+    .product-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .product-name {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--kitchen-dark);
+        margin: 0;
+        flex: 1;
+    }
+
+    .quantity-badge {
+        background: var(--kitchen-accent);
+        color: var(--kitchen-dark);
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        min-width: 60px;
+        text-align: center;
+    }
+
+    .order-info {
+        background: var(--kitchen-light);
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+
+    .order-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .order-detail {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .order-detail strong {
+        color: var(--kitchen-dark);
+    }
+
+    /* Action Buttons - gros boutons pour tablette */
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .action-btn {
+        flex: 1;
+        min-height: 50px;
+        border: none;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        min-width: 140px;
+    }
+
+    .btn-start {
+        background: var(--kitchen-primary);
+        color: white;
+    }
+
+    .btn-start:hover {
+        background: var(--kitchen-primary-hover);
+        transform: scale(1.05);
+    }
+
+    .btn-complete {
+        background: var(--kitchen-success);
+        color: white;
+    }
+
+    .btn-complete:hover {
+        background: #218838;
+        transform: scale(1.05);
+    }
+
+    .btn-issue {
+        background: var(--kitchen-danger);
+        color: white;
+    }
+
+    .btn-issue:hover {
+        background: #c82333;
+        transform: scale(1.05);
+    }
+
+    .btn-disabled {
+        background: var(--kitchen-gray-light);
+        color: var(--kitchen-gray);
+        cursor: not-allowed;
+    }
+
+    /* Status Indicators */
+    .status-indicator {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-not-started {
+        background: #e9ecef;
+        color: #495057;
+    }
+
+    .status-in-progress {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-completed {
+        background: #d4f4dd;
+        color: #155724;
+    }
+
+    /* Timer Display */
+    .timer-display {
+        background: var(--kitchen-warning);
+        color: var(--kitchen-dark);
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-family: monospace;
+        font-size: 1rem;
+        text-align: center;
+        margin: 0.5rem 0;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--kitchen-gray);
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .empty-state-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state-text {
+        font-size: 1.1rem;
+    }
+
+    /* My Items Section */
+    .my-items-section {
+        background: var(--kitchen-white);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        border-top: 4px solid var(--kitchen-accent);
+    }
+
+    .my-items-title {
+        color: var(--kitchen-primary);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Floating Action Button */
+    .fab {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        background: var(--kitchen-primary);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        font-size: 1.5rem;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+        z-index: 1000;
+    }
+
+    .fab:hover {
+        background: var(--kitchen-primary-hover);
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+
+    /* Responsive Design pour tablettes */
+    @media (max-width: 1024px) {
+        .production-grid {
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1rem;
+        }
+        
+        .kitchen-content {
+            padding: 1rem;
+        }
+        
+        .date-selector {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .date-input-group {
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .production-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .action-btn {
+            min-width: 100%;
+        }
+        
+        .quick-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    /* Animations */
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+
+    .priority .quantity-badge {
+        animation: pulse 2s infinite;
+    }
+
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+    }
+
+    .modal-content {
+        background-color: var(--kitchen-white);
+        margin: 5% auto;
+        padding: 2rem;
+        border-radius: 15px;
+        width: 90%;
+        max-width: 500px;
+        position: relative;
+    }
+
+    .close {
+        position: absolute;
+        right: 1rem;
+        top: 1rem;
+        font-size: 2rem;
+        cursor: pointer;
+        color: var(--kitchen-gray);
+    }
+
+    .modal-title {
+        color: var(--kitchen-primary);
+        margin-bottom: 1rem;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--kitchen-dark);
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid var(--kitchen-gray-light);
+        border-radius: 8px;
+        font-size: 1rem;
+    }
+
+    .form-textarea {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid var(--kitchen-gray-light);
+        border-radius: 8px;
+        font-size: 1rem;
+        min-height: 100px;
+        resize: vertical;
+    }
+
+    /* Progress Bar */
+    .progress-section {
+        background: var(--kitchen-white);
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .progress-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 20px;
+        background: var(--kitchen-gray-light);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--kitchen-accent) 0%, var(--kitchen-primary) 100%);
+        transition: width 0.5s ease;
+        border-radius: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Kitchen Header -->
+<section class="kitchen-header">
+    <div class="container">
+        <h1 class="kitchen-title">
+            <i class="fas fa-utensils"></i>
+            Dashboard Cuisine
+            <span class="kitchen-badge">{{ department_name }}</span>
+        </h1>
+        <p class="kitchen-subtitle">
+            <i class="fas fa-user"></i> {{ user.get_full_name }}
+            <span style="margin-left: 2rem;">
+                <i class="fas fa-calendar"></i> {{ selected_date|date:"l d F Y" }}
+            </span>
+        </p>
+    </div>
+</section>
+
+<!-- Date Selector -->
+<section class="date-selector">
+    <div class="date-input-group">
+        <label for="production-date" style="font-weight: 600; color: var(--kitchen-dark);">
+            <i class="fas fa-calendar-alt"></i> Date de production:
+        </label>
+        <input type="date" id="production-date" class="date-input" 
+               value="{{ selected_date|date:'Y-m-d' }}"
+               onchange="changeDate()">
+        <button type="button" class="date-btn" onclick="setToday()">
+            <i class="fas fa-calendar-day"></i> Aujourd'hui
+        </button>
+    </div>
+    
+    {% if production %}
+    <div class="progress-section">
+        <div class="progress-title">
+            <span style="font-weight: 600; color: var(--kitchen-dark);">Progression du département</span>
+            <span style="font-weight: 700; color: var(--kitchen-primary);">{{ production.progress_percentage }}%</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: {{ production.progress_percentage }}%;"></div>
+        </div>
+    </div>
+    {% endif %}
+</section>
+
+<!-- Quick Stats -->
+<section class="quick-stats">
+    <div class="stat-item">
+        <div class="stat-value">{{ today_completed }}</div>
+        <div class="stat-label">Terminés aujourd'hui</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-value">{{ week_completed }}</div>
+        <div class="stat-label">Cette semaine</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-value">{{ my_items.count }}</div>
+        <div class="stat-label">En cours</div>
+    </div>
+    {% if production %}
+    <div class="stat-item">
+        <div class="stat-value">{{ production.total_items }}</div>
+        <div class="stat-label">Total à produire</div>
+    </div>
+    {% endif %}
+</section>
+
+<!-- Main Content -->
+<section class="kitchen-content">
+    {% if my_items %}
+    <!-- My Items in Progress -->
+    <div class="my-items-section">
+        <h3 class="my-items-title">
+            <i class="fas fa-play-circle"></i> Mes productions en cours
+        </h3>
+        <div class="production-grid">
+            {% for item in my_items %}
+            <div class="production-card in-progress">
+                <div class="product-header">
+                    <h4 class="product-name">{{ item.order_item.product_name }}</h4>
+                    <div class="quantity-badge">{{ item.quantity_to_produce }}</div>
+                </div>
+                
+                <div class="order-info">
+                    <div class="order-details">
+                        <div class="order-detail">
+                            <span>Commande:</span>
+                            <strong>#{{ item.order_item.order.order_number }}</strong>
+                        </div>
+                        <div class="order-detail">
+                            <span>Livraison:</span>
+                            <strong>{{ item.order_item.order.delivery_time|time:"H:i" }}</strong>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if item.started_at %}
+                <div class="timer-display" id="timer-{{ item.id }}">
+                    <i class="fas fa-clock"></i> Commencé à {{ item.started_at|time:"H:i" }}
+                </div>
+                {% endif %}
+                
+                <div class="action-buttons">
+                    <button class="action-btn btn-complete" onclick="completeItem({{ item.id }})">
+                        <i class="fas fa-check"></i> Terminer
+                    </button>
+                    <button class="action-btn btn-issue" onclick="reportIssue({{ item.id }})">
+                        <i class="fas fa-exclamation-triangle"></i> Problème
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if production_items %}
+    <!-- Available Production Items -->
+    <div class="section-title" style="margin-bottom: 1.5rem;">
+        <h3 style="color: var(--kitchen-primary); font-size: 1.5rem; margin: 0;">
+            <i class="fas fa-list-check"></i> À produire aujourd'hui
+        </h3>
+    </div>
+    
+    <div class="production-grid">
+        {% for item in production_items %}
+        <div class="production-card {% if item.is_priority %}priority{% endif %} {% if item.is_completed %}completed{% endif %}">
+            <div class="product-header">
+                <h4 class="product-name">{{ item.order_item.product_name }}</h4>
+                <div class="quantity-badge">{{ item.quantity_to_produce }}</div>
+            </div>
+            
+            <div class="order-info">
+                <div class="order-details">
+                    <div class="order-detail">
+                        <span>Commande:</span>
+                        <strong>#{{ item.order_item.order.order_number }}</strong>
+                    </div>
+                    <div class="order-detail">
+                        <span>Client:</span>
+                        <strong>{{ item.order_item.order.first_name }} {{ item.order_item.order.last_name }}</strong>
+                    </div>
+                    <div class="order-detail">
+                        <span>Livraison:</span>
+                        <strong>{{ item.order_item.order.delivery_date|date:"d/m" }} à {{ item.order_item.order.delivery_time|time:"H:i" }}</strong>
+                    </div>
+                    {% if item.order_item.notes %}
+                    <div class="order-detail" style="grid-column: 1 / -1;">
+                        <span>Notes:</span>
+                        <strong>{{ item.order_item.notes }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if item.is_priority %}
+            <div style="background: var(--kitchen-danger); color: white; padding: 8px; border-radius: 6px; margin: 0.5rem 0; text-align: center; font-weight: 600;">
+                <i class="fas fa-exclamation"></i> LIVRAISON PRIORITAIRE
+            </div>
+            {% endif %}
+            
+            {% if item.has_issue %}
+            <div style="background: var(--kitchen-warning); color: var(--kitchen-dark); padding: 8px; border-radius: 6px; margin: 0.5rem 0; text-align: center; font-weight: 600;">
+                <i class="fas fa-exclamation-triangle"></i> PROBLÈME SIGNALÉ
+            </div>
+            {% endif %}
+            
+            <div style="margin: 1rem 0;">
+                {% if item.is_completed %}
+                    <span class="status-indicator status-completed">
+                        <i class="fas fa-check"></i> Terminé
+                    </span>
+                    {% if item.completed_at %}
+                    <div style="font-size: 0.9rem; color: var(--kitchen-gray); margin-top: 0.5rem;">
+                        Terminé à {{ item.completed_at|time:"H:i" }} par {{ item.produced_by.get_full_name }}
+                    </div>
+                    {% endif %}
+                {% elif item.started_at %}
+                    <span class="status-indicator status-in-progress">
+                        <i class="fas fa-play"></i> En cours
+                    </span>
+                    <div class="timer-display">
+                        Commencé à {{ item.started_at|time:"H:i" }}
+                    </div>
+                {% else %}
+                    <span class="status-indicator status-not-started">
+                        <i class="fas fa-pause"></i> Non commencé
+                    </span>
+                {% endif %}
+            </div>
+            
+            {% if not item.is_completed %}
+            <div class="action-buttons">
+                {% if not item.started_at %}
+                    <button class="action-btn btn-start" onclick="startItem({{ item.id }})">
+                        <i class="fas fa-play"></i> Commencer
+                    </button>
+                {% else %}
+                    <button class="action-btn btn-complete" onclick="completeItem({{ item.id }})">
+                        <i class="fas fa-check"></i> Terminer
+                    </button>
+                {% endif %}
+                <button class="action-btn btn-issue" onclick="reportIssue({{ item.id }})">
+                    <i class="fas fa-exclamation-triangle"></i> Problème
+                </button>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    
+    {% else %}
+    <!-- Empty State -->
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <i class="fas fa-calendar-check"></i>
+        </div>
+        <h3 class="empty-state-title">
+            {% if is_today %}
+                Aucune production prévue aujourd'hui
+            {% else %}
+                Aucune production prévue pour cette date
+            {% endif %}
+        </h3>
+        <p class="empty-state-text">
+            {% if is_today %}
+                Consultez les autres dates ou contactez votre chef de département.
+            {% else %}
+                Sélectionnez une autre date pour voir les productions.
+            {% endif %}
+        </p>
+    </div>
+    {% endif %}
+</section>
+
+<!-- Floating Action Button for Notifications -->
+<button class="fab" onclick="window.location.href='{% url 'kitchen_notifications' %}';" title="Notifications">
+    <i class="fas fa-bell"></i>
+</button>
+
+<!-- Modal for Completing Items -->
+<div id="completeModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('completeModal')">&times;</span>
+        <h3 class="modal-title">Terminer la production</h3>
+        <form id="completeForm">
+            <div class="form-group">
+                <label class="form-label">Quantité produite:</label>
+                <input type="number" id="completeQuantity" class="form-input" min="1" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Notes (optionnel):</label>
+                <textarea id="completeNotes" class="form-textarea" placeholder="Notes sur la production..."></textarea>
+            </div>
+            <div class="action-buttons">
+                <button type="submit" class="action-btn btn-complete">
+                    <i class="fas fa-check"></i> Confirmer
+                </button>
+                <button type="button" class="action-btn btn-issue" onclick="closeModal('completeModal')">
+                    <i class="fas fa-times"></i> Annuler
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal for Reporting Issues -->
+<div id="issueModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('issueModal')">&times;</span>
+        <h3 class="modal-title">Signaler un problème</h3>
+        <form id="issueForm">
+            <div class="form-group">
+                <label class="form-label">Description du problème:</label>
+                <textarea id="issueDescription" class="form-textarea" placeholder="Décrivez le problème rencontré..." required></textarea>
+            </div>
+            <div class="action-buttons">
+                <button type="submit" class="action-btn btn-issue">
+                    <i class="fas fa-exclamation-triangle"></i> Signaler
+                </button>
+                <button type="button" class="action-btn" onclick="closeModal('issueModal')" style="background: var(--kitchen-gray); color: white;">
+                    <i class="fas fa-times"></i> Annuler
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentItemId = null;
+    
+    // Change Date Function
+    function changeDate() {
+        const date = document.getElementById('production-date').value;
+        window.location.href = `?date=${date}`;
+    }
+    
+    // Set Today
+    function setToday() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('production-date').value = today;
+        changeDate();
+    }
+    
+    // Start Production Item
+    function startItem(itemId) {
+        fetch(`/kitchen/cook/start-item/${itemId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erreur: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Erreur lors du démarrage de la production');
+        });
+    }
+    
+    // Complete Production Item
+    function completeItem(itemId) {
+        currentItemId = itemId;
+        // Pre-fill quantity if available
+        const card = document.querySelector(`[onclick*="${itemId}"]`).closest('.production-card');
+        const quantityBadge = card.querySelector('.quantity-badge');
+        if (quantityBadge) {
+            document.getElementById('completeQuantity').value = quantityBadge.textContent.trim();
+        }
+        document.getElementById('completeModal').style.display = 'block';
+    }
+    
+    // Report Issue
+    function reportIssue(itemId) {
+        currentItemId = itemId;
+        document.getElementById('issueModal').style.display = 'block';
+    }
+    
+    // Close Modal
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+        currentItemId = null;
+    }
+    
+    // Handle Complete Form
+    document.getElementById('completeForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const quantity = document.getElementById('completeQuantity').value;
+        const notes = document.getElementById('completeNotes').value;
+        
+        fetch(`/kitchen/cook/complete-item/${currentItemId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                quantity: parseInt(quantity),
+                notes: notes
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                closeModal('completeModal');
+                location.reload();
+            } else {
+                alert('Erreur: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Erreur lors de la finalisation');
+        });
+    });
+    
+    // Handle Issue Form
+    document.getElementById('issueForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const description = document.getElementById('issueDescription').value;
+        
+        fetch(`/kitchen/cook/report-issue/${currentItemId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                description: description
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                closeModal('issueModal');
+                alert('Problème signalé avec succès');
+                location.reload();
+            } else {
+                alert('Erreur: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Erreur lors du signalement');
+        });
+    });
+    
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        const completeModal = document.getElementById('completeModal');
+        const issueModal = document.getElementById('issueModal');
+        
+        if (event.target == completeModal) {
+            closeModal('completeModal');
+        }
+        if (event.target == issueModal) {
+            closeModal('issueModal');
+        }
+    }
+    
+    // Get CSRF Token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Auto-refresh progress every 30 seconds
+    setInterval(function() {
+        const progressFill = document.querySelector('.progress-fill');
+        if (progressFill) {
+            fetch(window.location.href + '&ajax=1')
+            .then(response => response.json())
+            .then(data => {
+                if (data.progress !== undefined) {
+                    progressFill.style.width = data.progress + '%';
+                    progressFill.parentElement.previousElementSibling.querySelector('span:last-child').textContent = data.progress + '%';
+                }
+            })
+            .catch(error => console.log('Error updating progress:', error));
+        }
+    }, 30000);
+</script>
+{% endblock %}

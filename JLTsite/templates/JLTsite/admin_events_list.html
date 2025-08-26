@@ -1,0 +1,960 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+
+{% block title %}Gestion des événements - Julien-Leblanc Traiteur{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --jlt-yellow: #F4C843;
+        --jlt-yellow-hover: #e6b835;
+        --jlt-black: #1a1a1a;
+        --jlt-gray: #6c757d;
+        --jlt-gray-light: #e9ecef;
+        --jlt-beige: #f8f9fa;
+        --jlt-green: #28a745;
+        --jlt-red: #dc3545;
+        --jlt-orange: #fd7e14;
+        --jlt-purple: #8e44ad;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--jlt-purple) 0%, #9b59b6 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+
+    .page-title {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .page-subtitle {
+        margin: 0.5rem 0 0 0;
+        opacity: 0.9;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        border-left: 4px solid var(--jlt-purple);
+        transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        background: rgba(142, 68, 173, 0.1);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: var(--jlt-purple);
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--jlt-black);
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        color: var(--jlt-gray);
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+
+    /* Filters */
+    .filters-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+
+    .filters-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        align-items: end;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .filter-label {
+        font-weight: 600;
+        color: var(--jlt-black);
+        font-size: 0.9rem;
+    }
+
+    .filter-control {
+        padding: 10px 12px;
+        border: 2px solid var(--jlt-gray-light);
+        border-radius: 8px;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+
+    .filter-control:focus {
+        outline: none;
+        border-color: var(--jlt-purple);
+    }
+
+    .btn-filter {
+        background: var(--jlt-purple);
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        height: fit-content;
+    }
+
+    .btn-filter:hover {
+        background: #7d3c98;
+        transform: translateY(-2px);
+    }
+
+    /* Events Table */
+    .events-table-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+
+    .table-header {
+        background: linear-gradient(135deg, var(--jlt-beige) 0%, white 100%);
+        padding: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--jlt-gray-light);
+    }
+
+    .table-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--jlt-black);
+        margin: 0;
+    }
+
+    .events-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .events-table thead {
+        background: var(--jlt-beige);
+    }
+
+    .events-table th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--jlt-black);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .events-table tbody tr {
+        border-bottom: 1px solid var(--jlt-gray-light);
+        transition: all 0.3s ease;
+    }
+
+    .events-table tbody tr:hover {
+        background: rgba(142, 68, 173, 0.05);
+    }
+
+    .events-table td {
+        padding: 1rem;
+        color: var(--jlt-gray);
+        vertical-align: middle;
+    }
+
+    /* Event Item */
+    .event-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .event-icon {
+        width: 40px;
+        height: 40px;
+        background: rgba(142, 68, 173, 0.1);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--jlt-purple);
+        flex-shrink: 0;
+    }
+
+    .event-info {
+        flex: 1;
+    }
+
+    .event-name {
+        font-weight: 600;
+        color: var(--jlt-black);
+        margin-bottom: 0.25rem;
+    }
+
+    .event-details {
+        font-size: 0.85rem;
+        color: var(--jlt-gray);
+    }
+
+    .order-link {
+        color: var(--jlt-purple);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .order-link:hover {
+        text-decoration: underline;
+    }
+
+    .client-info {
+        font-weight: 600;
+        color: var(--jlt-black);
+        margin-bottom: 0.25rem;
+    }
+
+    .client-details {
+        font-size: 0.85rem;
+        color: var(--jlt-gray);
+    }
+
+    /* Status Badges */
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-block;
+    }
+
+    .status-draft {
+        background: #f8f9fa;
+        color: #6c757d;
+    }
+
+    .status-confirmed {
+        background: #d4f4dd;
+        color: #28a745;
+    }
+
+    .status-in_progress {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-completed {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .status-cancelled {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    /* Priority Badges */
+    .priority-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .priority-low {
+        background: #e9ecef;
+        color: #6c757d;
+    }
+
+    .priority-normal {
+        background: #d4f4dd;
+        color: #28a745;
+    }
+
+    .priority-high {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .priority-urgent {
+        background: #f8d7da;
+        color: #721c24;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.7; }
+        100% { opacity: 1; }
+    }
+
+    /* Maitre Hotel Info */
+    .maitre-hotel-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .maitre-hotel-avatar {
+        width: 32px;
+        height: 32px;
+        background: var(--jlt-purple);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+
+    .maitre-hotel-name {
+        font-weight: 600;
+        color: var(--jlt-black);
+    }
+
+    .unassigned {
+        color: var(--jlt-gray);
+        font-style: italic;
+    }
+
+    /* Actions */
+    .actions-dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .actions-btn {
+        background: var(--jlt-gray-light);
+        border: none;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        color: var(--jlt-gray);
+        transition: all 0.3s ease;
+    }
+
+    .actions-btn:hover {
+        background: var(--jlt-purple);
+        color: white;
+    }
+
+    .quick-assign {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .quick-assign select {
+        padding: 5px 8px;
+        border: 1px solid var(--jlt-gray-light);
+        border-radius: 4px;
+        font-size: 0.8rem;
+        max-width: 150px;
+    }
+
+    .btn-assign {
+        background: var(--jlt-green);
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+    .btn-assign:hover {
+        background: #218838;
+    }
+
+    /* Pagination */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 2rem;
+    }
+
+    .pagination a,
+    .pagination span {
+        padding: 8px 12px;
+        border: 1px solid var(--jlt-gray-light);
+        border-radius: 6px;
+        text-decoration: none;
+        color: var(--jlt-gray);
+        font-weight: 500;
+    }
+
+    .pagination .current {
+        background: var(--jlt-purple);
+        color: white;
+        border-color: var(--jlt-purple);
+    }
+
+    .pagination a:hover {
+        background: var(--jlt-purple);
+        color: white;
+        border-color: var(--jlt-purple);
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--jlt-gray);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .filters-row {
+            grid-template-columns: 1fr;
+        }
+
+        .events-table {
+            font-size: 0.85rem;
+        }
+
+        .events-table th,
+        .events-table td {
+            padding: 0.5rem;
+        }
+
+        .quick-assign {
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .quick-assign select {
+            max-width: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="container">
+        <h1 class="page-title">
+            <i class="fas fa-calendar-alt"></i>
+            Gestion des événements
+        </h1>
+        <p class="page-subtitle">
+            Créez et gérez les événements assignés aux maîtres d'hôtel
+        </p>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Statistics -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+            </div>
+            <div class="stat-value">{{ stats.total }}</div>
+            <div class="stat-label">Total événements</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+            </div>
+            <div class="stat-value">{{ stats.confirmed }}</div>
+            <div class="stat-label">Confirmés</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-play-circle"></i>
+                </div>
+            </div>
+            <div class="stat-value">{{ stats.in_progress }}</div>
+            <div class="stat-label">En cours</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+            <div class="stat-value">{{ stats.completed }}</div>
+            <div class="stat-label">Terminés</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+            </div>
+            <div class="stat-value">{{ stats.today }}</div>
+            <div class="stat-label">Aujourd'hui</div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-card">
+        <form method="get" class="filters-row">
+            <div class="filter-group">
+                <label class="filter-label">Statut</label>
+                <select name="status" class="filter-control">
+                    <option value="">Tous les statuts</option>
+                    <option value="draft" {% if current_status == 'draft' %}selected{% endif %}>Brouillon</option>
+                    <option value="confirmed" {% if current_status == 'confirmed' %}selected{% endif %}>Confirmé</option>
+                    <option value="in_progress" {% if current_status == 'in_progress' %}selected{% endif %}>En cours</option>
+                    <option value="completed" {% if current_status == 'completed' %}selected{% endif %}>Terminé</option>
+                    <option value="cancelled" {% if current_status == 'cancelled' %}selected{% endif %}>Annulé</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Maître d'hôtel</label>
+                <select name="maitre_hotel" class="filter-control">
+                    <option value="">Tous les MD</option>
+                    <option value="unassigned" {% if current_maitre_hotel == 'unassigned' %}selected{% endif %}>Non assignés</option>
+                    {% for mh in maitre_hotels %}
+                    <option value="{{ mh.id }}" {% if current_maitre_hotel == mh.id|stringformat:"s" %}selected{% endif %}>
+                        {{ mh.get_full_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Période</label>
+                <select name="date" class="filter-control">
+                    <option value="">Toutes les dates</option>
+                    <option value="today" {% if current_date == 'today' %}selected{% endif %}>Aujourd'hui</option>
+                    <option value="week" {% if current_date == 'week' %}selected{% endif %}>Cette semaine</option>
+                    <option value="month" {% if current_date == 'month' %}selected{% endif %}>Ce mois</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Recherche</label>
+                <input type="text" name="search" class="filter-control" 
+                       placeholder="Nom événement, commande..." 
+                       value="{{ search_query }}">
+            </div>
+
+            <div class="filter-group">
+                <button type="submit" class="btn-filter">
+                    <i class="fas fa-search"></i> Filtrer
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Events Table -->
+    <div class="events-table-card">
+        <div class="table-header">
+            <h3 class="table-title">
+                {% if events.object_list %}
+                    {{ events.paginator.count }} événement{{ events.paginator.count|pluralize }}
+                {% else %}
+                    Événements
+                {% endif %}
+            </h3>
+        </div>
+        
+        {% if events %}
+        <div class="table-responsive">
+            <table class="events-table">
+                <thead>
+                    <tr>
+                        <th>Événement</th>
+                        <th>Commande</th>
+                        <th>Client</th>
+                        <th>Date & Heure</th>
+                        <th>Statut</th>
+                        <th>Priorité</th>
+                        <th>Maître d'hôtel</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for event in events %}
+                    <tr>
+                        <td>
+                            <div class="event-item">
+                                <div class="event-icon">
+                                    {% if event.priority == 'urgent' %}
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    {% elif event.status == 'completed' %}
+                                        <i class="fas fa-check-circle"></i>
+                                    {% elif event.status == 'in_progress' %}
+                                        <i class="fas fa-play-circle"></i>
+                                    {% else %}
+                                        <i class="fas fa-calendar"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="event-info">
+                                    <div class="event-name">{{ event.event_name|truncatechars:40 }}</div>
+                                    <div class="event-details">
+                                        {% if event.venue_name %}{{ event.venue_name|truncatechars:30 }}{% endif %}
+                                        <br>{{ event.contract_number }}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        
+                        <td>
+                            <a href="{% url 'admin_order_detail' event.order.order_number %}" class="order-link">
+                                #{{ event.order.order_number }}
+                            </a>
+                            <br>
+                            <small class="text-muted">{{ event.order.total|floatformat:2 }}$</small>
+                        </td>
+                        
+                        <td>
+                            <div class="client-info">{{ event.order.first_name }} {{ event.order.last_name }}</div>
+                            <div class="client-details">
+                                {% if event.order.company %}{{ event.order.company }}<br>{% endif %}
+                                {{ event.order.phone }}
+                            </div>
+                        </td>
+                        
+                        <td>
+                            <strong>{{ event.event_start_time|date:"d/m/Y" }}</strong><br>
+                            <small>{{ event.event_start_time|time:"H:i" }} - {{ event.event_end_time|time:"H:i" }}</small>
+                            {% if event.is_today %}
+                            <br><span class="priority-badge priority-urgent">AUJOURD'HUI</span>
+                            {% endif %}
+                        </td>
+                        
+                        <td>
+                            <span class="status-badge status-{{ event.status }}">
+                                {% if event.status == 'draft' %}Brouillon
+                                {% elif event.status == 'confirmed' %}Confirmé
+                                {% elif event.status == 'in_progress' %}En cours
+                                {% elif event.status == 'completed' %}Terminé
+                                {% elif event.status == 'cancelled' %}Annulé
+                                {% endif %}
+                            </span>
+                        </td>
+                        
+                        <td>
+                            <span class="priority-badge priority-{{ event.priority }}">
+                                {% if event.priority == 'low' %}Basse
+                                {% elif event.priority == 'normal' %}Normale
+                                {% elif event.priority == 'high' %}Haute
+                                {% elif event.priority == 'urgent' %}Urgente
+                                {% endif %}
+                            </span>
+                        </td>
+                        
+                        <td>
+                            {% if event.maitre_hotel %}
+                            <div class="maitre-hotel-info">
+                                <div class="maitre-hotel-avatar">
+                                    {{ event.maitre_hotel.first_name.0 }}{{ event.maitre_hotel.last_name.0 }}
+                                </div>
+                                <div class="maitre-hotel-name">{{ event.maitre_hotel.get_full_name }}</div>
+                            </div>
+                            {% else %}
+                            <div class="quick-assign" data-event-id="{{ event.id }}">
+                                <select class="maitre-hotel-select">
+                                    <option value="">Assigner...</option>
+                                    {% for mh in maitre_hotels %}
+                                    <option value="{{ mh.id }}">{{ mh.get_full_name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="button" class="btn-assign" onclick="quickAssign({{ event.id }})">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </div>
+                            {% endif %}
+                        </td>
+                        
+                        <td>
+                            <div class="actions-dropdown">
+                                <button class="actions-btn" onclick="toggleActions({{ event.id }})">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <div id="actions-{{ event.id }}" class="actions-menu" style="display: none;">
+                                    <a href="{% url 'admin_event_detail' event.id %}">
+                                        <i class="fas fa-eye"></i> Voir détails
+                                    </a>
+                                    {% if event.status != 'completed' %}
+                                    <a href="#" onclick="changeStatus({{ event.id }}, 'in_progress')">
+                                        <i class="fas fa-play"></i> Démarrer
+                                    </a>
+                                    <a href="#" onclick="changeStatus({{ event.id }}, 'completed')">
+                                        <i class="fas fa-check"></i> Terminer
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if events.has_other_pages %}
+        <div class="pagination">
+            {% if events.has_previous %}
+                <a href="?{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}{% if request.GET.maitre_hotel %}maitre_hotel={{ request.GET.maitre_hotel }}&{% endif %}{% if request.GET.date %}date={{ request.GET.date }}&{% endif %}{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}page={{ events.previous_page_number }}">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            {% endif %}
+            
+            {% for num in events.paginator.page_range %}
+                {% if events.number == num %}
+                    <span class="current">{{ num }}</span>
+                {% else %}
+                    <a href="?{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}{% if request.GET.maitre_hotel %}maitre_hotel={{ request.GET.maitre_hotel }}&{% endif %}{% if request.GET.date %}date={{ request.GET.date }}&{% endif %}{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}page={{ num }}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            
+            {% if events.has_next %}
+                <a href="?{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}{% if request.GET.maitre_hotel %}maitre_hotel={{ request.GET.maitre_hotel }}&{% endif %}{% if request.GET.date %}date={{ request.GET.date }}&{% endif %}{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}page={{ events.next_page_number }}">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-calendar-times"></i>
+            <h3>Aucun événement trouvé</h3>
+            <p>{% if search_query or current_status or current_maitre_hotel or current_date %}
+                Aucun événement ne correspond à vos critères de recherche.
+            {% else %}
+                Les événements créés apparaîtront ici.
+            {% endif %}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Actions Menu Styles (dans le head ou CSS externe) -->
+<style>
+.actions-menu {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: white;
+    border: 1px solid var(--jlt-gray-light);
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    z-index: 1000;
+    min-width: 150px;
+    padding: 0.5rem 0;
+}
+
+.actions-menu a {
+    display: block;
+    padding: 0.5rem 1rem;
+    color: var(--jlt-gray);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.actions-menu a:hover {
+    background: var(--jlt-purple);
+    color: white;
+}
+
+.actions-menu i {
+    width: 16px;
+    margin-right: 0.5rem;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Assignation rapide de maître d'hôtel
+    function quickAssign(eventId) {
+        const container = document.querySelector(`[data-event-id="${eventId}"]`);
+        const select = container.querySelector('.maitre-hotel-select');
+        const maitreHotelId = select.value;
+        
+        if (!maitreHotelId) {
+            alert('Veuillez sélectionner un maître d\'hôtel');
+            return;
+        }
+        
+        // Désactiver le bouton pendant la requête
+        const btn = container.querySelector('.btn-assign');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        btn.disabled = true;
+        
+        fetch('/admin-dashboard/api/quick-assign-maitre-hotel/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                event_id: eventId,
+                maitre_hotel_id: maitreHotelId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Recharger la page pour voir les changements
+                location.reload();
+            } else {
+                alert('Erreur: ' + data.message);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            alert('Erreur de connexion');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+    }
+    
+    // Toggle menu actions
+    function toggleActions(eventId) {
+        // Fermer tous les autres menus
+        document.querySelectorAll('.actions-menu').forEach(menu => {
+            if (menu.id !== `actions-${eventId}`) {
+                menu.style.display = 'none';
+            }
+        });
+        
+        // Toggle le menu actuel
+        const menu = document.getElementById(`actions-${eventId}`);
+        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    }
+    
+    // Fermer les menus en cliquant ailleurs
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.actions-dropdown')) {
+            document.querySelectorAll('.actions-menu').forEach(menu => {
+                menu.style.display = 'none';
+            });
+        }
+    });
+    
+    // Changer le statut d'un événement
+    function changeStatus(eventId, newStatus) {
+        if (confirm(`Confirmer le changement de statut?`)) {
+            fetch('/admin-dashboard/api/change-event-status/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    event_id: eventId,
+                    status: newStatus
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Erreur: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                alert('Erreur de connexion');
+            });
+        }
+    }
+    
+    // Auto-submit des filtres
+    document.querySelectorAll('.filter-control').forEach(control => {
+        if (control.type !== 'text') { // Pas pour les champs de recherche
+            control.addEventListener('change', function() {
+                this.form.submit();
+            });
+        }
+    });
+    
+    // Raccourcis clavier
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey || e.metaKey) {
+            switch(e.key) {
+                case 'f':
+                    e.preventDefault();
+                    document.querySelector('input[name="search"]').focus();
+                    break;
+                case 'n':
+                    e.preventDefault();
+                    // Rediriger vers création d'événement si on a une commande sélectionnée
+                    break;
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,1000 @@
+{% extends 'JLTsite/base_driver.html' %}
+{% load static %}
+
+{% block title %}Profil - {{ driver.get_full_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --driver-primary: #2ecc71;
+        --driver-secondary: #27ae60;
+        --driver-info: #3498db;
+        --driver-warning: #f39c12;
+        --driver-danger: #e74c3c;
+        --driver-dark: #2c3e50;
+        --driver-light: #ecf0f1;
+        --text-dark: #2c3e50;
+        --text-muted: #7f8c8d;
+        --bg-white: #ffffff;
+        --bg-light: #f8f9fa;
+    }
+
+    * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        background: var(--bg-white);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+        color: var(--text-dark);
+    }
+
+    .mobile-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: var(--driver-primary);
+        color: white;
+        padding: 15px;
+        z-index: 1000;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .mobile-header h1 {
+        margin: 0;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: white;
+    }
+
+    .edit-btn {
+        background: rgba(255,255,255,0.2);
+        border: none;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .edit-btn:active {
+        background: rgba(255,255,255,0.3);
+    }
+
+    .mobile-container {
+        padding-top: 80px;
+        padding-bottom: 80px;
+        min-height: 100vh;
+        background: var(--bg-white);
+    }
+
+    /* Profil header */
+    .profile-header {
+        background: var(--bg-white);
+        margin: 15px;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        text-align: center;
+        border: 1px solid #e0e0e0;
+    }
+
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        background: var(--driver-primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 15px;
+        font-size: 2.5rem;
+        color: white;
+    }
+
+    .profile-name {
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 5px;
+    }
+
+    .profile-role {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+    }
+
+    .availability-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 10px;
+        background: var(--bg-light);
+        border-radius: 10px;
+        color: var(--text-dark);
+    }
+
+    .toggle-switch {
+        position: relative;
+        width: 50px;
+        height: 25px;
+        background: #ccc;
+        border-radius: 25px;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+
+    .toggle-switch.active {
+        background: var(--driver-primary);
+    }
+
+    .toggle-slider {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 21px;
+        height: 21px;
+        background: white;
+        border-radius: 50%;
+        transition: transform 0.3s;
+    }
+
+    .toggle-switch.active .toggle-slider {
+        transform: translateX(25px);
+    }
+
+    /* Statistiques */
+    .stats-section {
+        background: var(--bg-white);
+        margin: 15px;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        border: 1px solid #e0e0e0;
+    }
+
+    .stats-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 15px;
+        background: var(--bg-light);
+        border-radius: 10px;
+        border: 1px solid #e0e0e0;
+    }
+
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: var(--driver-primary);
+        margin-bottom: 5px;
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        line-height: 1.2;
+    }
+
+    /* Formulaire de profil */
+    .profile-form {
+        background: var(--bg-white);
+        margin: 15px;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        border: 1px solid #e0e0e0;
+        display: none;
+    }
+
+    .profile-form.editing {
+        display: block;
+    }
+
+    .form-section {
+        margin-bottom: 25px;
+    }
+
+    .section-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--text-dark);
+        margin-bottom: 5px;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 1rem;
+        transition: border-color 0.3s;
+        background: var(--bg-white);
+        color: var(--text-dark);
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--driver-primary);
+    }
+
+    .form-textarea {
+        min-height: 80px;
+        resize: vertical;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        padding-top: 20px;
+        border-top: 2px solid var(--driver-light);
+    }
+
+    .btn-mobile {
+        flex: 1;
+        padding: 15px;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .btn-mobile:active {
+        transform: scale(0.95);
+    }
+
+    .btn-primary {
+        background: var(--driver-primary);
+        color: white;
+    }
+
+    .btn-secondary {
+        background: var(--bg-light);
+        color: var(--text-dark);
+        border: 2px solid #e0e0e0;
+    }
+
+    /* Section actions rapides */
+    .quick-actions {
+        background: var(--bg-white);
+        margin: 15px;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        border: 1px solid #e0e0e0;
+    }
+
+    .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+
+    .action-item {
+        background: var(--bg-light);
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 2px solid transparent;
+    }
+
+    .action-item:active {
+        transform: scale(0.95);
+        border-color: var(--driver-primary);
+    }
+
+    .action-icon {
+        font-size: 2rem;
+        color: var(--driver-primary);
+        margin-bottom: 10px;
+    }
+
+    .action-label {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--text-dark);
+    }
+
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--bg-white);
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        display: flex;
+        justify-content: space-around;
+        padding: 8px 0;
+        z-index: 999;
+        border-top: 1px solid #e0e0e0;
+    }
+
+    .nav-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 8px;
+        color: var(--text-muted);
+        text-decoration: none;
+        transition: color 0.2s;
+        cursor: pointer;
+    }
+
+    .nav-item.active {
+        color: var(--driver-primary);
+    }
+
+    .nav-item i {
+        font-size: 1.5rem;
+        margin-bottom: 4px;
+    }
+
+    .nav-item span {
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    /* Toast notification */
+    .toast-mobile {
+        position: fixed;
+        bottom: 100px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 15px 25px;
+        border-radius: 25px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        z-index: 9999;
+        animation: slideUp 0.3s ease;
+        color: white;
+        font-weight: 600;
+    }
+
+    .toast-success { background: var(--driver-primary); }
+    .toast-error { background: var(--driver-danger); }
+    .toast-warning { background: var(--driver-warning); }
+    .toast-info { background: var(--driver-info); }
+
+    @keyframes slideUp {
+        from {
+            transform: translateX(-50%) translateY(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+    }
+
+    /* Ajustements pour iPhone X et plus */
+    @supports (padding: max(0px)) {
+        .bottom-nav {
+            padding-bottom: max(8px, env(safe-area-inset-bottom));
+        }
+    }
+
+    /* Responsive pour tablettes */
+    @media (min-width: 768px) {
+        .mobile-container {
+            max-width: 768px;
+            margin: 0 auto;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(4, 1fr);
+        }
+    }
+
+    /* Mode sombre désactivé pour garder le fond blanc */
+    @media (prefers-color-scheme: dark) {
+        body {
+            background: var(--bg-white);
+            color: var(--text-dark);
+        }
+        
+        .mobile-container {
+            background: var(--bg-white);
+        }
+        
+        .profile-header,
+        .stats-section,
+        .quick-actions,
+        .profile-form,
+        .bottom-nav {
+            background: var(--bg-white);
+            color: var(--text-dark);
+        }
+        
+        .form-input {
+            background: var(--bg-white);
+            color: var(--text-dark);
+        }
+        
+        .stat-item,
+        .action-item {
+            background: var(--bg-light);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header mobile fixe -->
+<div class="mobile-header">
+    <div class="header-content">
+        <h1>
+            <i class="fas fa-user"></i>
+            Profil
+        </h1>
+        <button class="edit-btn" onclick="toggleEdit()">
+            <i class="fas fa-edit"></i>
+            Modifier
+        </button>
+    </div>
+</div>
+
+<!-- Container principal -->
+<div class="mobile-container">
+    <!-- En-tête du profil -->
+    <div class="profile-header">
+        <div class="profile-avatar">
+            <i class="fas fa-user"></i>
+        </div>
+        <div class="profile-name">{{ driver.get_full_name }}</div>
+        <div class="profile-role">Livreur</div>
+        
+        <div class="availability-toggle">
+            <span>Indisponible</span>
+            <div class="toggle-switch {% if driver.is_available %}active{% endif %}" 
+                 onclick="toggleAvailability()">
+                <div class="toggle-slider"></div>
+            </div>
+            <span>Disponible</span>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="stats-section">
+        <div class="stats-title">
+            <i class="fas fa-chart-bar"></i>
+            Mes statistiques
+        </div>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value">{{ stats.total_deliveries }}</div>
+                <div class="stat-label">Total livraisons</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ stats.this_month_deliveries }}</div>
+                <div class="stat-label">Ce mois-ci</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ stats.completed_routes }}</div>
+                <div class="stat-label">Routes complétées</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ stats.success_rate }}%</div>
+                <div class="stat-label">Taux de réussite</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="quick-actions">
+        <div class="stats-title">
+            <i class="fas fa-rocket"></i>
+            Actions rapides
+        </div>
+        <div class="actions-grid">
+            <div class="action-item" onclick="goToHistory()">
+                <div class="action-icon">
+                    <i class="fas fa-history"></i>
+                </div>
+                <div class="action-label">Historique</div>
+            </div>
+            <div class="action-item" onclick="contactSupport()">
+                <div class="action-icon">
+                    <i class="fas fa-headset"></i>
+                </div>
+                <div class="action-label">Support</div>
+            </div>
+            <div class="action-item" onclick="goToSettings()">
+                <div class="action-icon">
+                    <i class="fas fa-cog"></i>
+                </div>
+                <div class="action-label">Paramètres</div>
+            </div>
+            <div class="action-item" onclick="logout()">
+                <div class="action-icon">
+                    <i class="fas fa-sign-out-alt"></i>
+                </div>
+                <div class="action-label">Déconnexion</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulaire d'édition -->
+    <div class="profile-form" id="profileForm">
+        <form method="post" id="editForm">
+            {% csrf_token %}
+            
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="fas fa-user"></i>
+                    Informations personnelles
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Prénom</label>
+                    <input type="text" class="form-input" name="first_name" 
+                           value="{{ driver.first_name }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Nom</label>
+                    <input type="text" class="form-input" name="last_name" 
+                           value="{{ driver.last_name }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" name="email" 
+                           value="{{ driver.email }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Téléphone</label>
+                    <input type="tel" class="form-input" name="phone" 
+                           value="{{ driver.phone }}">
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="fas fa-truck"></i>
+                    Informations de livraison
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Numéro de permis</label>
+                    <input type="text" class="form-input" name="driver_license" 
+                           value="{{ driver.driver_license }}">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Informations véhicule</label>
+                    <textarea class="form-input form-textarea" name="vehicle_info" 
+                              placeholder="Marque, modèle, plaque d'immatriculation...">{{ driver.vehicle_info }}</textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">
+                        <input type="checkbox" name="is_available" 
+                               {% if driver.is_available %}checked{% endif %}
+                               style="margin-right: 8px;">
+                        Disponible pour les livraisons
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn-mobile btn-secondary" onclick="cancelEdit()">
+                    <i class="fas fa-times"></i>
+                    Annuler
+                </button>
+                <button type="submit" class="btn-mobile btn-primary">
+                    <i class="fas fa-save"></i>
+                    Enregistrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Bottom Navigation -->
+<div class="bottom-nav">
+    <a href="{% url 'driver_dashboard' %}" class="nav-item">
+        <i class="fas fa-home"></i>
+        <span>Accueil</span>
+    </a>
+    <a href="{% url 'driver_planning' %}" class="nav-item">
+        <i class="fas fa-calendar"></i>
+        <span>Planning</span>
+    </a>
+    <a href="{% url 'driver_notifications' %}" class="nav-item">
+        <i class="fas fa-bell"></i>
+        <span>Notifications</span>
+    </a>
+    <a href="{% url 'driver_profile' %}" class="nav-item active">
+        <i class="fas fa-user"></i>
+        <span>Profil</span>
+    </a>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let isEditing = false;
+
+    // Vibration pour feedback
+    function vibrate(pattern = [50]) {
+        if ('vibrate' in navigator) {
+            navigator.vibrate(pattern);
+        }
+    }
+
+    // Toggle mode édition
+    function toggleEdit() {
+        vibrate();
+        isEditing = !isEditing;
+        
+        const profileForm = document.getElementById('profileForm');
+        const editBtn = document.querySelector('.edit-btn');
+        
+        if (isEditing) {
+            profileForm.classList.add('editing');
+            editBtn.innerHTML = '<i class="fas fa-times"></i> Annuler';
+            editBtn.onclick = cancelEdit;
+        } else {
+            profileForm.classList.remove('editing');
+            editBtn.innerHTML = '<i class="fas fa-edit"></i> Modifier';
+            editBtn.onclick = toggleEdit;
+        }
+    }
+
+    // Annuler l'édition
+    function cancelEdit() {
+        vibrate();
+        isEditing = false;
+        
+        const profileForm = document.getElementById('profileForm');
+        const editBtn = document.querySelector('.edit-btn');
+        
+        profileForm.classList.remove('editing');
+        editBtn.innerHTML = '<i class="fas fa-edit"></i> Modifier';
+        editBtn.onclick = toggleEdit;
+        
+        // Réinitialiser le formulaire
+        document.getElementById('editForm').reset();
+    }
+
+    // Toggle disponibilité rapide
+    function toggleAvailability() {
+        vibrate([50, 50]);
+        
+        const toggle = document.querySelector('.toggle-switch');
+        const isCurrentlyAvailable = toggle.classList.contains('active');
+        
+        // Envoyer la mise à jour au serveur
+        fetch('{% url "driver_profile" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `is_available=${!isCurrentlyAvailable ? 'on' : ''}&quick_update=true`
+        })
+        .then(response => {
+            if (response.ok) {
+                // Mettre à jour l'interface
+                if (isCurrentlyAvailable) {
+                    toggle.classList.remove('active');
+                    showToast('Vous êtes maintenant indisponible', 'warning');
+                } else {
+                    toggle.classList.add('active');
+                    showToast('Vous êtes maintenant disponible', 'success');
+                }
+            } else {
+                showToast('Erreur lors de la mise à jour', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showToast('Erreur de connexion', 'error');
+        });
+    }
+
+    // Actions rapides
+    function goToHistory() {
+        vibrate();
+        window.location.href = '/driver/history/';
+    }
+
+    function contactSupport() {
+        vibrate();
+        // Ouvrir l'app de téléphone ou email
+        if (confirm('Contacter le support par téléphone?')) {
+            window.location.href = 'tel:+15141234567'; // Remplacez par le vrai numéro
+        } else {
+            window.location.href = 'mailto:support@jlt.com?subject=Support Livreur';
+        }
+    }
+
+    function goToSettings() {
+        vibrate();
+        showToast('Fonctionnalité en développement', 'info');
+    }
+
+    function logout() {
+        vibrate([100, 50, 100]);
+        if (confirm('Êtes-vous sûr de vouloir vous déconnecter?')) {
+            window.location.href = '{% url "logout" %}';
+        }
+    }
+
+    // Toast notification
+    function showToast(message, type = 'info', duration = 3000) {
+        const existingToasts = document.querySelectorAll('.toast-mobile');
+        existingToasts.forEach(toast => toast.remove());
+        
+        const toast = document.createElement('div');
+        toast.className = `toast-mobile toast-${type}`;
+        toast.textContent = message;
+        
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, duration);
+    }
+
+    // Gestion du formulaire
+    document.getElementById('editForm').addEventListener('submit', function(e) {
+        vibrate([50, 50, 50]);
+        
+        // Ajouter un indicateur de chargement
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement...';
+        submitBtn.disabled = true;
+        
+        // Le formulaire sera soumis normalement
+        // La restauration du bouton se fera au rechargement de la page
+    });
+
+    // Validation en temps réel
+    function setupFormValidation() {
+        const inputs = document.querySelectorAll('.form-input[required]');
+        
+        inputs.forEach(input => {
+            input.addEventListener('blur', function() {
+                if (this.value.trim() === '') {
+                    this.style.borderColor = 'var(--driver-danger)';
+                    this.style.boxShadow = '0 0 0 2px rgba(231, 76, 60, 0.2)';
+                } else {
+                    this.style.borderColor = 'var(--driver-primary)';
+                    this.style.boxShadow = '0 0 0 2px rgba(46, 204, 113, 0.2)';
+                }
+            });
+            
+            input.addEventListener('input', function() {
+                if (this.value.trim() !== '') {
+                    this.style.borderColor = '#e0e0e0';
+                    this.style.boxShadow = 'none';
+                }
+            });
+        });
+    }
+
+    // Formatage automatique du téléphone
+    function setupPhoneFormatting() {
+        const phoneInput = document.querySelector('input[name="phone"]');
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                
+                if (value.length >= 6) {
+                    value = value.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
+                } else if (value.length >= 3) {
+                    value = value.replace(/(\d{3})(\d+)/, '($1) $2');
+                }
+                
+                e.target.value = value;
+            });
+        }
+    }
+
+    // Gestion des erreurs réseau
+    function handleNetworkError() {
+        if (!navigator.onLine) {
+            showToast('Connexion perdue - Modifications sauvegardées localement', 'warning', 5000);
+            
+            // Ici vous pourriez implémenter une sauvegarde locale
+            // avec localStorage pour les modifications hors ligne
+        }
+    }
+
+    // Sauvegarde automatique des brouillons
+    function saveFormDraft() {
+        if (isEditing) {
+            const formData = new FormData(document.getElementById('editForm'));
+            const draft = {};
+            
+            for (let [key, value] of formData.entries()) {
+                draft[key] = value;
+            }
+            
+            localStorage.setItem('profileDraft', JSON.stringify(draft));
+        }
+    }
+
+    // Restaurer le brouillon
+    function restoreFormDraft() {
+        const draft = localStorage.getItem('profileDraft');
+        if (draft) {
+            try {
+                const data = JSON.parse(draft);
+                const form = document.getElementById('editForm');
+                
+                Object.keys(data).forEach(key => {
+                    const input = form.querySelector(`[name="${key}"]`);
+                    if (input) {
+                        if (input.type === 'checkbox') {
+                            input.checked = data[key] === 'on';
+                        } else {
+                            input.value = data[key];
+                        }
+                    }
+                });
+                
+                showToast('Brouillon restauré', 'info');
+            } catch (error) {
+                console.error('Erreur restauration brouillon:', error);
+            }
+        }
+    }
+
+    // Détection de changements non sauvegardés
+    function setupUnsavedChangesWarning() {
+        let hasUnsavedChanges = false;
+        
+        document.querySelectorAll('.form-input').forEach(input => {
+            input.addEventListener('input', () => {
+                hasUnsavedChanges = true;
+            });
+        });
+        
+        window.addEventListener('beforeunload', (e) => {
+            if (hasUnsavedChanges && isEditing) {
+                e.preventDefault();
+                e.returnValue = 'Vous avez des modifications non sauvegardées. Quitter quand même?';
+            }
+        });
+        
+        // Réinitialiser le flag lors de la soumission
+        document.getElementById('editForm').addEventListener('submit', () => {
+            hasUnsavedChanges = false;
+        });
+    }
+
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Profil mobile initialisé');
+        
+        // Configuration des fonctionnalités
+        setupFormValidation();
+        setupPhoneFormatting();
+        setupUnsavedChangesWarning();
+        
+        // Écouter les changements de connexion
+        window.addEventListener('online', () => {
+            showToast('Connexion rétablie', 'success');
+        });
+        
+        window.addEventListener('offline', handleNetworkError);
+        
+        // Sauvegarde automatique du brouillon toutes les 30 secondes
+        setInterval(saveFormDraft, 30000);
+        
+        // Ajouter la vibration aux actions
+        document.querySelectorAll('.action-item, .toggle-switch').forEach(item => {
+            item.addEventListener('click', () => vibrate());
+        });
+        
+        // Vérifier s'il y a un brouillon à restaurer
+        if (localStorage.getItem('profileDraft')) {
+            setTimeout(() => {
+                if (confirm('Restaurer le brouillon de vos modifications?')) {
+                    toggleEdit();
+                    restoreFormDraft();
+                } else {
+                    localStorage.removeItem('profileDraft');
+                }
+            }, 1000);
+        }
+    });
+
+    // Gestion de la visibilité de la page
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'hidden' && isEditing) {
+            // Sauvegarder automatiquement en arrière-plan
+            saveFormDraft();
+        }
+    });
+
+    // Gestion des gestes tactiles avancés
+    let touchStartY = 0;
+    let touchEndY = 0;
+
+    document.addEventListener('touchstart', e => {
+        touchStartY = e.changedTouches[0].screenY;
+    });
+
+    document.addEventListener('touchend', e => {
+        touchEndY = e.changedTouches[0].screenY;
+        handleSwipe();
+    });
+
+    function handleSwipe() {
+        const swipeThreshold = 100;
+        const diff = touchStartY - touchEndY;
+        
+        // Swipe vers le haut pour éditer rapidement
+        if (diff > swipeThreshold && !isEditing && window.scrollY < 50) {
+            toggleEdit();
+        }
+        
+        // Swipe vers le bas pour annuler l'édition
+        if (diff < -swipeThreshold && isEditing && window.scrollY < 50) {
+            cancelEdit();
+        }
+    }
+</script>
+{% endblock %}

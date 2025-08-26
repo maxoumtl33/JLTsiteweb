@@ -1,0 +1,551 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Rapports de production - Chef de Cuisine{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --chef-primary: #8B4513;
+        --chef-secondary: #DEB887;
+        --chef-accent: #CD853F;
+        --chef-dark: #654321;
+        --chef-light: #FFF8DC;
+        --success: #28a745;
+        --warning: #ffc107;
+        --danger: #dc3545;
+    }
+
+    .production-header {
+        background: linear-gradient(135deg, var(--chef-primary) 0%, var(--chef-dark) 100%);
+        color: white;
+        padding: 2rem 0;
+    }
+
+    .filters-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .filter-row {
+        display: flex;
+        gap: 1rem;
+        align-items: end;
+        flex-wrap: wrap;
+    }
+
+    .filter-group {
+        flex: 1;
+        min-width: 150px;
+    }
+
+    .filter-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #495057;
+        font-size: 0.9rem;
+    }
+
+    .filter-control {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+    }
+
+    .btn-filter {
+        padding: 10px 24px;
+        background: var(--chef-primary);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-filter:hover {
+        background: var(--chef-dark);
+        transform: translateY(-2px);
+    }
+
+    .quality-section {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+    }
+
+    .quality-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .quality-card {
+        text-align: center;
+        padding: 1.5rem;
+        background: var(--chef-light);
+        border-radius: 10px;
+    }
+
+    .quality-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+
+    .quality-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--chef-dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .quality-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .departments-performance {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+
+    .performance-header {
+        background: var(--chef-light);
+        padding: 1.5rem;
+        border-bottom: 2px solid var(--chef-accent);
+    }
+
+    .performance-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--chef-dark);
+        margin: 0;
+    }
+
+    .performance-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .performance-table thead {
+        background: #f8f9fa;
+    }
+
+    .performance-table th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--chef-dark);
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .performance-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .performance-table tbody tr:hover {
+        background: #f8f9fa;
+    }
+
+    .dept-name {
+        font-weight: 600;
+        color: var(--chef-dark);
+    }
+
+    .progress-indicator {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .progress-bar {
+        flex: 1;
+        height: 10px;
+        background: #e9ecef;
+        border-radius: 5px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        transition: width 0.5s ease;
+    }
+
+    .progress-excellent { background: var(--success); }
+    .progress-good { background: #17a2b8; }
+    .progress-average { background: var(--warning); }
+    .progress-poor { background: var(--danger); }
+
+    .rate-badge {
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .rate-high { background: #d4f4dd; color: var(--success); }
+    .rate-medium { background: #fff3cd; color: #856404; }
+    .rate-low { background: #f8d7da; color: var(--danger); }
+
+    .productions-list {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+    }
+
+    .production-item {
+        padding: 1rem;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background 0.3s ease;
+    }
+
+    .production-item:hover {
+        background: var(--chef-light);
+    }
+
+    .production-item:last-child {
+        border-bottom: none;
+    }
+
+    .production-date {
+        font-weight: 600;
+        color: var(--chef-dark);
+        margin-bottom: 0.25rem;
+    }
+
+    .production-dept {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .production-status {
+        padding: 6px 12px;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-completed { background: #d4f4dd; color: var(--success); }
+    .status-in_progress { background: #cce5ff; color: #004085; }
+    .status-not_started { background: #f8f9fa; color: #6c757d; }
+
+    .chart-container {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+    }
+
+    .chart-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--chef-dark);
+        margin-bottom: 1.5rem;
+    }
+
+    .export-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .btn-export {
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-csv { background: var(--success); color: white; }
+    .btn-pdf { background: #dc3545; color: white; }
+    .btn-print { background: #6c757d; color: white; }
+
+    .rating-stars {
+        color: #ffc107;
+    }
+
+    .rating-stars .empty {
+        color: #dee2e6;
+    }
+
+    .alert-box {
+        background: #fff3cd;
+        border: 1px solid #ffeeba;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .alert-icon {
+        font-size: 1.5rem;
+        color: #856404;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<section class="production-header">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb" style="background: transparent;">
+                <li class="breadcrumb-item"><a href="{% url 'head_chef_dashboard' %}" style="color: var(--chef-secondary);">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'head_chef_reports' %}" style="color: var(--chef-secondary);">Rapports</a></li>
+                <li class="breadcrumb-item active" style="color: white;">Production</li>
+            </ol>
+        </nav>
+        <h1><i class="fas fa-industry"></i> Rapports de production détaillés</h1>
+        <p class="mb-0">Analysez les performances de production par département</p>
+    </div>
+</section>
+
+<!-- Contenu principal -->
+<section class="py-4" style="background: #f8f9fa;">
+    <div class="container">
+        <!-- Filtres -->
+        <div class="filters-card">
+            <form method="get" class="filter-row">
+                <div class="filter-group">
+                    <label class="filter-label">Département</label>
+                    <select name="department" class="filter-control">
+                        <option value="">Tous les départements</option>
+                        {% for dept_code, dept_name in departments %}
+                        <option value="{{ dept_code }}" {% if filters.department == dept_code %}selected{% endif %}>
+                            {{ dept_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">Date de début</label>
+                    <input type="date" name="start_date" class="filter-control" value="{{ filters.start_date }}">
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">Date de fin</label>
+                    <input type="date" name="end_date" class="filter-control" value="{{ filters.end_date }}">
+                </div>
+                
+                <button type="submit" class="btn-filter">
+                    <i class="fas fa-filter"></i> Appliquer
+                </button>
+            </form>
+        </div>
+
+        <!-- Statistiques qualité -->
+        <div class="quality-section">
+            <h3 style="margin-bottom: 1.5rem;">
+                <i class="fas fa-star"></i> Statistiques qualité
+            </h3>
+            
+            <div class="quality-stats">
+                <div class="quality-card">
+                    <i class="fas fa-clipboard-check quality-icon" style="color: var(--chef-accent);"></i>
+                    <div class="quality-value">{{ quality_stats.total_checks }}</div>
+                    <div class="quality-label">Contrôles effectués</div>
+                </div>
+                
+                <div class="quality-card">
+                    <i class="fas fa-star quality-icon" style="color: #ffc107;"></i>
+                    <div class="quality-value">
+                        {{ quality_stats.avg_rating|floatformat:1 }}/5
+                    </div>
+                    <div class="quality-label">Note moyenne</div>
+                </div>
+                
+                <div class="quality-card">
+                    <i class="fas fa-thumbs-up quality-icon" style="color: var(--success);"></i>
+                    <div class="quality-value">{{ quality_stats.approved_rate|floatformat:0 }}%</div>
+                    <div class="quality-label">Taux d'approbation</div>
+                </div>
+            </div>
+
+            {% if quality_stats.avg_rating < 3 %}
+            <div class="alert-box">
+                <i class="fas fa-exclamation-triangle alert-icon"></i>
+                <div>
+                    <strong>Attention:</strong> La note de qualité moyenne est inférieure à 3/5. 
+                    Des actions correctives sont recommandées.
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Performance par département -->
+        <div class="departments-performance">
+            <div class="performance-header">
+                <h3 class="performance-title">
+                    <i class="fas fa-chart-bar"></i> Performance par département
+                </h3>
+            </div>
+            
+            <table class="performance-table">
+                <thead>
+                    <tr>
+                        <th>Département</th>
+                        <th>Productions</th>
+                        <th>Complétées</th>
+                        <th>Taux de réussite</th>
+                        <th>Progression moyenne</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dept in dept_performance %}
+                    <tr>
+                        <td class="dept-name">{{ dept.department }}</td>
+                        <td>{{ dept.total_productions }}</td>
+                        <td>{{ dept.completed }}</td>
+                        <td>
+                            <span class="rate-badge {% if dept.on_time_rate >= 90 %}rate-high{% elif dept.on_time_rate >= 70 %}rate-medium{% else %}rate-low{% endif %}">
+                                {{ dept.on_time_rate|floatformat:0 }}%
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress-indicator">
+                                <span>{{ dept.avg_progress|floatformat:0 }}%</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill {% if dept.avg_progress >= 90 %}progress-excellent{% elif dept.avg_progress >= 75 %}progress-good{% elif dept.avg_progress >= 50 %}progress-average{% else %}progress-poor{% endif %}" 
+                                         style="width: {{ dept.avg_progress }}%;"></div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 2rem; color: #6c757d;">
+                            Aucune donnée de production pour cette période
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Liste des productions récentes -->
+        <div class="productions-list">
+            <h3 style="margin-bottom: 1.5rem;">
+                <i class="fas fa-list"></i> Productions récentes
+            </h3>
+            
+            {% for production in productions %}
+            <div class="production-item">
+                <div>
+                    <div class="production-date">{{ production.date|date:"d/m/Y" }}</div>
+                    <div class="production-dept">{{ production.get_department_display }}</div>
+                    <div style="margin-top: 0.5rem;">
+                        <small>{{ production.completed_items }}/{{ production.total_items }} articles</small>
+                        <div class="progress-bar" style="width: 200px; height: 6px; margin-top: 0.25rem;">
+                            <div class="progress-fill progress-good" style="width: {{ production.progress_percentage }}%;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <span class="production-status status-{{ production.status }}">
+                        {{ production.get_status_display }}
+                    </span>
+                </div>
+            </div>
+            {% empty %}
+            <p style="text-align: center; color: #6c757d; padding: 2rem;">
+                Aucune production trouvée pour les critères sélectionnés
+            </p>
+            {% endfor %}
+        </div>
+
+        <!-- Export -->
+        <div class="export-buttons">
+            <a href="{% url 'head_chef_export_reports' %}?type=csv&report=production&{{ request.GET.urlencode }}" 
+               class="btn-export btn-csv">
+                <i class="fas fa-file-csv"></i> Export CSV
+            </a>
+            <a href="{% url 'head_chef_export_reports' %}?type=pdf&report=production&{{ request.GET.urlencode }}" 
+               class="btn-export btn-pdf">
+                <i class="fas fa-file-pdf"></i> Export PDF
+            </a>
+            <button onclick="window.print()" class="btn-export btn-print">
+                <i class="fas fa-print"></i> Imprimer
+            </button>
+        </div>
+
+        <!-- Graphiques -->
+        <div class="chart-container">
+            <h3 class="chart-title">Évolution de la production</h3>
+            <canvas id="productionChart" height="100"></canvas>
+        </div>
+    </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Graphique de production
+const ctx = document.getElementById('productionChart').getContext('2d');
+const productionChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: [
+            {% for dept in dept_performance %}
+            '{{ dept.department }}',
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Taux de complétion (%)',
+            data: [
+                {% for dept in dept_performance %}
+                {{ dept.on_time_rate|default:0 }},
+                {% endfor %}
+            ],
+            backgroundColor: 'rgba(139, 69, 19, 0.6)',
+            borderColor: 'rgba(139, 69, 19, 1)',
+            borderWidth: 1
+        }, {
+            label: 'Progression moyenne (%)',
+            data: [
+                {% for dept in dept_performance %}
+                {{ dept.avg_progress|default:0 }},
+                {% endfor %}
+            ],
+            backgroundColor: 'rgba(205, 133, 63, 0.6)',
+            borderColor: 'rgba(205, 133, 63, 1)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,706 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Commande Produit {{ product_order.order_number }} - Chef de Cuisine{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --chef-primary: #8B4513;
+        --chef-secondary: #DEB887;
+        --chef-accent: #CD853F;
+        --chef-dark: #654321;
+        --chef-light: #FFF8DC;
+        --success: #28a745;
+        --warning: #ffc107;
+        --danger: #dc3545;
+    }
+
+    .product-order-header {
+        background: linear-gradient(135deg, var(--chef-primary) 0%, var(--chef-dark) 100%);
+        color: white;
+        padding: 2rem 0;
+    }
+
+    .status-badge {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+        display: inline-block;
+    }
+
+    .status-pending { background: var(--warning); color: #333; }
+    .status-approved { background: var(--success); color: white; }
+    .status-ordered { background: #17a2b8; color: white; }
+    .status-received { background: #6c757d; color: white; }
+    .status-cancelled { background: var(--danger); color: white; }
+
+    .order-summary {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 2rem;
+        margin-top: 1.5rem;
+    }
+
+    .summary-item {
+        text-align: center;
+        padding: 1rem;
+        background: var(--chef-light);
+        border-radius: 10px;
+    }
+
+    .summary-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--chef-primary);
+    }
+
+    .summary-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+
+    .items-section {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+
+    .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+
+    .items-table th {
+        background: var(--chef-light);
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--chef-dark);
+    }
+
+    .items-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .items-table tr:hover {
+        background: #f8f9fa;
+    }
+
+    .quantity-input {
+        width: 80px;
+        padding: 5px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        text-align: center;
+    }
+
+    .action-section {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-action {
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-approve {
+        background: var(--success);
+        color: white;
+    }
+
+    .btn-approve:hover {
+        background: #218838;
+        transform: translateY(-2px);
+    }
+
+    .btn-reject {
+        background: var(--danger);
+        color: white;
+    }
+
+    .btn-receive {
+        background: #17a2b8;
+        color: white;
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .notes-section {
+        background: #f8f9fa;
+        border-left: 4px solid var(--chef-accent);
+        padding: 1rem;
+        border-radius: 5px;
+        margin-top: 1rem;
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+    }
+
+    .modal-content {
+        background-color: white;
+        margin: 15% auto;
+        padding: 2rem;
+        border-radius: 10px;
+        width: 80%;
+        max-width: 500px;
+    }
+
+    .close-modal {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .close-modal:hover {
+        color: #000;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<section class="product-order-header">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb" style="background: transparent;">
+                <li class="breadcrumb-item"><a href="{% url 'head_chef_dashboard' %}" style="color: var(--chef-secondary);">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'head_chef_product_orders' %}" style="color: var(--chef-secondary);">Commandes Produits</a></li>
+                <li class="breadcrumb-item active" style="color: white;">{{ product_order.order_number }}</li>
+            </ol>
+        </nav>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1><i class="fas fa-shopping-cart"></i> {{ product_order.order_number }}</h1>
+                <p class="mb-0">Fournisseur: {{ product_order.supplier.name }}</p>
+            </div>
+            <span class="status-badge status-{{ product_order.status }}">
+                {{ product_order.get_status_display }}
+            </span>
+        </div>
+    </div>
+</section>
+
+<!-- Contenu principal -->
+<section class="py-4" style="background: var(--chef-light); min-height: calc(100vh - 200px);">
+    <div class="container">
+        <!-- Résumé de la commande -->
+        <div class="order-summary">
+            <h3><i class="fas fa-info-circle"></i> Informations de la commande</h3>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-value">${{ product_order.total_amount|floatformat:2 }}</div>
+                    <div class="summary-label">Montant total</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">{{ product_order.items.count }}</div>
+                    <div class="summary-label">Nombre d'articles</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">{{ product_order.needed_date|date:"d/m/Y" }}</div>
+                    <div class="summary-label">Date souhaitée</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">{{ product_order.get_priority_display }}</div>
+                    <div class="summary-label">Priorité</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #dee2e6;">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Département:</strong> {{ product_order.get_department_display }}</p>
+                        <p><strong>Demandé par:</strong> {{ product_order.requested_by.get_full_name }}</p>
+                        <p><strong>Date de création:</strong> {{ product_order.created_at|date:"d/m/Y H:i" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Fournisseur:</strong> {{ product_order.supplier.name }}</p>
+                        <p><strong>Contact:</strong> {{ product_order.supplier.contact_name }}</p>
+                        <p><strong>Téléphone:</strong> {{ product_order.supplier.phone }}</p>
+                    </div>
+                </div>
+            </div>
+
+            {% if product_order.notes %}
+            <div class="notes-section">
+                <h5><i class="fas fa-sticky-note"></i> Notes de la commande</h5>
+                <p>{{ product_order.notes }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Articles de la commande -->
+        <div class="items-section">
+            <h3><i class="fas fa-list"></i> Articles commandés</h3>
+            
+            <form id="receiveForm" method="post">
+                {% csrf_token %}
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th>Produit</th>
+                            <th>Catégorie</th>
+                            <th>Quantité commandée</th>
+                            {% if can_receive %}
+                            <th>Quantité reçue</th>
+                            {% endif %}
+                            <th>Unité</th>
+                            <th>Prix unitaire</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in product_order.items.all %}
+                        <tr>
+                            <td><strong>{{ item.product.name }}</strong></td>
+                            <td>{{ item.product.get_category_display }}</td>
+                            <td>{{ item.quantity }}</td>
+                            {% if can_receive %}
+                            <td>
+                                <input type="number" 
+                                       name="received_{{ item.id }}" 
+                                       class="quantity-input"
+                                       value="{{ item.received_quantity|default:item.quantity }}"
+                                       max="{{ item.quantity }}"
+                                       min="0">
+                            </td>
+                            {% endif %}
+                            <td>{{ item.product.get_unit_display }}</td>
+                            <td>${{ item.unit_price|floatformat:2 }}</td>
+                            <td><strong>${{ item.total_price|floatformat:2 }}</strong></td>
+                        </tr>
+                        {% if item.notes %}
+                        <tr>
+                            <td colspan="7" style="background: #f8f9fa; font-style: italic;">
+                                <i class="fas fa-info-circle"></i> {{ item.notes }}
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background: var(--chef-light); font-weight: bold;">
+                            <td colspan="{% if can_receive %}6{% else %}5{% endif %}" style="text-align: right;">Total:</td>
+                            <td>${{ product_order.total_amount|floatformat:2 }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </form>
+        </div>
+
+        <!-- Actions -->
+        {% if can_approve or can_receive %}
+        <div class="action-section">
+            <h3><i class="fas fa-tasks"></i> Actions disponibles</h3>
+            <div class="action-buttons">
+                {% if can_approve %}
+                <button onclick="approveOrder()" class="btn-action btn-approve">
+                    <i class="fas fa-check"></i> Approuver la commande
+                </button>
+                <button onclick="showRejectModal()" class="btn-action btn-reject">
+                    <i class="fas fa-times"></i> Rejeter la commande
+                </button>
+                {% endif %}
+                
+                {% if can_receive %}
+                <button onclick="markAsReceived()" class="btn-action btn-receive">
+                    <i class="fas fa-truck"></i> Marquer comme reçue
+                </button>
+                {% endif %}
+                
+                <a href="{% url 'head_chef_product_orders' %}" class="btn-action btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Retour à la liste
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Historique d'approbation -->
+        {% if product_order.approved_by %}
+        <div class="items-section">
+            <h3><i class="fas fa-history"></i> Historique</h3>
+            <p><strong>Approuvée par:</strong> {{ product_order.approved_by.get_full_name }}</p>
+            <p><strong>Date d'approbation:</strong> {{ product_order.approved_at|date:"d/m/Y H:i" }}</p>
+            {% if product_order.internal_notes %}
+            <div class="notes-section">
+                <h5>Notes internes</h5>
+                <p>{{ product_order.internal_notes }}</p>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Modal de rejet -->
+<div id="rejectModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeRejectModal()">&times;</span>
+        <h3>Rejeter la commande</h3>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="reject">
+            <div class="form-group">
+                <label for="rejection_reason">Raison du rejet:</label>
+                <textarea name="rejection_reason" 
+                          id="rejection_reason" 
+                          class="form-control" 
+                          rows="4" 
+                          required></textarea>
+            </div>
+            <div class="action-buttons" style="margin-top: 1rem;">
+                <button type="submit" class="btn-action btn-reject">
+                    <i class="fas fa-times"></i> Confirmer le rejet
+                </button>
+                <button type="button" onclick="closeRejectModal()" class="btn-action btn-secondary">
+                    Annuler
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function approveOrder() {
+    if (confirm('Êtes-vous sûr de vouloir approuver cette commande?')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.innerHTML = `
+            {% csrf_token %}
+            <input type="hidden" name="action" value="approve">
+        `;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function showRejectModal() {
+    document.getElementById('rejectModal').style.display = 'block';
+}
+
+function closeRejectModal() {
+    document.getElementById('rejectModal').style.display = 'none';
+}
+
+function markAsReceived() {
+    if (confirm('Confirmer la réception de tous les articles?')) {
+        const form = document.getElementById('receiveForm');
+        const actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'action';
+        actionInput.value = 'mark_received';
+        form.appendChild(actionInput);
+        form.submit();
+    }
+}
+
+// Fermer le modal en cliquant en dehors
+window.onclick = function(event) {
+    const modal = document.getElementById('rejectModal');
+    if (event.target == modal) {
+        closeRejectModal();
+    }
+}
+
+// Validation des quantités reçues
+document.addEventListener('DOMContentLoaded', function() {
+    // Ajouter des écouteurs sur les champs de quantité reçue
+    const quantityInputs = document.querySelectorAll('.quantity-input');
+    
+    quantityInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            const maxValue = parseFloat(this.getAttribute('max'));
+            const currentValue = parseFloat(this.value);
+            
+            if (currentValue > maxValue) {
+                alert(`La quantité reçue ne peut pas dépasser la quantité commandée (${maxValue})`);
+                this.value = maxValue;
+            }
+            
+            if (currentValue < 0) {
+                this.value = 0;
+            }
+        });
+    });
+    
+    // Ajouter un bouton pour remplir automatiquement avec les quantités commandées
+    const receiveForm = document.getElementById('receiveForm');
+    if (receiveForm && document.querySelector('.quantity-input')) {
+        const autoFillBtn = document.createElement('button');
+        autoFillBtn.type = 'button';
+        autoFillBtn.className = 'btn-action btn-secondary';
+        autoFillBtn.style.marginBottom = '1rem';
+        autoFillBtn.innerHTML = '<i class="fas fa-magic"></i> Remplir avec les quantités commandées';
+        autoFillBtn.onclick = function() {
+            quantityInputs.forEach(input => {
+                input.value = input.getAttribute('max');
+            });
+        };
+        
+        // Insérer le bouton avant le tableau
+        const table = receiveForm.querySelector('.items-table');
+        receiveForm.insertBefore(autoFillBtn, table);
+    }
+});
+
+// Fonction pour imprimer la commande
+function printOrder() {
+    window.print();
+}
+
+// Fonction pour copier le numéro de commande
+function copyOrderNumber() {
+    const orderNumber = '{{ product_order.order_number }}';
+    navigator.clipboard.writeText(orderNumber).then(function() {
+        // Afficher une notification temporaire
+        const notification = document.createElement('div');
+        notification.textContent = 'Numéro de commande copié!';
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--chef-primary);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            z-index: 9999;
+            animation: slideIn 0.3s ease;
+        `;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    });
+}
+
+// Fonction pour exporter en PDF (nécessite une bibliothèque comme jsPDF)
+function exportToPDF() {
+    // Cette fonction nécessiterait l'inclusion de jsPDF
+    // Pour l'instant, on redirige vers l'export côté serveur
+    const orderNumber = '{{ product_order.order_number }}';
+    window.location.href = `/kitchen/head-chef/product-orders/${orderNumber}/export?format=pdf`;
+}
+
+// Fonction pour envoyer la commande par email au fournisseur
+function sendToSupplier() {
+    if (confirm('Envoyer cette commande par email au fournisseur?')) {
+        fetch('{% url "head_chef_product_order_detail" product_order.id %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: 'action=send_to_supplier'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Commande envoyée avec succès au fournisseur!');
+            } else {
+                alert('Erreur lors de l\'envoi: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Erreur de connexion: ' + error);
+        });
+    }
+}
+
+// Fonction pour ajouter une note
+function addNote() {
+    const note = prompt('Ajouter une note à cette commande:');
+    if (note && note.trim()) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.innerHTML = `
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_note">
+            <input type="hidden" name="note" value="${note}">
+        `;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Gestion du clavier pour fermer le modal
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeRejectModal();
+    }
+});
+
+// Animation pour les badges de statut
+document.addEventListener('DOMContentLoaded', function() {
+    const statusBadge = document.querySelector('.status-badge');
+    if (statusBadge) {
+        statusBadge.style.animation = 'pulse 2s infinite';
+    }
+});
+
+// Ajouter les styles d'animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.7; }
+        100% { opacity: 1; }
+    }
+    
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @media print {
+        .btn-action,
+        .action-section,
+        .modal,
+        nav {
+            display: none !important;
+        }
+        
+        .product-order-header {
+            background: none !important;
+            color: black !important;
+        }
+        
+        .status-badge {
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+        }
+    }
+`;
+document.head.appendChild(style);
+
+// Fonction pour mettre à jour le statut via AJAX
+function updateStatus(newStatus) {
+    fetch('{% url "head_chef_product_order_detail" product_order.id %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: `action=update_status&status=${newStatus}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Erreur lors de la mise à jour du statut');
+        }
+    });
+}
+
+// Fonction pour calculer le total en temps réel
+function recalculateTotal() {
+    let total = 0;
+    const rows = document.querySelectorAll('.items-table tbody tr');
+    
+    rows.forEach(row => {
+        const totalCell = row.querySelector('td:last-child strong');
+        if (totalCell) {
+            const value = parseFloat(totalCell.textContent.replace('$', ''));
+            if (!isNaN(value)) {
+                total += value;
+            }
+        }
+    });
+    
+    // Mettre à jour l'affichage du total
+    const totalDisplay = document.querySelector('.summary-value');
+    if (totalDisplay) {
+        totalDisplay.textContent = `$${total.toFixed(2)}`;
+    }
+}
+
+// Fonction pour vérifier les stocks disponibles
+function checkStockAvailability() {
+    const items = [];
+    document.querySelectorAll('.items-table tbody tr').forEach(row => {
+        const productName = row.querySelector('td:first-child strong');
+        if (productName) {
+            items.push(productName.textContent);
+        }
+    });
+    
+    fetch('/kitchen/api/check-stock/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ products: items })
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Afficher les alertes de stock si nécessaire
+        if (data.warnings && data.warnings.length > 0) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-warning';
+            alertDiv.innerHTML = '<strong>Attention:</strong> ' + data.warnings.join('<br>');
+            document.querySelector('.order-summary').appendChild(alertDiv);
+        }
+    });
+}
+
+// Charger la vérification des stocks au chargement de la page
+if ('{{ product_order.status }}' === 'pending') {
+    document.addEventListener('DOMContentLoaded', checkStockAvailability);
+}
+</script>
+{% endblock %}

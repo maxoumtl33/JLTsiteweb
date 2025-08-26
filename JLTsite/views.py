@@ -233,31 +233,45 @@ def signup_view(request):
     return render(request, 'JLTsite/signup.html', {'form': form})
 
 def login_view(request):
-    """Connexion utilisateur"""
+    """Connexion utilisateur avec redirection selon le rôle"""
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
             username = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password')
-            user = authenticate(username=username, password=password)
+            
+            # Permettre la connexion avec email ou username
+            from django.db.models import Q
+            try:
+                user_obj = User.objects.get(Q(username=username) | Q(email=username))
+                user = authenticate(username=user_obj.username, password=password)
+            except User.DoesNotExist:
+                user = authenticate(username=username, password=password)
             
             if user is not None:
                 login(request, user)
                 transfer_cart_to_user(request, user)
                 
-                # Redirection selon le rôle
-                if user.role in ['admin', 'staff']:
+                # Redirection selon le rôle de l'utilisateur
+                if user.role == 'checklist_manager':
+                    # Responsable checklist -> Dashboard checklist
+                    return redirect('checklist_dashboard')
+                elif user.role in ['admin', 'staff']:
+                    # Admin ou Staff -> Dashboard admin
                     return redirect('admin_dashboard')
-                
-                next_url = request.GET.get('next', 'customer_dashboard')
-                return redirect(next_url)
+                elif user.role == 'customer':
+                    # Client -> Dashboard client ou page demandée
+                    next_url = request.GET.get('next', 'customer_dashboard')
+                    return redirect(next_url)
+                else:
+                    # Par défaut -> Page d'accueil
+                    return redirect('home')
             else:
                 messages.error(request, 'Identifiants invalides.')
     else:
         form = LoginForm()
     
     return render(request, 'JLTsite/login.html', {'form': form})
-
 def logout_view(request):
     """Déconnexion"""
     logout(request)

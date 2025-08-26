@@ -1,0 +1,333 @@
+{% extends 'JLTsite/base_maitre_hotel.html' %}
+
+{% block title %}Profil - Maître d'Hôtel{% endblock %}
+
+{% block page_title %}Mon Profil{% endblock %}
+
+{% block page_actions %}
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+        <i class="fas fa-edit me-1"></i>
+        Modifier le profil
+    </button>
+{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <!-- Profile Information -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <div class="rounded-circle bg-primary d-inline-flex align-items-center justify-content-center" 
+                             style="width: 80px; height: 80px;">
+                            <i class="fas fa-user fa-2x text-white"></i>
+                        </div>
+                    </div>
+                    
+                    <h4 class="mb-1">{{ user.get_full_name }}</h4>
+                    <p class="text-muted mb-3">Maître d'Hôtel</p>
+                    
+                    <div class="text-start">
+                        <p class="mb-2">
+                            <i class="fas fa-envelope text-muted me-2"></i>
+                            {{ user.email }}
+                        </p>
+                        {% if user.phone %}
+                            <p class="mb-2">
+                                <i class="fas fa-phone text-muted me-2"></i>
+                                {{ user.phone }}
+                            </p>
+                        {% endif %}
+                        {% if user.address %}
+                            <p class="mb-2">
+                                <i class="fas fa-map-marker-alt text-muted me-2"></i>
+                                {{ user.address }}
+                            </p>
+                        {% endif %}
+                        <p class="mb-0">
+                            <i class="fas fa-calendar text-muted me-2"></i>
+                            Depuis le {{ user.date_joined|date:"d/m/Y" }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="col-md-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Statistiques
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="text-center">
+                                <h3 class="text-primary mb-1">{{ total_events }}</h3>
+                                <small class="text-muted">Total événements</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <div class="text-center">
+                                <h3 class="text-success mb-1">{{ completed_events }}</h3>
+                                <small class="text-muted">Terminés</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <div class="text-center">
+                                <h3 class="text-warning mb-1">{{ in_progress_events }}</h3>
+                                <small class="text-muted">En cours</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <div class="text-center">
+                                <h3 class="text-info mb-1">{{ completion_rate }}%</h3>
+                                <small class="text-muted">Taux de completion</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    <div class="mt-3">
+                        <label class="form-label">Progression du mois</label>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-success" 
+                                 style="width: {{ completion_rate }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent and Upcoming Events -->
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2"></i>
+                        Événements récents
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_events %}
+                        {% for event in recent_events %}
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <h6 class="mb-1">{{ event.event_name }}</h6>
+                                    <small class="text-muted">{{ event.event_start_time|date:"d/m/Y à H:i" }}</small>
+                                </div>
+                                <span class="badge bg-{% if event.status == 'completed' %}success{% elif event.status == 'in_progress' %}warning{% else %}secondary{% endif %}">
+                                    {{ event.get_status_display }}
+                                </span>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-calendar-times fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">Aucun événement récent</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-plus me-2"></i>
+                        Prochains événements
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_events %}
+                        {% for event in upcoming_events %}
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <h6 class="mb-1">{{ event.event_name }}</h6>
+                                    <small class="text-muted">{{ event.event_start_time|date:"d/m/Y à H:i" }}</small>
+                                </div>
+                                <span class="badge bg-info">
+                                    {{ event.get_status_display }}
+                                </span>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-calendar-check fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">Aucun événement à venir</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Statistics Chart -->
+    {% if monthly_stats %}
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Événements par mois (6 derniers mois)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="monthlyChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Additional Stats -->
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-alt me-2"></i>
+                        Rapports
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <h3 class="text-primary mb-2">{{ reports_count }}</h3>
+                    <p class="text-muted mb-3">Rapports soumis</p>
+                    <a href="{% url 'maitre_hotel_reports' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-eye me-1"></i>
+                        Voir tous les rapports
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-award me-2"></i>
+                        Performance
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <h3 class="text-success mb-2">{{ completion_rate }}%</h3>
+                    <p class="text-muted mb-3">Taux de succès</p>
+                    {% if completion_rate >= 90 %}
+                        <span class="badge bg-success">Excellent</span>
+                    {% elif completion_rate >= 75 %}
+                        <span class="badge bg-warning">Bon</span>
+                    {% else %}
+                        <span class="badge bg-danger">À améliorer</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Modifier le profil</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="first_name" class="form-label">Prénom</label>
+                        <input type="text" class="form-control" id="first_name" name="first_name" 
+                               value="{{ user.first_name }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="last_name" class="form-label">Nom</label>
+                        <input type="text" class="form-control" id="last_name" name="last_name" 
+                               value="{{ user.last_name }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" 
+                               value="{{ user.email }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Téléphone</label>
+                        <input type="tel" class="form-control" id="phone" name="phone" 
+                               value="{{ user.phone }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Adresse</label>
+                        <textarea class="form-control" id="address" name="address" rows="3">{{ user.address }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Sauvegarder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+{% if monthly_stats %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Monthly Chart
+    const ctx = document.getElementById('monthlyChart').getContext('2d');
+    const monthlyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [
+                {% for stat in monthly_stats %}
+                    '{{ stat.month|date:"M Y" }}'{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            datasets: [{
+                label: 'Événements',
+                data: [
+                    {% for stat in monthly_stats %}
+                        {{ stat.count }}{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                borderColor: 'rgb(52, 152, 219)',
+                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

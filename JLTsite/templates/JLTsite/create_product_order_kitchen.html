@@ -1,0 +1,447 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+
+{% block title %}Nouvelle Commande Produits - {{ department_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --dept-primary: #4682B4;
+        --dept-accent: #1E90FF;
+        --dept-dark: #2F4F4F;
+        --dept-light: #F0F8FF;
+        --dept-gray: #6c757d;
+        --dept-gray-light: #e9ecef;
+        --dept-success: #20B2AA;
+        --dept-warning: #FFD700;
+        --dept-danger: #DC143C;
+    }
+
+    .form-container {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+
+    .form-header {
+        border-bottom: 2px solid var(--dept-light);
+        padding-bottom: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .form-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--dept-dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .form-subtitle {
+        color: var(--dept-gray);
+        font-size: 1rem;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        font-weight: 600;
+        color: var(--dept-dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid var(--dept-gray-light);
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--dept-accent);
+        box-shadow: 0 0 0 3px rgba(30, 144, 255, 0.1);
+    }
+
+    .form-select {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1.5 4.5h9z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        padding-right: 40px;
+    }
+
+    .items-section {
+        background: var(--dept-light);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .items-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .items-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--dept-dark);
+    }
+
+    .add-item-btn {
+        background: var(--dept-accent);
+        color: white;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .add-item-btn:hover {
+        background: var(--dept-primary);
+        transform: translateY(-2px);
+    }
+
+    .item-row {
+        background: white;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr auto;
+        gap: 1rem;
+        align-items: end;
+    }
+
+    .remove-item-btn {
+        background: var(--dept-danger);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .remove-item-btn:hover {
+        background: #b71c1c;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        padding-top: 2rem;
+        border-top: 2px solid var(--dept-light);
+    }
+
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary {
+        background: var(--dept-accent);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: var(--dept-primary);
+        transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+        background: var(--dept-gray);
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: var(--dept-dark);
+    }
+
+    .total-section {
+        background: var(--dept-light);
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+
+    .total-amount {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--dept-accent);
+    }
+
+    @media (max-width: 768px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .item-row {
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="form-container">
+        <div class="form-header">
+            <h1 class="form-title">
+                <i class="fas fa-plus-circle"></i>
+                Nouvelle Commande de Produits
+            </h1>
+            <p class="form-subtitle">Département {{ department_name }}</p>
+        </div>
+
+        <form method="post" id="productOrderForm">
+            {% csrf_token %}
+            
+            <!-- Informations générales -->
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label" for="supplier_id">
+                        <i class="fas fa-truck"></i> Fournisseur *
+                    </label>
+                    <select name="supplier_id" id="supplier_id" class="form-control form-select" required>
+                        <option value="">Sélectionner un fournisseur</option>
+                        {% for supplier in suppliers %}
+                        <option value="{{ supplier.id }}">{{ supplier.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="needed_date">
+                        <i class="fas fa-calendar"></i> Date souhaitée *
+                    </label>
+                    <input type="date" name="needed_date" id="needed_date" class="form-control" required
+                           min="{% now "Y-m-d" %}">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="priority">
+                        <i class="fas fa-flag"></i> Priorité
+                    </label>
+                    <select name="priority" id="priority" class="form-control form-select">
+                        <option value="low">Basse</option>
+                        <option value="normal" selected>Normale</option>
+                        <option value="high">Haute</option>
+                        <option value="urgent">Urgente</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="notes">
+                    <i class="fas fa-sticky-note"></i> Notes
+                </label>
+                <textarea name="notes" id="notes" class="form-control" rows="3" 
+                          placeholder="Notes ou instructions spéciales..."></textarea>
+            </div>
+
+            <!-- Articles -->
+            <div class="items-section">
+                <div class="items-header">
+                    <h3 class="items-title">
+                        <i class="fas fa-box"></i> Articles à commander
+                    </h3>
+                    <button type="button" class="add-item-btn" onclick="addItem()">
+                        <i class="fas fa-plus"></i> Ajouter un article
+                    </button>
+                </div>
+
+                <div id="items-container">
+                    <!-- Les articles seront ajoutés ici dynamiquement -->
+                </div>
+
+                <div class="total-section">
+                    <div class="total-amount">
+                        Total: $<span id="total-amount">0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <input type="hidden" name="item_count" id="item_count" value="0">
+
+            <!-- Actions -->
+            <div class="form-actions">
+                <a href="{% url 'department_product_orders' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Annuler
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Créer la commande
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let itemCount = 0;
+const products = [
+    {% for product in available_products %}
+    {
+        id: {{ product.id }},
+        name: "{{ product.name|escapejs }}",
+        unit: "{{ product.get_unit_display|escapejs }}",
+        price: {{ product.unit_price }},
+        category: "{{ product.get_category_display|escapejs }}"
+    },
+    {% endfor %}
+];
+
+function addItem() {
+    const container = document.getElementById('items-container');
+    const itemHtml = `
+        <div class="item-row" id="item-${itemCount}">
+            <div class="form-group">
+                <label class="form-label">Produit</label>
+                <select name="item_${itemCount}_product_id" class="form-control form-select" required onchange="updatePrice(${itemCount})">
+                    <option value="">Sélectionner un produit</option>
+                    ${products.map(product => 
+                        `<option value="${product.id}" data-price="${product.price}" data-unit="${product.unit}">
+                            ${product.name} (${product.unit})
+                        </option>`
+                    ).join('')}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Quantité</label>
+                <input type="number" name="item_${itemCount}_quantity" class="form-control" 
+                       min="0.01" step="0.01" required onchange="updateTotal()">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Prix unitaire ($)</label>
+                <input type="number" name="item_${itemCount}_unit_price" class="form-control" 
+                       min="0.01" step="0.01" required onchange="updateTotal()">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Sous-total</label>
+                <input type="text" class="form-control" id="subtotal-${itemCount}" readonly value="$0.00">
+            </div>
+            <div class="form-group">
+                <label class="form-label">&nbsp;</label>
+                <button type="button" class="remove-item-btn" onclick="removeItem(${itemCount})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', itemHtml);
+    itemCount++;
+    document.getElementById('item_count').value = itemCount;
+}
+
+function removeItem(index) {
+    const item = document.getElementById(`item-${index}`);
+    item.remove();
+    updateTotal();
+}
+
+function updatePrice(index) {
+    const select = document.querySelector(`select[name="item_${index}_product_id"]`);
+    const priceInput = document.querySelector(`input[name="item_${index}_unit_price"]`);
+    
+    if (select.value) {
+        const selectedOption = select.options[select.selectedIndex];
+        const price = selectedOption.dataset.price;
+        priceInput.value = price;
+        updateTotal();
+    }
+}
+
+function updateTotal() {
+    let total = 0;
+    
+    for (let i = 0; i < itemCount; i++) {
+        const quantityInput = document.querySelector(`input[name="item_${i}_quantity"]`);
+        const priceInput = document.querySelector(`input[name="item_${i}_unit_price"]`);
+        const subtotalInput = document.getElementById(`subtotal-${i}`);
+        
+        if (quantityInput && priceInput && subtotalInput) {
+            const quantity = parseFloat(quantityInput.value) || 0;
+            const price = parseFloat(priceInput.value) || 0;
+            const subtotal = quantity * price;
+            
+            subtotalInput.value = `$${subtotal.toFixed(2)}`;
+            total += subtotal;
+        }
+    }
+    
+    document.getElementById('total-amount').textContent = total.toFixed(2);
+}
+
+// Ajouter un premier item par défaut
+document.addEventListener('DOMContentLoaded', function() {
+    addItem();
+});
+
+// Validation du formulaire
+document.getElementById('productOrderForm').addEventListener('submit', function(e) {
+    const itemsContainer = document.getElementById('items-container');
+    const items = itemsContainer.querySelectorAll('.item-row');
+    
+    if (items.length === 0) {
+        e.preventDefault();
+        alert('Veuillez ajouter au moins un article à la commande.');
+        return false;
+    }
+    
+    // Vérifier que tous les items sont remplis
+    let hasEmptyItems = false;
+    items.forEach(item => {
+        const selects = item.querySelectorAll('select[required]');
+        const inputs = item.querySelectorAll('input[required]');
+        
+        selects.forEach(select => {
+            if (!select.value) hasEmptyItems = true;
+        });
+        
+        inputs.forEach(input => {
+            if (!input.value) hasEmptyItems = true;
+        });
+    });
+    
+    if (hasEmptyItems) {
+        e.preventDefault();
+        alert('Veuillez remplir tous les champs requis pour chaque article.');
+        return false;
+    }
+});
+</script>
+{% endblock %}

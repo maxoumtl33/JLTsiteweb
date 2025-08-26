@@ -1,0 +1,308 @@
+<!-- head_chef_add_product.html -->
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+
+{% block title %}Ajouter un produit - Chef de Cuisine{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --chef-primary: #8B4513;
+        --chef-dark: #654321;
+        --chef-light: #FFF8DC;
+    }
+
+    .product-form-header {
+        background: linear-gradient(135deg, var(--chef-primary) 0%, var(--chef-dark) 100%);
+        color: white;
+        padding: 2rem 0;
+    }
+
+    .form-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+    }
+
+    .form-section {
+        margin-bottom: 2rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .form-section:last-child {
+        border-bottom: none;
+    }
+
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--chef-dark);
+        margin-bottom: 1rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .form-label.required::after {
+        content: " *";
+        color: #dc3545;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--chef-primary);
+        box-shadow: 0 0 0 0.2rem rgba(139, 69, 19, 0.25);
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+
+    .checkbox-group {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 0.5rem;
+    }
+
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem;
+        background: #f8f9fa;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    .checkbox-label:hover {
+        background: var(--chef-light);
+    }
+
+    .checkbox-label input {
+        margin-right: 0.5rem;
+    }
+
+    .form-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 2rem;
+    }
+
+    .btn-form {
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+        background: var(--chef-primary);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: var(--chef-dark);
+        transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+
+    .alert {
+        padding: 1rem;
+        border-radius: 6px;
+        margin-bottom: 1rem;
+    }
+
+    .alert-danger {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<section class="product-form-header">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb" style="background: transparent;">
+                <li class="breadcrumb-item"><a href="{% url 'head_chef_dashboard' %}" style="color: #DEB887;">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'head_chef_inventory' %}" style="color: #DEB887;">Inventaire</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'head_chef_manage_products' %}" style="color: #DEB887;">Produits</a></li>
+                <li class="breadcrumb-item active" style="color: white;">Ajouter</li>
+            </ol>
+        </nav>
+        <h1><i class="fas fa-plus-circle"></i> Ajouter un nouveau produit</h1>
+    </div>
+</section>
+
+<!-- Formulaire -->
+<section style="background: #f8f9fa; padding: 2rem 0;">
+    <div class="container">
+        <div class="form-container">
+            <form method="post">
+                {% csrf_token %}
+                
+                {% if form.errors %}
+                <div class="alert alert-danger">
+                    <strong>Erreurs dans le formulaire:</strong>
+                    <ul style="margin: 0.5rem 0 0; padding-left: 1.5rem;">
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                <!-- Informations de base -->
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-info-circle"></i> Informations de base
+                    </h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label required">Nom du produit</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label required">Catégorie</label>
+                            <select name="category" class="form-control" required>
+                                <option value="">Sélectionner une catégorie</option>
+                                {% for cat_code, cat_name in categories %}
+                                <option value="{{ cat_code }}">{{ cat_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label required">Unité de mesure</label>
+                            <select name="unit" class="form-control" required>
+                                <option value="">Sélectionner une unité</option>
+                                {% for unit_code, unit_name in units %}
+                                <option value="{{ unit_code }}">{{ unit_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Stock et prix -->
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-boxes"></i> Stock et prix
+                    </h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Stock actuel</label>
+                            <input type="number" name="current_stock" class="form-control" step="0.01" min="0" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Stock minimum</label>
+                            <input type="number" name="min_stock" class="form-control" step="0.01" min="0" value="0">
+                            <span class="help-text">Alerte quand le stock descend sous ce niveau</span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Stock maximum</label>
+                            <input type="number" name="max_stock" class="form-control" step="0.01" min="0" value="100">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label required">Prix unitaire ($)</label>
+                            <input type="number" name="unit_price" class="form-control" step="0.01" min="0" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Durée de conservation (jours)</label>
+                            <input type="number" name="shelf_life_days" class="form-control" min="1" value="7">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Fournisseur et départements -->
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-truck"></i> Fournisseur et départements
+                    </h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Fournisseur principal</label>
+                        <select name="supplier" class="form-control">
+                            <option value="">Aucun fournisseur</option>
+                            {% for supplier in suppliers %}
+                            <option value="{{ supplier.id }}">{{ supplier.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Départements utilisateurs</label>
+                        <div class="checkbox-group">
+                            {% for dept_code, dept_name in departments %}
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="departments" value="{{ dept_code }}">
+                                {{ dept_name }}
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Boutons -->
+                <div class="form-buttons">
+                    <a href="{% url 'head_chef_manage_products' %}" class="btn-form btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Annuler
+                    </a>
+                    <button type="submit" class="btn-form btn-primary">
+                        <i class="fas fa-save"></i> Enregistrer le produit
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}

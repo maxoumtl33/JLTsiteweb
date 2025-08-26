@@ -1,0 +1,903 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Commandes Produits {{ department_name }} - Julien-Leblanc Traiteur{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Variables CSS pour chef de département */
+    :root {
+        --dept-primary: #4682B4;
+        --dept-primary-hover: #5F9EA0;
+        --dept-secondary: #B0E0E6;
+        --dept-accent: #1E90FF;
+        --dept-dark: #2F4F4F;
+        --dept-light: #F0F8FF;
+        --dept-gray: #6c757d;
+        --dept-gray-light: #e9ecef;
+        --dept-white: #ffffff;
+        --dept-success: #20B2AA;
+        --dept-warning: #FFD700;
+        --dept-danger: #DC143C;
+    }
+
+    /* Header */
+    .dept-header {
+        background: linear-gradient(135deg, var(--dept-primary) 0%, var(--dept-dark) 100%);
+        padding: 2rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .dept-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 60%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(30, 144, 255, 0.1) 0%, transparent 70%);
+        animation: float 20s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(10deg); }
+    }
+    
+    .dept-title {
+        color: white;
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .dept-badge {
+        background: var(--dept-accent);
+        color: white;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .dept-subtitle {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Navigation */
+    .dept-nav {
+        background: var(--dept-dark);
+        border-bottom: 3px solid var(--dept-accent);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+    
+    .dept-nav-tabs {
+        display: flex;
+        gap: 0;
+        margin: 0;
+        padding: 0;
+        overflow-x: auto;
+    }
+    
+    .dept-nav-tab {
+        padding: 1rem 1.5rem;
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        border-bottom: 3px solid transparent;
+        position: relative;
+    }
+    
+    .dept-nav-tab:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+    }
+    
+    .dept-nav-tab.active {
+        background: rgba(30, 144, 255, 0.1);
+        color: var(--dept-accent);
+        border-bottom-color: var(--dept-accent);
+    }
+    
+    /* Content */
+    .dept-content {
+        background: var(--dept-light);
+        padding: 2rem 0;
+        min-height: calc(100vh - 300px);
+    }
+    
+    /* Action Bar */
+    .action-bar {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        border-top: 4px solid var(--dept-accent);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .action-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--dept-dark);
+    }
+    
+    .new-order-btn {
+        background: var(--dept-accent);
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1rem;
+    }
+    
+    .new-order-btn:hover {
+        background: var(--dept-primary-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(30, 144, 255, 0.3);
+    }
+    
+    /* Filter Bar */
+    .filter-bar {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .filter-label {
+        font-weight: 600;
+        color: var(--dept-dark);
+        font-size: 0.9rem;
+    }
+    
+    .filter-select {
+        padding: 8px 12px;
+        border: 2px solid var(--dept-gray-light);
+        border-radius: 6px;
+        background: white;
+        font-size: 0.9rem;
+        min-width: 120px;
+    }
+    
+    .filter-select:focus {
+        outline: none;
+        border-color: var(--dept-accent);
+    }
+    
+    /* Orders Grid */
+    .orders-grid {
+        display: grid;
+        gap: 1.5rem;
+    }
+    
+    .order-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border-left: 5px solid var(--dept-gray-light);
+    }
+    
+    .order-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+    
+    .order-card.draft {
+        border-left-color: var(--dept-gray);
+    }
+    
+    .order-card.pending {
+        border-left-color: var(--dept-warning);
+    }
+    
+    .order-card.approved {
+        border-left-color: var(--dept-success);
+    }
+    
+    .order-card.cancelled {
+        border-left-color: var(--dept-danger);
+        opacity: 0.7;
+    }
+    
+    .order-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--dept-gray-light);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+    
+    .order-info {
+        flex: 1;
+    }
+    
+    .order-number {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--dept-dark);
+        margin-bottom: 0.25rem;
+    }
+    
+    .order-supplier {
+        color: var(--dept-gray);
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .order-meta {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        font-size: 0.85rem;
+        color: var(--dept-gray);
+    }
+    
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    
+    .order-status {
+        text-align: right;
+    }
+    
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+        display: inline-block;
+    }
+    
+    .status-draft {
+        background: rgba(108, 117, 125, 0.1);
+        color: var(--dept-gray);
+    }
+    
+    .status-pending {
+        background: rgba(255, 215, 0, 0.2);
+        color: #b8860b;
+    }
+    
+    .status-approved {
+        background: rgba(32, 178, 170, 0.2);
+        color: var(--dept-success);
+    }
+    
+    .status-ordered {
+        background: rgba(30, 144, 255, 0.2);
+        color: var(--dept-accent);
+    }
+    
+    .status-received {
+        background: rgba(40, 167, 69, 0.2);
+        color: #28a745;
+    }
+    
+    .status-cancelled {
+        background: rgba(220, 20, 60, 0.2);
+        color: var(--dept-danger);
+    }
+    
+    .priority-badge {
+        background: var(--dept-danger);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        margin-top: 0.5rem;
+        display: inline-block;
+    }
+    
+    .order-amount {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--dept-accent);
+        margin-top: 0.5rem;
+    }
+    
+    /* Order Items */
+    .order-items {
+        padding: 1rem 1.5rem;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    
+    .items-title {
+        font-weight: 600;
+        color: var(--dept-dark);
+        margin-bottom: 0.75rem;
+        font-size: 0.9rem;
+    }
+    
+    .item-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        font-size: 0.85rem;
+    }
+    
+    .item-row:last-child {
+        border-bottom: none;
+    }
+    
+    .item-name {
+        font-weight: 500;
+        color: var(--dept-dark);
+    }
+    
+    .item-quantity {
+        color: var(--dept-gray);
+    }
+    
+    .item-price {
+        font-weight: 600;
+        color: var(--dept-accent);
+    }
+    
+    /* Order Actions */
+    .order-actions {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid var(--dept-gray-light);
+        background: rgba(240, 248, 255, 0.3);
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+    
+    .action-btn {
+        padding: 8px 16px;
+        border: 2px solid;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        background: white;
+    }
+    
+    .btn-edit {
+        border-color: var(--dept-accent);
+        color: var(--dept-accent);
+    }
+    
+    .btn-edit:hover {
+        background: var(--dept-accent);
+        color: white;
+    }
+    
+    .btn-approve {
+        border-color: var(--dept-success);
+        color: var(--dept-success);
+    }
+    
+    .btn-approve:hover {
+        background: var(--dept-success);
+        color: white;
+    }
+    
+    .btn-cancel {
+        border-color: var(--dept-danger);
+        color: var(--dept-danger);
+    }
+    
+    .btn-cancel:hover {
+        background: var(--dept-danger);
+        color: white;
+    }
+    
+    .btn-view {
+        border-color: var(--dept-gray);
+        color: var(--dept-gray);
+    }
+    
+    .btn-view:hover {
+        background: var(--dept-gray);
+        color: white;
+    }
+    
+    /* Quick Stats */
+    .quick-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.25rem;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border-top: 4px solid var(--dept-accent);
+    }
+    
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--dept-dark);
+        margin-bottom: 0.25rem;
+    }
+    
+    .stat-label {
+        color: var(--dept-gray);
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--dept-gray);
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+        color: var(--dept-accent);
+    }
+    
+    .empty-state-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--dept-dark);
+    }
+    
+    .empty-state-text {
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .action-bar {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: stretch;
+        }
+        
+        .filter-bar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .filter-group {
+            justify-content: space-between;
+        }
+        
+        .order-header {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .order-meta {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .order-actions {
+            flex-direction: column;
+        }
+        
+        .quick-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Department Header -->
+<section class="dept-header">
+    <div class="container">
+        <h1 class="dept-title">
+            <i class="fas fa-shopping-cart"></i> 
+            Commandes Produits
+            <span class="dept-badge">{{ department_name }}</span>
+        </h1>
+        <p class="dept-subtitle">Gestion des commandes de produits pour le département {{ department_name }}</p>
+    </div>
+</section>
+
+<!-- Department Navigation -->
+<nav class="dept-nav">
+    <div class="container">
+        <div class="dept-nav-tabs">
+            <a href="{% url 'department_chef_dashboard' %}" class="dept-nav-tab">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a href="{% url 'department_chef_orders' %}" class="dept-nav-tab">
+                <i class="fas fa-clipboard-list"></i> Production
+            </a>
+            <a href="{% url 'department_product_orders' %}" class="dept-nav-tab active">
+                <i class="fas fa-shopping-cart"></i> Commandes Produits
+            </a>
+            <a href="/kitchen/department/inventory/" class="dept-nav-tab">
+                <i class="fas fa-warehouse"></i> Stock
+            </a>
+            <a href="{% url 'kitchen_notifications' %}" class="dept-nav-tab">
+                <i class="fas fa-bell"></i> Notifications
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- Content -->
+<section class="dept-content">
+    <div class="container">
+        <!-- Action Bar -->
+        <div class="action-bar">
+            <h2 class="action-title">Mes commandes de produits</h2>
+            <a href="/kitchen/product-orders/new/" class="new-order-btn">
+                <i class="fas fa-plus"></i>
+                Nouvelle commande
+            </a>
+        </div>
+        
+        <!-- Quick Stats -->
+        <div class="quick-stats">
+            <div class="stat-card">
+                <div class="stat-value">{{ stats.total_orders }}</div>
+                <div class="stat-label">Total commandes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ stats.pending_orders }}</div>
+                <div class="stat-label">En attente</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ stats.approved_orders }}</div>
+                <div class="stat-label">Approuvées</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${{ stats.total_amount|floatformat:0 }}</div>
+                <div class="stat-label">Montant total</div>
+            </div>
+        </div>
+        
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <div class="filter-group">
+                <span class="filter-label">Statut:</span>
+                <select class="filter-select" id="statusFilter" onchange="filterOrders()">
+                    <option value="all">Tous</option>
+                    <option value="draft">Brouillon</option>
+                    <option value="pending">En attente</option>
+                    <option value="approved">Approuvées</option>
+                    <option value="ordered">Commandées</option>
+                    <option value="received">Reçues</option>
+                    <option value="cancelled">Annulées</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <span class="filter-label">Fournisseur:</span>
+                <select class="filter-select" id="supplierFilter" onchange="filterOrders()">
+                    <option value="all">Tous</option>
+                    {% for supplier in suppliers %}
+                    <option value="{{ supplier.id }}">{{ supplier.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <span class="filter-label">Priorité:</span>
+                <select class="filter-select" id="priorityFilter" onchange="filterOrders()">
+                    <option value="all">Toutes</option>
+                    <option value="urgent">Urgente</option>
+                    <option value="high">Haute</option>
+                    <option value="normal">Normale</option>
+                    <option value="low">Basse</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Orders Grid -->
+        <div class="orders-grid">
+            {% if orders %}
+                {% for order in orders %}
+                <div class="order-card {{ order.status }}" 
+                     data-status="{{ order.status }}" 
+                     data-supplier="{{ order.supplier.id }}" 
+                     data-priority="{{ order.priority }}">
+                    
+                    <div class="order-header">
+                        <div class="order-info">
+                            <div class="order-number">{{ order.order_number }}</div>
+                            <div class="order-supplier">
+                                <i class="fas fa-truck"></i> {{ order.supplier.name }}
+                            </div>
+                            <div class="order-meta">
+                                <div class="meta-item">
+                                    <i class="fas fa-calendar"></i>
+                                    Créée le {{ order.created_at|date:"d/m/Y" }}
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-clock"></i>
+                                    Souhaitée pour le {{ order.needed_date|date:"d/m/Y" }}
+                                </div>
+                                {% if order.delivery_date %}
+                                <div class="meta-item">
+                                    <i class="fas fa-shipping-fast"></i>
+                                    Livraison: {{ order.delivery_date|date:"d/m/Y" }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="order-status">
+                            <span class="status-badge status-{{ order.status }}">
+                                {% if order.status == 'draft' %}
+                                    <i class="fas fa-edit"></i> Brouillon
+                                {% elif order.status == 'pending' %}
+                                    <i class="fas fa-clock"></i> En attente
+                                {% elif order.status == 'approved' %}
+                                    <i class="fas fa-check"></i> Approuvée
+                                {% elif order.status == 'ordered' %}
+                                    <i class="fas fa-shipping-fast"></i> Commandée
+                                {% elif order.status == 'received' %}
+                                    <i class="fas fa-check-circle"></i> Reçue
+                                {% elif order.status == 'cancelled' %}
+                                    <i class="fas fa-times"></i> Annulée
+                                {% endif %}
+                            </span>
+                            
+                            {% if order.priority == 'urgent' or order.priority == 'high' %}
+                                <div class="priority-badge">
+                                    {% if order.priority == 'urgent' %}
+                                        <i class="fas fa-exclamation"></i> URGENT
+                                    {% else %}
+                                        <i class="fas fa-arrow-up"></i> HAUTE
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                            
+                            <div class="order-amount">${{ order.total_amount|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Order Items -->
+                    <div class="order-items">
+                        <div class="items-title">
+                            <i class="fas fa-box"></i> Articles ({{ order.items.count }})
+                        </div>
+                        {% for item in order.items.all|slice:":5" %}
+                        <div class="item-row">
+                            <span class="item-name">{{ item.product.name }}</span>
+                            <span class="item-quantity">{{ item.quantity }} {{ item.product.get_unit_display }}</span>
+                            <span class="item-price">${{ item.total_price|floatformat:2 }}</span>
+                        </div>
+                        {% endfor %}
+                        {% if order.items.count > 5 %}
+                        <div class="item-row" style="font-style: italic; color: var(--dept-gray);">
+                            ... et {{ order.items.count|add:"-5" }} autres articles
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Order Actions -->
+                    <div class="order-actions">
+                        {% if order.status == 'draft' %}
+                            <a href="/kitchen/product-orders/{{ order.id }}/edit/" class="action-btn btn-edit">
+                                <i class="fas fa-edit"></i> Modifier
+                            </a>
+                            <button class="action-btn btn-approve" onclick="submitOrder({{ order.id }})">
+                                <i class="fas fa-paper-plane"></i> Soumettre
+                            </button>
+                            <button class="action-btn btn-cancel" onclick="cancelOrder({{ order.id }})">
+                                <i class="fas fa-trash"></i> Supprimer
+                            </button>
+                        {% elif order.status == 'pending' %}
+                            <a href="/kitchen/product-orders/{{ order.id }}/" class="action-btn btn-view">
+                                <i class="fas fa-eye"></i> Voir détails
+                            </a>
+                            <button class="action-btn btn-cancel" onclick="cancelOrder({{ order.id }})">
+                                <i class="fas fa-times"></i> Annuler
+                            </button>
+                        {% elif order.status == 'approved' %}
+                            <a href="/kitchen/product-orders/{{ order.id }}/" class="action-btn btn-view">
+                                <i class="fas fa-eye"></i> Voir détails
+                            </a>
+                            <button class="action-btn btn-edit" onclick="markAsOrdered({{ order.id }})">
+                                <i class="fas fa-shipping-fast"></i> Marquer commandée
+                            </button>
+                        {% elif order.status == 'ordered' %}
+                            <a href="/kitchen/product-orders/{{ order.id }}/" class="action-btn btn-view">
+                                <i class="fas fa-eye"></i> Voir détails
+                            </a>
+                            <button class="action-btn btn-approve" onclick="markAsReceived({{ order.id }})">
+                                <i class="fas fa-check-circle"></i> Marquer reçue
+                            </button>
+                        {% else %}
+                            <a href="/kitchen/product-orders/{{ order.id }}/" class="action-btn btn-view">
+                                <i class="fas fa-eye"></i> Voir détails
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <h4 class="empty-state-title">Aucune commande de produits</h4>
+                    <p class="empty-state-text">Vous n'avez pas encore créé de commandes de produits.</p>
+                    <a href="/kitchen/product-orders/new/" class="new-order-btn">
+                        <i class="fas fa-plus"></i>
+                        Créer ma première commande
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<script>
+function filterOrders() {
+    const statusFilter = document.getElementById('statusFilter').value;
+    const supplierFilter = document.getElementById('supplierFilter').value;
+    const priorityFilter = document.getElementById('priorityFilter').value;
+    
+    const orders = document.querySelectorAll('.order-card');
+    
+    orders.forEach(order => {
+        let showOrder = true;
+        
+        // Filter by status
+        if (statusFilter !== 'all' && order.dataset.status !== statusFilter) {
+            showOrder = false;
+        }
+        
+        // Filter by supplier
+        if (supplierFilter !== 'all' && order.dataset.supplier !== supplierFilter) {
+            showOrder = false;
+        }
+        
+        // Filter by priority
+        if (priorityFilter !== 'all' && order.dataset.priority !== priorityFilter) {
+            showOrder = false;
+        }
+        
+        order.style.display = showOrder ? 'block' : 'none';
+    });
+}
+
+function submitOrder(orderId) {
+    if (confirm('Soumettre cette commande pour approbation ?')) {
+        fetch(`/kitchen/product-orders/${orderId}/submit/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erreur: ' + data.error);
+            }
+        });
+    }
+}
+
+function cancelOrder(orderId) {
+    if (confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) {
+        fetch(`/kitchen/product-orders/${orderId}/cancel/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erreur: ' + data.error);
+            }
+        });
+    }
+}
+
+function markAsOrdered(orderId) {
+    if (confirm('Marquer cette commande comme commandée auprès du fournisseur ?')) {
+        fetch(`/kitchen/product-orders/${orderId}/mark-ordered/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erreur: ' + data.error);
+            }
+        });
+    }
+}
+
+function markAsReceived(orderId) {
+    if (confirm('Marquer cette commande comme reçue ?')) {
+        fetch(`/kitchen/product-orders/${orderId}/mark-received/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erreur: ' + data.error);
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

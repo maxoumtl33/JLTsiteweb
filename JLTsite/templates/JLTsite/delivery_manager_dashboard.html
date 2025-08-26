@@ -1,0 +1,1855 @@
+{% extends 'JLTsite/base_driver.html' %}
+{% load static %}
+
+{% block title %}Dashboard Livraisons - {{ selected_date|date:"d/m/Y" }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --delivery-primary: #4a90e2;
+        --delivery-secondary: #357abd;
+        --delivery-success: #5cb85c;
+        --delivery-warning: #f0ad4e;
+        --delivery-danger: #d9534f;
+        --delivery-light: #e8f4f8;
+    }
+
+    .delivery-dashboard {
+        background: linear-gradient(135deg, var(--delivery-light) 0%, #ffffff 100%);
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+    .dashboard-header {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 10px rgba(74, 144, 226, 0.1);
+    }
+
+    .date-selector {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        background: white;
+        padding: 10px 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border-left: 4px solid var(--delivery-primary);
+    }
+
+    .stat-number {
+        font-size: 2.5em;
+        font-weight: bold;
+        color: var(--delivery-primary);
+        margin: 10px 0;
+    }
+
+    /* Onglets */
+    .nav-tabs-custom {
+        border-bottom: 2px solid var(--delivery-primary);
+        margin-bottom: 20px;
+        background: white;
+        padding: 10px;
+        border-radius: 10px 10px 0 0;
+    }
+
+    .nav-tabs-custom .nav-link {
+        color: #666;
+        border: none;
+        padding: 10px 20px;
+        margin-right: 5px;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .nav-tabs-custom .nav-link:hover {
+        background: var(--delivery-light);
+    }
+
+    .nav-tabs-custom .nav-link.active {
+        background: var(--delivery-primary);
+        color: white;
+    }
+
+    .tab-badge {
+        background: rgba(255,255,255,0.3);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        margin-left: 8px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    /* Carte */
+    .map-container {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+    }
+
+    #delivery-map {
+        height: 600px;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #f5f5f5;
+        position: relative;
+    }
+
+    .map-controls {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+
+    .map-control-btn {
+        padding: 10px 16px;
+        border: none;
+        border-radius: 8px;
+        background: white;
+        color: var(--delivery-primary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 500;
+        border: 2px solid var(--delivery-primary);
+    }
+
+    .map-control-btn:hover {
+        background: var(--delivery-primary);
+        color: white;
+    }
+
+    .map-control-btn.active {
+        background: var(--delivery-primary);
+        color: white;
+    }
+
+    .time-filter-buttons {
+        display: flex;
+        gap: 10px;
+    }
+
+    /* Tableau des livraisons */
+    .deliveries-table-container {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        overflow-x: auto;
+    }
+
+    .deliveries-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .deliveries-table thead {
+        background: var(--delivery-primary);
+        color: white;
+    }
+
+    .deliveries-table th {
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .deliveries-table td {
+        padding: 12px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .deliveries-table tbody tr:hover {
+        background: var(--delivery-light);
+    }
+
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-assigned { background: #d1ecf1; color: #0c5460; }
+    .status-in_transit { background: #cce5ff; color: #004085; }
+    .status-delivered { background: #d4edda; color: #155724; }
+    .status-failed { background: #f8d7da; color: #721c24; }
+
+    .priority-badge {
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .priority-urgent { background: #ff4444; color: white; }
+    .priority-high { background: #ffa500; color: white; }
+    .priority-normal { background: #4a90e2; color: white; }
+    .priority-low { background: #999; color: white; }
+
+    /* Routes */
+    .route-container {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+    }
+
+    .route-deliveries {
+        min-height: 100px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        border: 2px dashed #ddd;
+        transition: all 0.3s ease;
+    }
+
+    .route-deliveries.drag-over {
+        background: var(--delivery-light);
+        border-color: var(--delivery-primary);
+    }
+
+    .delivery-item {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 10px;
+        cursor: move;
+        transition: all 0.3s ease;
+        border-left: 4px solid var(--delivery-primary);
+    }
+
+    .delivery-item.dragging {
+        opacity: 0.5;
+    }
+
+    /* Bouton création en masse */
+    .bulk-create-btn {
+        background: linear-gradient(135deg, var(--delivery-success), #45a845);
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(92, 184, 92, 0.3);
+    }
+
+    .bulk-create-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(92, 184, 92, 0.4);
+    }
+
+    /* Actions rapides */
+    .quick-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .quick-action-btn {
+        padding: 5px 10px;
+        border: none;
+        border-radius: 5px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .quick-action-btn:hover {
+        transform: translateY(-1px);
+    }
+
+    /* Loading */
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(0,0,0,.1);
+        border-radius: 50%;
+        border-top-color: var(--delivery-primary);
+        animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Notification toast */
+    .toast-notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        min-width: 300px;
+        z-index: 9999;
+    }
+
+    /* Styles pour l'onglet Planning */
+    .drivers-planning-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .driver-planning-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        border-left: 4px solid var(--delivery-primary);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .driver-planning-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+    }
+
+    .driver-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .driver-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .driver-avatar {
+        color: var(--delivery-primary);
+    }
+
+    .driver-details h5 {
+        color: #333;
+        font-weight: 600;
+    }
+
+    .existing-planning {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+    }
+
+    .planning-time {
+        font-weight: 600;
+        color: var(--delivery-primary);
+        margin-bottom: 8px;
+    }
+
+    .planning-time i {
+        margin-right: 5px;
+    }
+
+    .planning-status {
+        margin-bottom: 8px;
+    }
+
+    .status-available {
+        color: var(--delivery-success);
+        font-weight: 500;
+    }
+
+    .status-unavailable {
+        color: var(--delivery-danger);
+        font-weight: 500;
+    }
+
+    .planning-notes {
+        background: #e8f4f8;
+        padding: 8px 12px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+        font-size: 0.9rem;
+    }
+
+    .planning-notes i {
+        color: var(--delivery-primary);
+        margin-right: 5px;
+    }
+
+    .planning-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .no-planning {
+        text-align: center;
+        padding: 30px 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 2px dashed #ddd;
+    }
+
+    .assigned-routes {
+        border-top: 1px solid #e0e0e0;
+        padding-top: 15px;
+    }
+
+    .route-summary {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        background: #e8f4f8;
+        border-radius: 6px;
+        margin-bottom: 5px;
+        font-size: 0.9rem;
+    }
+
+    .route-number {
+        font-weight: 600;
+        color: var(--delivery-primary);
+    }
+
+    .planning-summary {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+    }
+
+    .summary-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border-left: 4px solid;
+        transition: transform 0.3s ease;
+    }
+
+    .summary-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .summary-card.available {
+        border-left-color: var(--delivery-success);
+    }
+
+    .summary-card.unavailable {
+        border-left-color: var(--delivery-danger);
+    }
+
+    .summary-card.routes {
+        border-left-color: var(--delivery-primary);
+    }
+
+    .summary-card.workload {
+        border-left-color: var(--delivery-warning);
+    }
+
+    .summary-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+
+    .summary-card.available .summary-icon {
+        color: var(--delivery-success);
+    }
+
+    .summary-card.unavailable .summary-icon {
+        color: var(--delivery-danger);
+    }
+
+    .summary-card.routes .summary-icon {
+        color: var(--delivery-primary);
+    }
+
+    .summary-card.workload .summary-icon {
+        color: var(--delivery-warning);
+    }
+
+    .summary-number {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .summary-label {
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .planning-controls {
+        display: flex;
+        gap: 10px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .drivers-planning-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .planning-controls {
+            flex-direction: column;
+        }
+        
+        .driver-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="delivery-dashboard">
+    <!-- Header avec sélecteur de date -->
+    <div class="dashboard-header">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h1><i class="fas fa-truck"></i> Dashboard Livraisons</h1>
+                <p class="text-muted mb-0">Gérez vos livraisons et routes efficacement</p>
+            </div>
+            <div class="col-md-6 text-right">
+                <div class="date-selector float-right">
+                    <label>Date sélectionnée:</label>
+                    <input type="date" id="dateSelector" value="{{ selected_date|date:'Y-m-d' }}" 
+                           onchange="changeDate(this.value)">
+                    <button class="map-control-btn" onclick="goToToday()">
+                        <i class="fas fa-calendar-day"></i> Aujourd'hui
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cartes de statistiques -->
+    <div class="stats-cards">
+        <div class="stat-card confirmed-orders">
+            <i class="fas fa-clipboard-check fa-2x text-danger mb-2"></i>
+            <div class="stat-number">{{ confirmed_orders_count }}</div>
+            <div>Commandes confirmées</div>
+            <small class="text-muted">Pour le {{ selected_date|date:"d/m/Y" }}</small>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-box fa-2x text-primary mb-2"></i>
+            <div class="stat-number">{{ stats.total }}</div>
+            <div>Total livraisons</div>
+        </div>
+        <div class="stat-card pending">
+            <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+            <div class="stat-number">{{ stats.pending }}</div>
+            <div>En attente</div>
+        </div>
+        <div class="stat-card assigned">
+            <i class="fas fa-user-check fa-2x text-info mb-2"></i>
+            <div class="stat-number">{{ stats.assigned }}</div>
+            <div>Assignées</div>
+        </div>
+        <div class="stat-card delivered">
+            <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+            <div class="stat-number">{{ stats.delivered }}</div>
+            <div>Livrées</div>
+        </div>
+    </div>
+
+    <!-- Onglets -->
+    <ul class="nav nav-tabs nav-tabs-custom" id="mainTabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" data-toggle="tab" href="#confirmed-orders-tab" onclick="switchTab('confirmed-orders-tab')">
+                <i class="fas fa-clipboard-list"></i> Commandes confirmées
+                <span class="tab-badge">{{ confirmed_orders_count }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="tab" href="#all-deliveries-tab" onclick="switchTab('all-deliveries-tab')">
+                <i class="fas fa-table"></i> Toutes les livraisons
+                <span class="tab-badge">{{ stats.total }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="tab" href="#deliveries-map-tab" onclick="switchTab('deliveries-map-tab')">
+                <i class="fas fa-map"></i> Carte
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="tab" href="#planning-tab" onclick="switchTab('planning-tab')">
+                <i class="fas fa-calendar-alt"></i> Planning
+            </a>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- Onglet Commandes Confirmées -->
+        <div class="tab-pane fade show active" id="confirmed-orders-tab">
+            <div class="confirmed-orders-section">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3><i class="fas fa-clipboard-check"></i> Commandes confirmées - {{ selected_date|date:"d/m/Y" }}</h3>
+                    {% if confirmed_orders_count > 0 %}
+                        <button class="bulk-create-btn" onclick="createAllDeliveries()">
+                            <i class="fas fa-truck-loading"></i> 
+                            Créer {{ confirmed_orders_count }} livraison(s)
+                        </button>
+                    {% endif %}
+                </div>
+
+                {% if confirmed_orders %}
+                    {% for order in confirmed_orders %}
+                        <div class="order-card">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h5 class="mb-1">
+                                        <i class="fas fa-receipt"></i> #{{ order.order_number }}
+                                    </h5>
+                                    <p class="mb-1">
+                                        <strong>{{ order.first_name }} {{ order.last_name }}</strong>
+                                        {% if order.company %} - {{ order.company }}{% endif %}
+                                    </p>
+                                    <p class="text-muted mb-1">
+                                        <i class="fas fa-map-marker-alt"></i> 
+                                        {{ order.delivery_address }}, {{ order.delivery_postal_code }} {{ order.delivery_city }}
+                                    </p>
+                                    <p class="mb-0">
+                                        <i class="fas fa-clock"></i> {{ order.delivery_time|time:"H:i" }}
+                                        <span class="ml-3">
+                                            <i class="fas fa-box"></i> {{ order.items.count }} article(s) - <strong>{{ order.total }}$</strong>
+                                        </span>
+                                    </p>
+                                </div>
+                                <div class="col-md-4 text-right">
+                                    <button class="btn btn-success" onclick="createDelivery('{{ order.order_number }}')">
+                                        <i class="fas fa-truck"></i> Créer livraison
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i> 
+                        Aucune commande confirmée pour le {{ selected_date|date:"d/m/Y" }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Onglet: Toutes les livraisons -->
+        <div class="tab-pane fade" id="all-deliveries-tab">
+            <div class="deliveries-table-container">
+                <h3 class="mb-3">
+                    <i class="fas fa-table"></i> Toutes les livraisons du {{ selected_date|date:"d/m/Y" }}
+                </h3>
+                
+                <table class="deliveries-table">
+                    <thead>
+                        <tr>
+                            <th>N° Livraison</th>
+                            <th>Heure</th>
+                            <th>Client</th>
+                            <th>Adresse</th>
+                            <th>Type</th>
+                            <th>Priorité</th>
+                            <th>Statut</th>
+                            <th>Livreur</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for delivery in deliveries %}
+                            <tr>
+                                <td><strong>{{ delivery.delivery_number }}</strong></td>
+                                <td>{{ delivery.scheduled_time_start|time:"H:i" }}</td>
+                                <td>
+                                    {{ delivery.customer_name }}
+                                    {% if delivery.company %}<br><small class="text-muted">{{ delivery.company }}</small>{% endif %}
+                                </td>
+                                <td>
+                                    <small>{{ delivery.delivery_address }}<br>
+                                    {{ delivery.delivery_postal_code }} {{ delivery.delivery_city }}</small>
+                                </td>
+                                <td>
+                                    {% if delivery.delivery_type == 'pickup' %}
+                                        <span class="badge badge-warning">Récupération</span>
+                                    {% else %}
+                                        <span class="badge badge-info">Livraison</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="priority-badge priority-{{ delivery.priority }}">
+                                        {{ delivery.get_priority_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="status-badge status-{{ delivery.status }}">
+                                        {{ delivery.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if delivery.route_assignments.first %}
+                                        {{ delivery.route_assignments.first.route.driver.get_full_name }}
+                                    {% else %}
+                                        <span class="text-muted">Non assigné</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="quick-actions">
+                                        <button class="quick-action-btn btn-sm btn-primary" 
+                                                onclick="viewDeliveryDetail({{ delivery.id }})">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        {% if delivery.status == 'pending' %}
+                                            <button class="quick-action-btn btn-sm btn-success" 
+                                                    onclick="assignDelivery({{ delivery.id }})">
+                                                <i class="fas fa-user-plus"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center py-4">
+                                    <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">Aucune livraison pour cette date</p>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Onglet Carte -->
+        <div class="tab-pane fade" id="deliveries-map-tab">
+            <div class="map-container">
+                <div class="map-controls">
+                    <div class="time-filter-buttons">
+                        <button class="map-control-btn active" onclick="filterByTime('all')" id="filter-all">
+                            <i class="fas fa-eye"></i> Tout afficher
+                        </button>
+                        <button class="map-control-btn" onclick="filterByTime('morning')" id="filter-morning">
+                            <i class="fas fa-sun"></i> Matin (6h-12h)
+                        </button>
+                        <button class="map-control-btn" onclick="filterByTime('noon')" id="filter-noon">
+                            <i class="fas fa-cloud-sun"></i> Midi (12h-14h)
+                        </button>
+                        <button class="map-control-btn" onclick="filterByTime('afternoon')" id="filter-afternoon">
+                            <i class="fas fa-moon"></i> Après-midi (14h-20h)
+                        </button>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="hideAssigned" onchange="toggleAssignedDeliveries()">
+                        <label for="hideAssigned">Masquer les livraisons assignées</label>
+                    </div>
+                </div>
+                <div id="delivery-map"></div>
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i> 
+                        Les livraisons assignées à une route sont masquées par défaut. 
+                        <span class="badge badge-warning">Orange</span> En attente
+                        <span class="badge badge-primary">Bleu</span> Assignée
+                        <span class="badge badge-success">Vert</span> Livrée
+                    </small>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-8">
+                    <h3 class="mb-3"><i class="fas fa-route"></i> Routes du {{ selected_date|date:"d/m/Y" }}</h3>
+                    
+                    {% for route in routes %}
+                        <div class="route-container" data-route-id="{{ route.id }}">
+                            <div class="route-header">
+                                <div>
+                                    <span class="driver-badge">
+                                        <i class="fas fa-user"></i>
+                                        {{ route.driver.get_full_name }}
+                                    </span>
+                                    <span class="badge badge-info ml-2">{{ route.route_number }}</span>
+                                </div>
+                                <div>
+                                    <span class="badge badge-pill badge-primary">
+                                        {{ route.route_deliveries.count }} livraisons
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="route-deliveries" 
+                                 ondrop="drop(event, {{ route.id }})" 
+                                 ondragover="allowDrop(event)"
+                                 ondragleave="dragLeave(event)">
+                                {% for rd in route.route_deliveries.all %}
+                                    <div class="delivery-item" 
+                                         draggable="true"
+                                         ondragstart="drag(event)"
+                                         data-delivery-id="{{ rd.delivery.id }}">
+                                        <strong>{{ rd.delivery.customer_name }}</strong> - 
+                                        {{ rd.delivery.scheduled_time_start|time:"H:i" }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="alert alert-info">
+                            Aucune route créée pour cette date.
+                        </div>
+                    {% endfor %}
+
+                    <button class="btn btn-primary mt-3" onclick="createNewRoute()">
+                        <i class="fas fa-plus-circle"></i> Créer une nouvelle route
+                    </button>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="route-container">
+                        <h3 class="mb-3"><i class="fas fa-boxes"></i> Livraisons non assignées</h3>
+                        <div id="unassigned-deliveries" class="route-deliveries">
+                            {% for delivery in unassigned_deliveries %}
+                                <div class="delivery-item" 
+                                     draggable="true"
+                                     ondragstart="drag(event)"
+                                     data-delivery-id="{{ delivery.id }}">
+                                    <strong>{{ delivery.customer_name }}</strong><br>
+                                    <small>{{ delivery.scheduled_time_start|time:"H:i" }} - {{ delivery.delivery_address }}</small>
+                                </div>
+                            {% empty %}
+                                <p class="text-center text-muted">Toutes les livraisons sont assignées!</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Onglet Planning -->
+        <div class="tab-pane fade" id="planning-tab">
+            <div class="planning-section">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3><i class="fas fa-calendar-alt"></i> Planning des livreurs - {{ selected_date|date:"d/m/Y" }}</h3>
+                    <div class="planning-controls">
+                        <button class="btn btn-primary" onclick="openAddPlanningModal()">
+                            <i class="fas fa-plus"></i> Ajouter au planning
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="viewWeeklyPlanning()">
+                            <i class="fas fa-calendar-week"></i> Vue semaine
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Grille de planning par livreur -->
+                <div class="drivers-planning-grid">
+                    {% for driver in available_drivers %}
+                        <div class="driver-planning-card" data-driver-id="{{ driver.id }}">
+                            <div class="driver-header">
+                                <div class="driver-info">
+                                    <div class="driver-avatar">
+                                        <i class="fas fa-user-circle fa-2x"></i>
+                                    </div>
+                                    <div class="driver-details">
+                                        <h5 class="mb-1">{{ driver.get_full_name }}</h5>
+                                        <small class="text-muted">{{ driver.email }}</small>
+                                    </div>
+                                </div>
+                                <div class="driver-status">
+                                    {% if driver.is_available %}
+                                        <span class="badge badge-success">Disponible</span>
+                                    {% else %}
+                                        <span class="badge badge-secondary">Indisponible</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="driver-day-planning">
+                                <!-- Planning existant pour ce livreur -->
+                                {% if driver.planning_for_date %}
+                                    {% with planning=driver.planning_for_date.0 %}
+                                        <div class="existing-planning">
+                                            <div class="planning-time">
+                                                <i class="fas fa-clock"></i>
+                                                {{ planning.start_time|time:"H:i" }} - {{ planning.end_time|time:"H:i" }}
+                                            </div>
+                                            <div class="planning-status">
+                                                {% if planning.is_available %}
+                                                    <span class="status-available">
+                                                        <i class="fas fa-check-circle"></i> Disponible
+                                                    </span>
+                                                {% else %}
+                                                    <span class="status-unavailable">
+                                                        <i class="fas fa-times-circle"></i> {{ planning.unavailability_reason }}
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                            {% if planning.notes %}
+                                                <div class="planning-notes">
+                                                    <i class="fas fa-sticky-note"></i>
+                                                    <span>{{ planning.notes }}</span>
+                                                </div>
+                                            {% endif %}
+                                            <div class="planning-actions">
+                                                <button class="btn btn-sm btn-outline-primary" 
+                                                        onclick="editPlanning({{ planning.id }})">
+                                                    <i class="fas fa-edit"></i> Modifier
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" 
+                                                        onclick="deletePlanning({{ planning.id }})">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    {% endwith %}
+                                {% else %}
+                                    <div class="no-planning">
+                                        <p class="text-muted mb-2">
+                                            <i class="fas fa-calendar-plus"></i>
+                                            Aucun planning défini
+                                        </p>
+                                        <button class="btn btn-sm btn-primary" 
+                                                onclick="quickAddPlanning({{ driver.id }})">
+                                            <i class="fas fa-plus"></i> Ajouter
+                                        </button>
+                                    </div>
+                                {% endif %}
+
+                                <!-- Routes assignées -->
+                                {% if driver.routes_for_date %}
+                                    <div class="assigned-routes mt-3">
+                                        <h6><i class="fas fa-route"></i> Routes assignées</h6>
+                                        {% for route in driver.routes_for_date %}
+                                            <div class="route-summary">
+                                                <span class="route-number">{{ route.route_number }}</span>
+                                                <span class="route-deliveries">{{ route.route_deliveries.count }} livraisons</span>
+                                                <span class="route-time">{{ route.start_time|time:"H:i" }}</span>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            Aucun livreur disponible. Ajoutez des utilisateurs avec le rôle "delivery_driver".
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Résumé du planning -->
+                <div class="planning-summary mt-4">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="summary-card available">
+                                <div class="summary-icon">
+                                    <i class="fas fa-user-check"></i>
+                                </div>
+                                <div class="summary-content">
+                                    <div class="summary-number">{{ planning_stats.available|default:0 }}</div>
+                                    <div class="summary-label">Livreurs disponibles</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="summary-card unavailable">
+                                <div class="summary-icon">
+                                    <i class="fas fa-user-times"></i>
+                                </div>
+                                <div class="summary-content">
+                                    <div class="summary-number">{{ planning_stats.unavailable|default:0 }}</div>
+                                    <div class="summary-label">Indisponibles</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="summary-card routes">
+                                <div class="summary-icon">
+                                    <i class="fas fa-route"></i>
+                                </div>
+                                <div class="summary-content">
+                                    <div class="summary-number">{{ planning_stats.total_routes|default:0 }}</div>
+                                    <div class="summary-label">Routes créées</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="summary-card workload">
+                                <div class="summary-icon">
+                                    <i class="fas fa-boxes"></i>
+                                </div>
+                                <div class="summary-content">
+                                    <div class="summary-number">{{ planning_stats.avg_deliveries|default:0 }}</div>
+                                    <div class="summary-label">Livraisons/livreur</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal créer route -->
+<div class="modal fade" id="createRouteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-route"></i> Créer une nouvelle route</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="createRouteForm">
+                    <div class="form-group">
+                        <label>Nom de la route</label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Livreur</label>
+                        <select class="form-control" name="driver_id" required>
+                            <option value="">Sélectionner un livreur</option>
+                            {% for driver in available_drivers %}
+                                <option value="{{ driver.id }}">{{ driver.get_full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Heure de départ</label>
+                        <input type="time" class="form-control" name="start_time" value="09:00" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" onclick="submitCreateRoute()">Créer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajouter/Modifier Planning -->
+<div class="modal fade" id="planningModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-calendar-plus"></i> 
+                    <span id="modalTitle">Ajouter au planning</span>
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="planningForm">
+                    <input type="hidden" id="planningId" name="planning_id">
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Livreur <span class="text-danger">*</span></label>
+                                <select class="form-control" id="driverId" name="driver_id" required>
+                                    <option value="">Sélectionner un livreur</option>
+                                    {% for driver in available_drivers %}
+                                        <option value="{{ driver.id }}">{{ driver.get_full_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="planningDate" 
+                                       name="date" value="{{ selected_date|date:'Y-m-d' }}" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Heure de début</label>
+                                <input type="time" class="form-control" id="startTime" 
+                                       name="start_time" value="08:00">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Heure de fin</label>
+                                <input type="time" class="form-control" id="endTime" 
+                                       name="end_time" value="17:00">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Statut</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="availability" 
+                                   id="available" value="available" checked>
+                            <label class="form-check-label" for="available">
+                                <i class="fas fa-check-circle text-success"></i> Disponible
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="availability" 
+                                   id="unavailable" value="unavailable">
+                            <label class="form-check-label" for="unavailable">
+                                <i class="fas fa-times-circle text-danger"></i> Indisponible
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="unavailabilityReasonGroup" style="display: none;">
+                        <label>Raison d'indisponibilité</label>
+                        <select class="form-control" id="unavailabilityReason" name="unavailability_reason">
+                            <option value="">Sélectionner une raison</option>
+                            <option value="Congé">Congé</option>
+                            <option value="Maladie">Maladie</option>
+                            <option value="Formation">Formation</option>
+                            <option value="Maintenance véhicule">Maintenance véhicule</option>
+                            <option value="Autre">Autre</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea class="form-control" id="planningNotes" name="notes" rows="3" 
+                                  placeholder="Instructions spéciales, informations importantes..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="notifyDriver" 
+                                   name="notify_driver" checked>
+                            <label class="form-check-label" for="notifyDriver">
+                                Notifier le livreur par email
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" onclick="savePlanning()">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Variables globales
+const deliveries = {{ map_deliveries|safe }};
+let map;
+let markers = [];
+let currentTimeFilter = 'all';
+let hideAssigned = false;
+let mapInitialized = false;
+let googleMapsLoaded = false;
+
+// ========================================
+// FONCTIONS GOOGLE MAPS
+// ========================================
+
+// FONCTION D'INITIALISATION DE LA CARTE
+function initMap() {
+    try {
+        if (typeof google === 'undefined' || !google.maps) {
+            return;
+        }
+
+        const montreal = { lat: 45.5017, lng: -73.5673 };
+        
+        map = new google.maps.Map(document.getElementById('delivery-map'), {
+            zoom: 11,
+            center: montreal,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: true,
+            gestureHandling: 'greedy'
+        });
+
+        // Attendre que la carte soit prête
+        google.maps.event.addListenerOnce(map, 'tilesloaded', function() {
+            mapInitialized = true;
+            setTimeout(() => {
+                refreshMarkers();
+            }, 500);
+        });
+
+    } catch (error) {
+        console.error('Erreur initialisation carte:', error);
+        setTimeout(() => {
+            initMap();
+        }, 2000);
+    }
+}
+
+// FONCTION POUR AJOUTER UN MARQUEUR
+function addSimpleMarker(delivery) {
+    try {
+        const marker = new google.maps.Marker({
+            position: { lat: delivery.lat, lng: delivery.lng },
+            map: map,
+            title: `${delivery.customer} - ${delivery.address}`,
+            optimized: false,
+            icon: getMarkerIcon(delivery.status)
+        });
+
+        const infoWindow = new google.maps.InfoWindow({
+            content: `
+                <div style="padding: 10px; min-width: 200px;">
+                    <h6>${delivery.customer}</h6>
+                    <p class="mb-1">${delivery.address}</p>
+                    <p class="mb-1"><i class="fas fa-clock"></i> ${delivery.time}</p>
+                    <span class="badge badge-${delivery.status}">${delivery.get_status_display || delivery.status}</span>
+                    ${delivery.priority === 'urgent' ? '<span class="badge badge-danger ml-1">URGENT</span>' : ''}
+                </div>
+            `
+        });
+
+        marker.addListener('click', () => {
+            infoWindow.open(map, marker);
+        });
+
+        markers.push(marker);
+        return marker;
+
+    } catch (error) {
+        console.error('Erreur ajout marqueur:', error);
+        return null;
+    }
+}
+
+// FONCTION POUR OBTENIR L'ICÔNE SELON LE STATUT
+function getMarkerIcon(status) {
+    const icons = {
+        'pending': 'https://maps.google.com/mapfiles/ms/icons/yellow-dot.png',
+        'assigned': 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+        'in_transit': 'https://maps.google.com/mapfiles/ms/icons/purple-dot.png',
+        'delivered': 'https://maps.google.com/mapfiles/ms/icons/green-dot.png',
+        'failed': 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
+    };
+    
+    return icons[status] || icons['pending'];
+}
+
+// RAFRAÎCHIR LES MARQUEURS
+function refreshMarkers() {
+    if (!mapInitialized || !map) {
+        return;
+    }
+
+    // Supprimer anciens marqueurs
+    markers.forEach(marker => {
+        try {
+            marker.setMap(null);
+        } catch (e) {
+            // Ignore errors
+        }
+    });
+    markers = [];
+
+    // Filtrer et ajouter nouveaux marqueurs
+    deliveries.forEach(delivery => {
+        // Filtrer par assignation
+        if (hideAssigned && delivery.assigned) {
+            return;
+        }
+        
+        // Filtrer par heure
+        if (currentTimeFilter !== 'all') {
+            const hour = parseInt(delivery.time.split(':')[0]);
+            
+            if (currentTimeFilter === 'morning' && (hour < 6 || hour >= 12)) return;
+            if (currentTimeFilter === 'noon' && (hour < 12 || hour >= 14)) return;
+            if (currentTimeFilter === 'afternoon' && (hour < 14 || hour >= 20)) return;
+        }
+
+        if (delivery.lat && delivery.lng) {
+            addSimpleMarker(delivery);
+        }
+    });
+
+    // Ajuster la vue si des marqueurs existent
+    if (markers.length > 0) {
+        setTimeout(() => {
+            try {
+                const bounds = new google.maps.LatLngBounds();
+                markers.forEach(marker => {
+                    if (marker.getPosition()) {
+                        bounds.extend(marker.getPosition());
+                    }
+                });
+                map.fitBounds(bounds);
+                
+                // Limiter le zoom maximum pour éviter de trop zoomer
+                google.maps.event.addListenerOnce(map, 'bounds_changed', function() {
+                    if (map.getZoom() > 16) {
+                        map.setZoom(16);
+                    }
+                });
+            } catch (error) {
+                console.error('Erreur ajustement vue carte:', error);
+            }
+        }, 500);
+    }
+}
+
+// CHARGEMENT DE GOOGLE MAPS
+function loadGoogleMaps() {
+    if (googleMapsLoaded || window.google) {
+        if (window.google && window.google.maps) {
+            initMap();
+        }
+        return;
+    }
+
+    googleMapsLoaded = true;
+
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key={{ key_google }}&libraries=places&callback=initMap`;
+    script.async = true;
+    script.defer = true;
+    
+    script.onerror = function() {
+        console.error('Erreur chargement Google Maps');
+        googleMapsLoaded = false;
+    };
+
+    document.head.appendChild(script);
+}
+
+// ========================================
+// FONCTIONS DE FILTRAGE
+// ========================================
+
+// Filtrer par période de la journée
+function filterByTime(period) {
+    currentTimeFilter = period;
+    
+    // Mettre à jour les boutons
+    document.querySelectorAll('.time-filter-buttons .map-control-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    const filterButton = document.getElementById('filter-' + period);
+    if (filterButton) {
+        filterButton.classList.add('active');
+    }
+    
+    refreshMarkers();
+}
+
+// Toggle livraisons assignées
+function toggleAssignedDeliveries() {
+    const checkbox = document.getElementById('hideAssigned');
+    if (checkbox) {
+        hideAssigned = checkbox.checked;
+        refreshMarkers();
+    }
+}
+
+// ========================================
+// GESTION DES ONGLETS
+// ========================================
+
+function switchTab(tabId) {
+    // Supprimer le hash de l'URL
+    history.replaceState(null, null, window.location.pathname + window.location.search);
+    
+    // Si c'est l'onglet carte, initialiser/rafraîchir
+    if (tabId === 'deliveries-map-tab') {
+        setTimeout(() => {
+            if (map && google && google.maps) {
+                google.maps.event.trigger(map, 'resize');
+                refreshMarkers();
+            }
+        }, 300);
+    }
+}
+
+// ========================================
+// FONCTIONS ACTIONS LIVRAISONS
+// ========================================
+
+// Créer toutes les livraisons
+function createAllDeliveries() {
+    if (confirm('Créer des livraisons pour toutes les commandes confirmées?')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{% url "create_bulk_deliveries" %}';
+        form.innerHTML = `
+            {% csrf_token %}
+            <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+        `;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Créer une livraison individuelle
+function createDelivery(orderNumber) {
+    window.location.href = `/delivery/create/${orderNumber}/`;
+}
+
+// Voir détail livraison
+function viewDeliveryDetail(deliveryId) {
+    window.location.href = `/delivery/${deliveryId}/`;
+}
+
+// Fonction pour assigner une livraison
+function assignDelivery(deliveryId) {
+    // Vous pouvez implémenter cette fonction selon vos besoins
+    console.log('Assigner livraison:', deliveryId);
+    // Par exemple, ouvrir un modal de sélection de livreur
+    // ou rediriger vers une page d'assignation
+    alert('Fonction d\'assignation à implémenter pour la livraison: ' + deliveryId);
+}
+
+// ========================================
+// DRAG AND DROP POUR LES ROUTES
+// ========================================
+
+function allowDrop(ev) {
+    ev.preventDefault();
+    ev.currentTarget.classList.add('drag-over');
+}
+
+function dragLeave(ev) {
+    ev.currentTarget.classList.remove('drag-over');
+}
+
+function drag(ev) {
+    ev.dataTransfer.setData("deliveryId", ev.target.dataset.deliveryId);
+    ev.target.classList.add('dragging');
+}
+
+function drop(ev, routeId) {
+    ev.preventDefault();
+    ev.currentTarget.classList.remove('drag-over');
+    
+    const deliveryId = ev.dataTransfer.getData("deliveryId");
+    const deliveryElement = document.querySelector(`[data-delivery-id="${deliveryId}"]`);
+    
+    if (!deliveryElement) {
+        console.error('Élément de livraison non trouvé');
+        return;
+    }
+    
+    fetch('{% url "update_route_deliveries" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            route_id: routeId,
+            positions: getRoutePositions(routeId, deliveryId)
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            ev.currentTarget.appendChild(deliveryElement);
+            deliveryElement.classList.remove('dragging');
+            showNotification('Livraison assignée avec succès', 'success');
+            // Rafraîchir la carte
+            if (map) refreshMarkers();
+        } else {
+            console.error('Erreur assignation:', data);
+            showNotification('Erreur lors de l\'assignation', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur réseau:', error);
+        showNotification('Erreur de connexion', 'danger');
+    });
+}
+
+function getRoutePositions(routeId, newDeliveryId) {
+    const route = document.querySelector(`[data-route-id="${routeId}"] .route-deliveries`);
+    if (!route) {
+        console.error('Route non trouvée:', routeId);
+        return [];
+    }
+    
+    const deliveries = route.querySelectorAll('.delivery-item');
+    const positions = [];
+    
+    deliveries.forEach((delivery, index) => {
+        positions.push({
+            delivery_id: delivery.dataset.deliveryId,
+            position: index
+        });
+    });
+    
+    if (!positions.find(p => p.delivery_id === newDeliveryId)) {
+        positions.push({
+            delivery_id: newDeliveryId,
+            position: positions.length
+        });
+    }
+    
+    return positions;
+}
+
+// ========================================
+// GESTION DES ROUTES
+// ========================================
+
+// Créer une nouvelle route
+function createNewRoute() {
+    $('#createRouteModal').modal('show');
+}
+
+function submitCreateRoute() {
+    const form = document.getElementById('createRouteForm');
+    if (!form) {
+        console.error('Formulaire de création de route non trouvé');
+        return;
+    }
+    
+    const formData = new FormData(form);
+    
+    fetch('{% url "create_route" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            name: formData.get('name'),
+            driver_id: formData.get('driver_id'),
+            date: '{{ selected_date|date:"Y-m-d" }}',
+            start_time: formData.get('start_time'),
+            vehicle: ''
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            $('#createRouteModal').modal('hide');
+            showNotification('Route créée avec succès', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            console.error('Erreur création route:', data);
+            showNotification('Erreur lors de la création', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur réseau:', error);
+        showNotification('Erreur de connexion', 'danger');
+    });
+}
+
+// ========================================
+// GESTION DU PLANNING
+// ========================================
+
+function openAddPlanningModal() {
+    document.getElementById('modalTitle').textContent = 'Ajouter au planning';
+    document.getElementById('planningForm').reset();
+    document.getElementById('planningId').value = '';
+    document.getElementById('planningDate').value = '{{ selected_date|date:"Y-m-d" }}';
+    $('#planningModal').modal('show');
+}
+
+function quickAddPlanning(driverId) {
+    openAddPlanningModal();
+    document.getElementById('driverId').value = driverId;
+}
+
+function editPlanning(planningId) {
+    document.getElementById('modalTitle').textContent = 'Modifier le planning';
+    document.getElementById('planningId').value = planningId;
+    
+    // TODO: Appel AJAX pour récupérer les données du planning
+    // et les pré-remplir dans le formulaire
+    
+    $('#planningModal').modal('show');
+}
+
+function deletePlanning(planningId) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer ce planning ?')) {
+        fetch(`/delivery/planning/${planningId}/delete/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Planning supprimé avec succès', 'success');
+                location.reload();
+            } else {
+                showNotification('Erreur lors de la suppression', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur suppression planning:', error);
+            showNotification('Erreur de connexion', 'danger');
+        });
+    }
+}
+
+function savePlanning() {
+    const form = document.getElementById('planningForm');
+    if (!form) {
+        console.error('Formulaire de planning non trouvé');
+        return;
+    }
+    
+    const formData = new FormData(form);
+    
+    // Convertir en JSON
+    const data = {};
+    for (let [key, value] of formData.entries()) {
+        data[key] = value;
+    }
+    
+    // Déterminer si c'est disponible ou non
+    const availabilityRadio = document.querySelector('input[name="availability"]:checked');
+    if (availabilityRadio) {
+        data.is_available = availabilityRadio.value === 'available';
+    }
+    
+    const url = data.planning_id ? 
+        `/delivery/planning/${data.planning_id}/update/` : 
+        '/delivery/planning/create/';
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            $('#planningModal').modal('hide');
+            showNotification('Planning enregistré avec succès', 'success');
+            location.reload();
+        } else {
+            console.error('Erreur sauvegarde planning:', data);
+            showNotification('Erreur lors de l\'enregistrement', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur réseau:', error);
+        showNotification('Erreur de connexion', 'danger');
+    });
+}
+
+function viewWeeklyPlanning() {
+    window.location.href = '/delivery/planning-overview/';
+}
+
+// ========================================
+// FONCTIONS UTILITAIRES
+// ========================================
+
+// Changer la date
+function changeDate(date) {
+    window.location.href = `?date=${date}`;
+}
+
+function goToToday() {
+    const today = new Date().toISOString().split('T')[0];
+    changeDate(today);
+}
+
+// Notification
+function showNotification(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} toast-notification`;
+    toast.innerHTML = `
+        <button type="button" class="close" onclick="this.parentElement.remove()">
+            <span>&times;</span>
+        </button>
+        ${message}
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 5000);
+}
+
+// ========================================
+// INITIALISATION ET STYLES
+// ========================================
+
+// Ajouter les styles manquants pour les cartes de commandes
+function addAdditionalStyles() {
+    const additionalStyles = `
+        .order-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+            border-left: 4px solid var(--delivery-primary);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .order-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+        }
+
+        .route-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .driver-badge {
+            background: var(--delivery-primary);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .driver-badge i {
+            margin-right: 5px;
+        }
+    `;
+
+    const styleElement = document.createElement('style');
+    styleElement.textContent = additionalStyles;
+    document.head.appendChild(styleElement);
+}
+
+// Gérer l'affichage conditionnel de la raison d'indisponibilité
+function setupPlanningFormEvents() {
+    const availabilityRadios = document.querySelectorAll('input[name="availability"]');
+    const reasonGroup = document.getElementById('unavailabilityReasonGroup');
+    
+    if (availabilityRadios.length > 0 && reasonGroup) {
+        availabilityRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.value === 'unavailable') {
+                    reasonGroup.style.display = 'block';
+                    const reasonSelect = document.getElementById('unavailabilityReason');
+                    if (reasonSelect) {
+                        reasonSelect.required = true;
+                    }
+                } else {
+                    reasonGroup.style.display = 'none';
+                    const reasonSelect = document.getElementById('unavailabilityReason');
+                    if (reasonSelect) {
+                        reasonSelect.required = false;
+                    }
+                }
+            });
+        });
+    }
+}
+
+// ========================================
+// INITIALISATION PRINCIPALE
+// ========================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Initialisation du dashboard livraisons...');
+    
+    // Ajouter les styles additionnels
+    addAdditionalStyles();
+    
+    // Configurer les événements du formulaire de planning
+    setupPlanningFormEvents();
+    
+    // Initialiser les onglets Bootstrap
+    if (typeof $ !== 'undefined') {
+        $('#mainTabs a').on('click', function (e) {
+            e.preventDefault();
+            $(this).tab('show');
+            
+            const href = $(this).attr('href');
+            if (href === '#deliveries-map-tab') {
+                setTimeout(() => switchTab('deliveries-map-tab'), 200);
+            }
+        });
+    }
+    
+    // Gérer le hash dans l'URL
+    const hash = window.location.hash;
+    if (hash) {
+        const tabId = hash.replace('#', '');
+        if (typeof $ !== 'undefined') {
+            $(`a[href="#${tabId}"]`).tab('show');
+            switchTab(tabId);
+        }
+    }
+    
+    // Initialiser Google Maps si l'élément carte existe
+    const mapElement = document.getElementById('delivery-map');
+    if (mapElement) {
+        setTimeout(loadGoogleMaps, 500);
+    }
+    
+    console.log('Dashboard livraisons initialisé avec succès');
+});
+
+// Exposer les fonctions nécessaires globalement
+window.initMap = initMap;
+window.filterByTime = filterByTime;
+window.toggleAssignedDeliveries = toggleAssignedDeliveries;
+window.switchTab = switchTab;
+window.createAllDeliveries = createAllDeliveries;
+window.createDelivery = createDelivery;
+window.viewDeliveryDetail = viewDeliveryDetail;
+window.assignDelivery = assignDelivery;
+window.createNewRoute = createNewRoute;
+window.submitCreateRoute = submitCreateRoute;
+window.openAddPlanningModal = openAddPlanningModal;
+window.quickAddPlanning = quickAddPlanning;
+window.editPlanning = editPlanning;
+window.deletePlanning = deletePlanning;
+window.savePlanning = savePlanning;
+window.viewWeeklyPlanning = viewWeeklyPlanning;
+window.changeDate = changeDate;
+window.goToToday = goToToday;
+window.allowDrop = allowDrop;
+window.dragLeave = dragLeave;
+window.drag = drag;
+window.drop = drop;
+</script>
+{% endblock %}

@@ -1,0 +1,823 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Dashboard Chef de Cuisine - Julien-Leblanc Traiteur{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Variables CSS pour chef de cuisine */
+    :root {
+        --chef-primary: #8B4513;
+        --chef-primary-hover: #A0522D;
+        --chef-secondary: #DEB887;
+        --chef-accent: #CD853F;
+        --chef-dark: #654321;
+        --chef-light: #FFF8DC;
+        --chef-gray: #6c757d;
+        --chef-gray-light: #e9ecef;
+        --chef-white: #ffffff;
+        --chef-success: #228B22;
+        --chef-warning: #FF8C00;
+        --chef-danger: #B22222;
+    }
+
+    /* Header */
+    .chef-header {
+        background: linear-gradient(135deg, var(--chef-primary) 0%, var(--chef-dark) 100%);
+        padding: 2rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .chef-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 60%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(205, 133, 63, 0.1) 0%, transparent 70%);
+        animation: float 20s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(10deg); }
+    }
+    
+    .chef-title {
+        color: white;
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .chef-badge {
+        background: var(--chef-accent);
+        color: white;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .chef-subtitle {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Navigation */
+    .chef-nav {
+        background: var(--chef-dark);
+        border-bottom: 3px solid var(--chef-accent);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+    
+    .chef-nav-tabs {
+        display: flex;
+        gap: 0;
+        margin: 0;
+        padding: 0;
+        overflow-x: auto;
+    }
+    
+    .chef-nav-tab {
+        padding: 1rem 1.5rem;
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        border-bottom: 3px solid transparent;
+        position: relative;
+    }
+    
+    .chef-nav-tab:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+    }
+    
+    .chef-nav-tab.active {
+        background: rgba(205, 133, 63, 0.1);
+        color: var(--chef-accent);
+        border-bottom-color: var(--chef-accent);
+    }
+    
+    .nav-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: var(--chef-danger);
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 0.7rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        animation: bounce 2s infinite;
+    }
+    
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+        40% { transform: translateY(-5px); }
+        60% { transform: translateY(-3px); }
+    }
+    
+    /* Period Selector */
+    .period-selector {
+        background: white;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--chef-gray-light);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    
+    .period-buttons {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+    }
+    
+    .period-btn {
+        padding: 8px 20px;
+        border: 2px solid var(--chef-gray-light);
+        background: white;
+        border-radius: 20px;
+        color: var(--chef-gray);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .period-btn:hover {
+        border-color: var(--chef-accent);
+        color: var(--chef-dark);
+    }
+    
+    .period-btn.active {
+        background: var(--chef-accent);
+        border-color: var(--chef-accent);
+        color: white;
+    }
+    
+    /* Content */
+    .chef-content {
+        background: var(--chef-light);
+        padding: 2rem 0;
+        min-height: calc(100vh - 300px);
+    }
+    
+    /* Alerts */
+    .alerts-section {
+        margin-bottom: 2rem;
+    }
+    
+    .alert-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border-left: 4px solid;
+        transition: all 0.3s ease;
+    }
+    
+    .alert-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    
+    .alert-card.warning {
+        border-left-color: var(--chef-warning);
+    }
+    
+    .alert-card.danger {
+        border-left-color: var(--chef-danger);
+    }
+    
+    .alert-card.info {
+        border-left-color: #17a2b8;
+    }
+    
+    .alert-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+    
+    .alert-card.warning .alert-icon {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .alert-card.danger .alert-icon {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .alert-card.info .alert-icon {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    /* Statistics Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--chef-accent);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+    
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        background: var(--chef-light);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: var(--chef-accent);
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--chef-dark);
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: var(--chef-gray);
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+    
+    /* Production Overview */
+    .production-overview {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+    }
+    
+    .production-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--chef-gray-light);
+    }
+    
+    .production-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--chef-dark);
+    }
+    
+    .departments-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .department-card {
+        background: var(--chef-light);
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .department-card:hover {
+        transform: translateY(-3px);
+        border-color: var(--chef-accent);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .department-name {
+        font-weight: 600;
+        color: var(--chef-dark);
+        margin-bottom: 0.5rem;
+    }
+    
+    .department-progress {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--chef-primary);
+        margin-bottom: 0.5rem;
+    }
+    
+    .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: var(--chef-gray-light);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 0.5rem;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--chef-accent) 0%, var(--chef-primary) 100%);
+        transition: width 0.5s ease;
+    }
+    
+    .department-status {
+        font-size: 0.8rem;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .status-completed {
+        background: #d4f4dd;
+        color: #155724;
+    }
+    
+    .status-in-progress {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .status-not-started {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    /* Quick Actions */
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .quick-action {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        text-decoration: none;
+        color: var(--chef-dark);
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border: 2px solid transparent;
+    }
+    
+    .quick-action:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        border-color: var(--chef-accent);
+    }
+    
+    .quick-action-icon {
+        width: 50px;
+        height: 50px;
+        background: var(--chef-accent);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 1.3rem;
+        color: white;
+    }
+    
+    .quick-action-title {
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+    
+    /* Recent Orders */
+    .orders-section {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+    
+    .orders-header {
+        background: linear-gradient(135deg, var(--chef-light) 0%, #f8f9fa 100%);
+        padding: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .orders-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--chef-dark);
+    }
+    
+    .btn-view-all {
+        background: var(--chef-accent);
+        color: white;
+        padding: 8px 20px;
+        border-radius: 20px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-view-all:hover {
+        background: var(--chef-primary-hover);
+        transform: translateY(-2px);
+    }
+    
+    /* Table styles */
+    .table-responsive {
+        overflow-x: auto;
+    }
+    
+    .orders-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .orders-table thead {
+        background: #f8f9fa;
+    }
+    
+    .orders-table th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--chef-dark);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .orders-table tbody tr {
+        border-bottom: 1px solid var(--chef-gray-light);
+        transition: all 0.3s ease;
+    }
+    
+    .orders-table tbody tr:hover {
+        background: var(--chef-light);
+    }
+    
+    .orders-table td {
+        padding: 1rem;
+        color: var(--chef-gray);
+    }
+    
+    .order-number {
+        font-weight: 600;
+        color: var(--chef-dark);
+    }
+    
+    .order-status {
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        display: inline-block;
+    }
+    
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .status-confirmed {
+        background: #d4f4dd;
+        color: #28a745;
+    }
+    
+    .status-preparing {
+        background: #cce5ff;
+        color: #004085;
+    }
+    
+    .status-delivered {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .chef-nav-tabs {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .period-buttons {
+            overflow-x: auto;
+            justify-content: flex-start;
+        }
+        
+        .departments-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .quick-actions {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Chef Header -->
+<section class="chef-header">
+    <div class="container">
+        <h1 class="chef-title">
+            <i class="fas fa-chef-hat"></i> 
+            Dashboard Chef de Cuisine
+            <span class="chef-badge">Chef</span>
+        </h1>
+        <p class="chef-subtitle">Bienvenue {{ user.first_name|default:"Chef" }}, gestion complète de la cuisine</p>
+    </div>
+</section>
+
+<!-- Chef Navigation -->
+<nav class="chef-nav">
+    <div class="container">
+        <div class="chef-nav-tabs">
+            <a href="{% url 'head_chef_dashboard' %}" class="chef-nav-tab active">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a href="{% url 'head_chef_orders' %}" class="chef-nav-tab">
+                <i class="fas fa-clipboard-list"></i> Commandes
+            </a>
+            <a href="{% url 'head_chef_product_orders' %}" class="chef-nav-tab">
+                <i class="fas fa-shopping-cart"></i> Commandes Produits
+                {% if pending_product_orders > 0 %}
+                <span class="nav-badge">{{ pending_product_orders }}</span>
+                {% endif %}
+            </a>
+            <a href="{% url 'head_chef_dispatch' %}" class="chef-nav-tab">
+                <i class="fas fa-print"></i> Dispatch
+            </a>
+            <a href="/kitchen/inventory/" class="chef-nav-tab">
+                <i class="fas fa-warehouse"></i> Inventaire
+            </a>
+            <a href="{% url 'kitchen_notifications' %}" class="chef-nav-tab">
+                <i class="fas fa-bell"></i> Notifications
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- Period Selector -->
+<section class="period-selector">
+    <div class="container">
+        <div class="period-buttons">
+            <a href="?period=7" class="period-btn {% if period == '7' %}active{% endif %}">7 jours</a>
+            <a href="?period=30" class="period-btn {% if period == '30' or not period %}active{% endif %}">30 jours</a>
+            <a href="?period=90" class="period-btn {% if period == '90' %}active{% endif %}">90 jours</a>
+        </div>
+    </div>
+</section>
+
+<!-- Chef Content -->
+<section class="chef-content">
+    <div class="container">
+        <!-- Alerts -->
+        {% if alerts %}
+        <div class="alerts-section">
+            {% for alert in alerts %}
+            <div class="alert-card {{ alert.type }}">
+                <div class="alert-icon">
+                    {% if alert.type == 'warning' %}
+                        <i class="fas fa-exclamation-triangle"></i>
+                    {% elif alert.type == 'danger' %}
+                        <i class="fas fa-exclamation-circle"></i>
+                    {% else %}
+                        <i class="fas fa-info-circle"></i>
+                    {% endif %}
+                </div>
+                <div class="alert-content">
+                    <div class="alert-message">{{ alert.message }}</div>
+                    {% if alert.link %}
+                    <a href="{{ alert.link }}" class="alert-link">Voir détails →</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <!-- Notifications récentes -->
+        {% if notifications %}
+        <div class="orders-section">
+            <div class="orders-header">
+                <h3 class="orders-title">Notifications récentes</h3>
+                <a href="{% url 'kitchen_notifications' %}" class="btn-view-all">
+                    Voir tout →
+                </a>
+            </div>
+            <div style="padding: 1rem;">
+                {% for notification in notifications %}
+                <div style="padding: 1rem; border-bottom: 1px solid var(--chef-gray-light); display: flex; align-items: center; gap: 1rem;">
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--chef-light); display: flex; align-items: center; justify-content: center; color: var(--chef-accent);">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; color: var(--chef-dark);">{{ notification.title }}</div>
+                        <div style="font-size: 0.9rem; color: var(--chef-gray);">{{ notification.message }}</div>
+                        <div style="font-size: 0.8rem; color: var(--chef-gray); margin-top: 0.25rem;">
+                            {{ notification.created_at|timesince }} ago
+                        </div>
+                    </div>
+                    {% if not notification.is_read %}
+                    <div style="width: 10px; height: 10px; background: var(--chef-danger); border-radius: 50%;"></div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                </div>
+                <div class="stat-value">{{ stats.total_orders|default:"0" }}</div>
+                <div class="stat-label">Commandes</div>
+                <div style="font-size: 0.85rem; color: var(--chef-gray); margin-top: 0.5rem;">
+                    <strong>{{ stats.pending_orders|default:"0" }}</strong> en attente
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                </div>
+                <div class="stat-value">${{ stats.total_revenue|default:"0"|floatformat:0 }}</div>
+                <div class="stat-label">Revenus</div>
+                <div style="font-size: 0.85rem; color: var(--chef-gray); margin-top: 0.5rem;">
+                    Moyenne: <strong>${{ stats.avg_order_value|default:"0"|floatformat:0 }}</strong>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
+                <div class="stat-value">{{ production_stats.avg_progress|default:"0"|floatformat:0 }}%</div>
+                <div class="stat-label">Progression moyenne</div>
+                <div style="font-size: 0.85rem; color: var(--chef-gray); margin-top: 0.5rem;">
+                    <strong>{{ production_stats.completed_departments }}</strong>/{{ production_stats.total_departments }} départements
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                </div>
+                <div class="stat-value">{{ production_stats.in_progress_departments|default:"0" }}</div>
+                <div class="stat-label">En production</div>
+                <div style="font-size: 0.85rem; color: var(--chef-gray); margin-top: 0.5rem;">
+                    Départements actifs
+                </div>
+            </div>
+        </div>
+        
+        <!-- Production Overview -->
+        <div class="production-overview">
+            <div class="production-header">
+                <h3 class="production-title">Production d'aujourd'hui par département</h3>
+                <a href="{% url 'head_chef_dispatch' %}" class="btn-view-all">
+                    <i class="fas fa-print"></i> Imprimer dispatch
+                </a>
+            </div>
+            
+            <div class="departments-grid">
+                {% for production in today_productions %}
+                <div class="department-card">
+                    <div class="department-name">{{ production.get_department_display }}</div>
+                    <div class="department-progress">{{ production.progress_percentage }}%</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{ production.progress_percentage }}%;"></div>
+                    </div>
+                    <span class="department-status status-{{ production.status }}">
+                        {{ production.get_status_display }}
+                    </span>
+                    <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--chef-gray);">
+                        {{ production.completed_items }}/{{ production.total_items }} items
+                    </div>
+                </div>
+                {% empty %}
+                <div style="grid-column: 1 / -1; text-align: center; color: var(--chef-gray); padding: 2rem;">
+                    <i class="fas fa-info-circle" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <p>Aucune production prévue aujourd'hui</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <a href="{% url 'head_chef_orders' %}?status=pending" class="quick-action">
+                <div class="quick-action-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="quick-action-title">Commandes en attente</div>
+            </a>
+            <a href="{% url 'head_chef_product_orders' %}?status=pending" class="quick-action">
+                <div class="quick-action-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <div class="quick-action-title">Approuver commandes</div>
+            </a>
+            <a href="{% url 'head_chef_dispatch' %}" class="quick-action">
+                <div class="quick-action-icon">
+                    <i class="fas fa-print"></i>
+                </div>
+                <div class="quick-action-title">Imprimer dispatch</div>
+            </a>
+            <a href="/head-chef/inventory/?low_stock=1" class="quick-action">
+                <div class="quick-action-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="quick-action-title">Stock faible</div>
+            </a>
+            <a href="/head-chef/reports/" class="quick-action">
+                <div class="quick-action-icon">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <div class="quick-action-title">Rapports</div>
+            </a>
+        </div>
+        
+        
+    </div>
+</section>
+{% endblock %}

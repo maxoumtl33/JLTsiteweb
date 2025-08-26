@@ -1,0 +1,785 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+
+{% block title %}Créer un événement - Commande #{{ order.order_number }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --jlt-yellow: #F4C843;
+        --jlt-yellow-hover: #e6b835;
+        --jlt-black: #1a1a1a;
+        --jlt-gray: #6c757d;
+        --jlt-gray-light: #e9ecef;
+        --jlt-beige: #f8f9fa;
+        --jlt-green: #28a745;
+        --jlt-red: #dc3545;
+        --jlt-orange: #fd7e14;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+
+    .page-title {
+        margin: 0;
+        font-size: 1.8rem;
+        font-weight: 600;
+    }
+
+    .page-subtitle {
+        margin: 0.5rem 0 0 0;
+        opacity: 0.9;
+    }
+
+    .form-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+
+    .form-section {
+        margin-bottom: 2rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid var(--jlt-gray-light);
+    }
+
+    .form-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+
+    .section-title {
+        color: var(--jlt-black);
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .section-title i {
+        color: var(--jlt-yellow);
+        font-size: 1.2rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: var(--jlt-black);
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .form-label.required::after {
+        content: ' *';
+        color: var(--jlt-red);
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid var(--jlt-gray-light);
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--jlt-yellow);
+        box-shadow: 0 0 0 3px rgba(244, 200, 67, 0.1);
+    }
+
+    .form-select {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 12px center;
+        background-repeat: no-repeat;
+        background-size: 16px;
+        padding-right: 40px;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .form-row-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1rem;
+    }
+
+    /* Order Info Card */
+    .order-info {
+        background: linear-gradient(135deg, var(--jlt-beige) 0%, white 100%);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border-left: 4px solid var(--jlt-yellow);
+    }
+
+    .order-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .order-detail-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .order-detail-item i {
+        color: var(--jlt-yellow);
+        width: 16px;
+    }
+
+    /* Priority Selector */
+    .priority-selector {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .priority-option {
+        position: relative;
+    }
+
+    .priority-option input[type="radio"] {
+        display: none;
+    }
+
+    .priority-option label {
+        display: block;
+        padding: 10px;
+        border: 2px solid var(--jlt-gray-light);
+        border-radius: 8px;
+        text-align: center;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .priority-option.low label {
+        color: var(--jlt-gray);
+    }
+
+    .priority-option.normal label {
+        color: var(--jlt-green);
+    }
+
+    .priority-option.high label {
+        color: var(--jlt-orange);
+    }
+
+    .priority-option.urgent label {
+        color: var(--jlt-red);
+    }
+
+    .priority-option input:checked + label {
+        border-color: currentColor;
+        background: currentColor;
+        color: white;
+    }
+
+    /* Maitre Hotel Selector */
+    .maitre-hotel-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .maitre-hotel-option {
+        position: relative;
+    }
+
+    .maitre-hotel-option input[type="radio"] {
+        display: none;
+    }
+
+    .maitre-hotel-option label {
+        display: block;
+        padding: 1rem;
+        border: 2px solid var(--jlt-gray-light);
+        border-radius: 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: white;
+    }
+
+    .maitre-hotel-option input:checked + label {
+        border-color: var(--jlt-yellow);
+        background: rgba(244, 200, 67, 0.1);
+    }
+
+    .maitre-hotel-name {
+        font-weight: 600;
+        color: var(--jlt-black);
+        margin-bottom: 0.5rem;
+    }
+
+    .maitre-hotel-info {
+        font-size: 0.85rem;
+        color: var(--jlt-gray);
+    }
+
+    /* Staff Assignment */
+    .staff-list {
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid var(--jlt-gray-light);
+        border-radius: 8px;
+        padding: 1rem;
+    }
+
+    .staff-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        border: 1px solid var(--jlt-gray-light);
+        border-radius: 8px;
+        background: white;
+    }
+
+    .staff-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .staff-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .staff-role-select {
+        padding: 5px 10px;
+        border: 1px solid var(--jlt-gray-light);
+        border-radius: 5px;
+        font-size: 0.85rem;
+        min-width: 100px;
+    }
+
+    .staff-rate-input {
+        width: 80px;
+        padding: 5px 8px;
+        border: 1px solid var(--jlt-gray-light);
+        border-radius: 5px;
+        font-size: 0.85rem;
+    }
+
+    /* Action Buttons */
+    .form-actions {
+        background: var(--jlt-beige);
+        padding: 1.5rem;
+        border-radius: 10px;
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 2rem;
+    }
+
+    .btn {
+        padding: 12px 25px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+        background: var(--jlt-yellow);
+        color: var(--jlt-black);
+    }
+
+    .btn-primary:hover {
+        background: var(--jlt-yellow-hover);
+        transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+        background: var(--jlt-gray-light);
+        color: var(--jlt-gray);
+    }
+
+    .btn-secondary:hover {
+        background: var(--jlt-gray);
+        color: white;
+    }
+
+    /* Alert Messages */
+    .alert {
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .alert-info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border-left: 4px solid #17a2b8;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .form-row,
+        .form-row-3 {
+            grid-template-columns: 1fr;
+        }
+
+        .priority-selector {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .maitre-hotel-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .staff-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .staff-controls {
+            width: 100%;
+            justify-content: space-between;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="container">
+        <h1 class="page-title">
+            <i class="fas fa-calendar-plus"></i>
+            Créer un événement
+        </h1>
+        <p class="page-subtitle">
+            Création d'un événement à partir de la commande #{{ order.order_number }}
+        </p>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Order Information -->
+    <div class="order-info">
+        <h3 style="margin: 0 0 1rem 0; color: var(--jlt-black);">
+            <i class="fas fa-shopping-cart"></i>
+            Informations de la commande
+        </h3>
+        
+        <div class="order-details">
+            <div class="order-detail-item">
+                <i class="fas fa-hashtag"></i>
+                <span><strong>Commande:</strong> #{{ order.order_number }}</span>
+            </div>
+            <div class="order-detail-item">
+                <i class="fas fa-user"></i>
+                <span><strong>Client:</strong> {{ order.first_name }} {{ order.last_name }}</span>
+            </div>
+            <div class="order-detail-item">
+                <i class="fas fa-envelope"></i>
+                <span><strong>Email:</strong> {{ order.email }}</span>
+            </div>
+            <div class="order-detail-item">
+                <i class="fas fa-phone"></i>
+                <span><strong>Téléphone:</strong> {{ order.phone }}</span>
+            </div>
+            {% if order.company %}
+            <div class="order-detail-item">
+                <i class="fas fa-building"></i>
+                <span><strong>Entreprise:</strong> {{ order.company }}</span>
+            </div>
+            {% endif %}
+            <div class="order-detail-item">
+                <i class="fas fa-calendar"></i>
+                <span><strong>Date livraison:</strong> {{ order.delivery_date|date:"d/m/Y" }}</span>
+            </div>
+            <div class="order-detail-item">
+                <i class="fas fa-clock"></i>
+                <span><strong>Heure:</strong> {{ order.delivery_time|time:"H:i" }}</span>
+            </div>
+            <div class="order-detail-item">
+                <i class="fas fa-dollar-sign"></i>
+                <span><strong>Montant:</strong> {{ order.total|floatformat:2 }}$</span>
+            </div>
+        </div>
+        
+        {% if order.delivery_notes %}
+        <div style="margin-top: 1rem; padding: 1rem; background: rgba(244, 200, 67, 0.1); border-radius: 8px;">
+            <strong>Notes de livraison:</strong><br>
+            {{ order.delivery_notes }}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Create Event Form -->
+    <form method="post" class="form-card">
+        {% csrf_token %}
+        
+        <!-- Informations générales -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="fas fa-info-circle"></i>
+                Informations générales
+            </h3>
+            
+            <div class="form-group">
+                <label class="form-label required" for="event_name">Nom de l'événement</label>
+                <input type="text" class="form-control" id="event_name" name="event_name" 
+                       value="{{ default_data.event_name }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="event_description">Description</label>
+                <textarea class="form-control" id="event_description" name="event_description" 
+                          rows="3" placeholder="Description détaillée de l'événement..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label required">Priorité</label>
+                <div class="priority-selector">
+                    <div class="priority-option low">
+                        <input type="radio" id="priority_low" name="priority" value="low">
+                        <label for="priority_low">Basse</label>
+                    </div>
+                    <div class="priority-option normal">
+                        <input type="radio" id="priority_normal" name="priority" value="normal" checked>
+                        <label for="priority_normal">Normale</label>
+                    </div>
+                    <div class="priority-option high">
+                        <input type="radio" id="priority_high" name="priority" value="high">
+                        <label for="priority_high">Haute</label>
+                    </div>
+                    <div class="priority-option urgent">
+                        <input type="radio" id="priority_urgent" name="priority" value="urgent">
+                        <label for="priority_urgent">Urgente</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dates et horaires -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="fas fa-clock"></i>
+                Planning et horaires
+            </h3>
+            
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                Définissez les horaires complets de l'événement, de l'installation au nettoyage final.
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label required" for="setup_start_time">Début installation</label>
+                    <input type="datetime-local" class="form-control" id="setup_start_time" 
+                           name="setup_start_time" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label required" for="event_start_time">Début événement</label>
+                    <input type="datetime-local" class="form-control" id="event_start_time" 
+                           name="event_start_time" value="{{ default_data.event_start_time }}" required>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label required" for="event_end_time">Fin événement</label>
+                    <input type="datetime-local" class="form-control" id="event_end_time" 
+                           name="event_end_time" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label required" for="cleanup_end_time">Fin nettoyage</label>
+                    <input type="datetime-local" class="form-control" id="cleanup_end_time" 
+                           name="cleanup_end_time" required>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lieu et accès -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="fas fa-map-marker-alt"></i>
+                Lieu et accès
+            </h3>
+            
+            <div class="form-group">
+                <label class="form-label" for="venue_name">Nom du lieu</label>
+                <input type="text" class="form-control" id="venue_name" name="venue_name" 
+                       placeholder="Ex: Salle de réception du Château...">
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="venue_contact">Contact sur place</label>
+                    <input type="text" class="form-control" id="venue_contact" name="venue_contact" 
+                           placeholder="Nom du responsable sur place">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="venue_phone">Téléphone lieu</label>
+                    <input type="tel" class="form-control" id="venue_phone" name="venue_phone" 
+                           placeholder="Numéro à contacter sur place">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="venue_instructions">Instructions d'accès</label>
+                <textarea class="form-control" id="venue_instructions" name="venue_instructions" 
+                          rows="3" placeholder="Code d'accès, étage, instructions de livraison...">{{ default_data.venue_address }}</textarea>
+            </div>
+        </div>
+
+        <!-- Équipements et exigences -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="fas fa-tools"></i>
+                Équipements et exigences
+            </h3>
+            
+            <div class="form-group">
+                <label class="form-label" for="equipment_needed">Équipements nécessaires</label>
+                <textarea class="form-control" id="equipment_needed" name="equipment_needed" 
+                          rows="3" placeholder="Tables, chaises, matériel de service, décoration..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="special_requirements">Exigences spéciales</label>
+                <textarea class="form-control" id="special_requirements" name="special_requirements" 
+                          rows="3" placeholder="Allergies, restrictions alimentaires, protocoles spécifiques..."></textarea>
+            </div>
+        </div>
+
+        <!-- Assignation Maître d'hôtel -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="fas fa-crown"></i>
+                Assignation Maître d'hôtel
+            </h3>
+            
+            {% if maitre_hotels %}
+            <div class="maitre-hotel-grid">
+                <div class="maitre-hotel-option">
+                    <input type="radio" id="no_maitre_hotel" name="maitre_hotel" value="">
+                    <label for="no_maitre_hotel">
+                        <div class="maitre-hotel-name">Assigner plus tard</div>
+                        <div class="maitre-hotel-info">Créer l'événement sans assignation</div>
+                    </label>
+                </div>
+                
+                {% for mh in maitre_hotels %}
+                <div class="maitre-hotel-option">
+                    <input type="radio" id="mh_{{ mh.id }}" name="maitre_hotel" value="{{ mh.id }}">
+                    <label for="mh_{{ mh.id }}">
+                        <div class="maitre-hotel-name">{{ mh.get_full_name }}</div>
+                        <div class="maitre-hotel-info">
+                            {% if mh.email %}{{ mh.email }}{% endif %}
+                            {% if mh.phone %}<br>{{ mh.phone }}{% endif %}
+                        </div>
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                Aucun maître d'hôtel disponible. L'événement sera créé sans assignation.
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Personnel assigné -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="fas fa-users"></i>
+                Personnel assigné
+            </h3>
+            
+            {% if staff_members %}
+            <div class="staff-list">
+                {% for staff in staff_members %}
+                <div class="staff-item">
+                    <div class="staff-info">
+                        <input type="checkbox" id="staff_{{ staff.id }}" name="staff_members" value="{{ staff.id }}">
+                        <label for="staff_{{ staff.id }}" style="margin: 0; font-weight: 600;">
+                            {{ staff.get_full_name }}
+                        </label>
+                        {% if staff.email %}
+                        <span style="color: var(--jlt-gray); font-size: 0.85rem;">{{ staff.email }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="staff-controls">
+                        <select class="staff-role-select" name="staff_role_{{ staff.id }}">
+                            <option value="assistant">Assistant</option>
+                            <option value="server">Serveur</option>
+                            <option value="bartender">Barman</option>
+                            <option value="chef">Chef</option>
+                            <option value="setup">Installation</option>
+                            <option value="cleanup">Nettoyage</option>
+                        </select>
+                        <input type="number" class="staff-rate-input" name="staff_rate_{{ staff.id }}" 
+                               value="20.00" step="0.50" min="15" placeholder="$/h">
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                Aucun personnel disponible pour assignation.
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions">
+            <a href="{% url 'admin_order_detail' order.order_number %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i>
+                Annuler
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-plus"></i>
+                Créer l'événement
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-calculer les horaires par défaut
+        const eventStartInput = document.getElementById('event_start_time');
+        const setupStartInput = document.getElementById('setup_start_time');
+        const eventEndInput = document.getElementById('event_end_time');
+        const cleanupEndInput = document.getElementById('cleanup_end_time');
+        
+        function updateSchedule() {
+            if (eventStartInput.value) {
+                const eventStart = new Date(eventStartInput.value);
+                
+                // Installation 2h avant
+                if (!setupStartInput.value) {
+                    const setupStart = new Date(eventStart.getTime() - 2 * 60 * 60 * 1000);
+                    setupStartInput.value = setupStart.toISOString().slice(0, 16);
+                }
+                
+                // Événement +3h par défaut
+                if (!eventEndInput.value) {
+                    const eventEnd = new Date(eventStart.getTime() + 3 * 60 * 60 * 1000);
+                    eventEndInput.value = eventEnd.toISOString().slice(0, 16);
+                }
+                
+                // Nettoyage +1h après événement
+                if (!cleanupEndInput.value) {
+                    const eventEnd = new Date(eventEndInput.value || eventStart.getTime() + 3 * 60 * 60 * 1000);
+                    const cleanupEnd = new Date(eventEnd.getTime() + 1 * 60 * 60 * 1000);
+                    cleanupEndInput.value = cleanupEnd.toISOString().slice(0, 16);
+                }
+            }
+        }
+        
+        eventStartInput.addEventListener('change', updateSchedule);
+        eventEndInput.addEventListener('change', function() {
+            if (eventEndInput.value) {
+                const eventEnd = new Date(eventEndInput.value);
+                const cleanupEnd = new Date(eventEnd.getTime() + 1 * 60 * 60 * 1000);
+                cleanupEndInput.value = cleanupEnd.toISOString().slice(0, 16);
+            }
+        });
+        
+        // Activer/désactiver les contrôles du personnel selon la sélection
+        const staffCheckboxes = document.querySelectorAll('input[name="staff_members"]');
+        staffCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const staffId = this.value;
+                const roleSelect = document.querySelector(`select[name="staff_role_${staffId}"]`);
+                const rateInput = document.querySelector(`input[name="staff_rate_${staffId}"]`);
+                
+                roleSelect.disabled = !this.checked;
+                rateInput.disabled = !this.checked;
+                
+                if (this.checked) {
+                    roleSelect.style.opacity = '1';
+                    rateInput.style.opacity = '1';
+                } else {
+                    roleSelect.style.opacity = '0.5';
+                    rateInput.style.opacity = '0.5';
+                }
+            });
+            
+            // Initialiser l'état
+            checkbox.dispatchEvent(new Event('change'));
+        });
+        
+        // Validation du formulaire
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const setupStart = new Date(setupStartInput.value);
+            const eventStart = new Date(eventStartInput.value);
+            const eventEnd = new Date(eventEndInput.value);
+            const cleanupEnd = new Date(cleanupEndInput.value);
+            
+            if (setupStart >= eventStart) {
+                e.preventDefault();
+                alert('L\'installation doit commencer avant le début de l\'événement');
+                return;
+            }
+            
+            if (eventStart >= eventEnd) {
+                e.preventDefault();
+                alert('L\'événement doit se terminer après son début');
+                return;
+            }
+            
+            if (eventEnd >= cleanupEnd) {
+                e.preventDefault();
+                alert('Le nettoyage doit se terminer après la fin de l\'événement');
+                return;
+            }
+        });
+        
+        // Initialiser les calculs
+        updateSchedule();
+    });
+</script>
+{% endblock %}

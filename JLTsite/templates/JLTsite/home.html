@@ -7,7 +7,6 @@
     <title>Julien-Leblanc Traiteur - Service traiteur haut de gamme</title>
     
     <style>
-        
         @font-face {
             font-family: 'NeueKabel-Regular';
             src: url('{% static "fonts/NeueKabel-Regular.otf" %}') format('opentype');
@@ -28,7 +27,6 @@
             background: linear-gradient(to right, #EDDCCD 50%, #444E36 50%);
         }
         
-        
         /* Container principal */
         .main-container {
             position: relative;
@@ -38,9 +36,18 @@
             overflow: visible;
         }
 
+        /* Transition plus smooth pour les boutons */
         .hide-buttons {
-    opacity: 0;
-}
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .show-buttons {
+            opacity: 1;
+            pointer-events: auto;
+            transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.3s;
+        }
         
         /* Éléments décoratifs - barres verticales */
         .decorative-lines-top {
@@ -143,7 +150,7 @@
             display: flex;
         }
         
-        /* Sections des vidéos (cachées derrière) */
+        /* Sections des vidéos avec zones cliquables */
         .video-section-left,
         .video-section-right {
             position: absolute;
@@ -152,6 +159,8 @@
             height: 100%;
             overflow: hidden;
             z-index: 1;
+            cursor: pointer;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         .video-section-left {
@@ -163,6 +172,12 @@
             right: 0;
             background-color: black;
         }
+
+        /* Effet de zoom léger au survol des vidéos actives */
+        .video-section-left.active:hover .video-container video,
+        .video-section-right.active:hover .video-container video {
+            transform: scale(1.05);
+        }
         
         .video-container {
             position: absolute;
@@ -171,6 +186,7 @@
             left: 0;
             right: 0;
             overflow: hidden;
+            pointer-events: none; /* Les vidéos ne captent pas les clics directement */
         }
         
         .video-container video {
@@ -178,7 +194,9 @@
             height: 100%;
             object-fit: cover;
             opacity: 0;
-            transition: opacity 0.6s ease;
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), 
+                        transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            will-change: opacity, transform;
         }
         
         .video-container video.playing {
@@ -211,11 +229,11 @@
             justify-content: center;
             align-items: center;
             z-index: 10;
-            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 1s cubic-bezier(0.65, 0, 0.35, 1);
             will-change: transform;
         }
         
-        /* États de glissement */
+        /* États de glissement avec transitions améliorées */
         .center-section.slide-right {
             transform: translateX(50%);
         }
@@ -224,33 +242,21 @@
             transform: translateX(-50%);
         }
         
-     
-        
-        .logo-icon {
-            
-            font-size: 80px;
-            color: #F4C843;
-            font-style: italic;
-            margin-bottom: -20px;
-            font-weight: 400;
+        /* Logo avec animation */
+        .logo-container {
+            transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                        transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .logo-container.fade-out {
+            opacity: 0.3;
+            transform: scale(0.95);
         }
         
-        .logo-text {
-            
-            font-size: 62px;
-            color: #000;
-            font-weight: 400;
-            letter-spacing: 2px;
-            margin-bottom: 10px;
-        }
-        
-        .logo-subtitle {
-            
-            font-size: 18px;
-            color: #000;
-            letter-spacing: 8px;
-            font-weight: 300;
-            text-transform: uppercase;
+        .logo-image {
+            width: 500px;
+            height: auto;
+            z-index: 200;
         }
         
         /* Boutons Repas d'affaires et Événement */
@@ -262,11 +268,13 @@
             display: flex;
             justify-content: space-around;
             z-index: 100;
+            transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         .nav-button {
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateZ(0); /* Force GPU acceleration */
         }
         
         .nav-button h2 {
@@ -274,7 +282,7 @@
             color: #000;
             font-weight: 400;
             margin-bottom: 10px;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             text-align: center;
         }
         
@@ -283,20 +291,22 @@
             height: 1px;
             background-color: #000;
             margin: 0 auto;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: center;
         }
         
         .nav-button:hover h2 {
             color: #F4C843;
-            transform: scale(1.05);
+            transform: scale(1.05) translateY(-2px);
         }
         
         .nav-button:hover .underline {
             background-color: #F4C843;
             width: 200px;
+            transform: scaleY(2);
         }
         
-        /* Texte sur les vidéos */
+        /* Texte sur les vidéos avec animations améliorées */
         .video-overlay-text {
             position: absolute;
             bottom: 120px;
@@ -304,32 +314,36 @@
             z-index: 20;
             text-align: center;
             opacity: 0;
-            transition: opacity 0.6s ease 0.3s;
-        }
-        .logo-image {
-            width: 500px; /* ou comme vous le souhaitez */
-            height: auto;
-            z-index: 200;
+            transform: translateY(20px);
+            transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.2s,
+                        transform 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.2s;
+            pointer-events: none; /* Ne capture pas les clics */
         }
         
         .video-overlay-text.business-overlay {
             left: 25%;
-            transform: translateX(-50%);
+            transform: translateX(-50%) translateY(20px);
         }
         
         .video-overlay-text.event-overlay {
             right: 25%;
-            transform: translateX(50%);
+            transform: translateX(50%) translateY(20px);
         }
         
         .video-overlay-text.visible {
             opacity: 1;
+            transform: translateX(-50%) translateY(0) !important;
+        }
+
+        .video-overlay-text.event-overlay.visible {
+            transform: translateX(50%) translateY(0) !important;
         }
         
         .video-overlay-text h2 {
             font-size: 32px;
             font-weight: 400;
             margin-bottom: 10px;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         .video-overlay-text .underline {
@@ -337,34 +351,24 @@
             height: 1px;
             background-color: #fff;
             margin: 0 auto;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        
-        /* Zone de déclenchement invisible pour debug */
-        .trigger-zone {
-            position: absolute;
-            bottom: 100px;
-            width: 250px;
-            height: 80px;
-            z-index: 200;
-            /* border: 2px solid red; */ /* Décommenter pour voir les zones */
+
+        /* Effet hover sur les overlays */
+        .video-section-left.active:hover ~ .video-overlay-text.business-overlay h2,
+        .video-section-right.active:hover ~ .video-overlay-text.event-overlay h2 {
+            transform: scale(1.05);
         }
-        
-        .trigger-zone.business-trigger {
-            left: calc(25% - 125px);
-        }
-        
-        .trigger-zone.event-trigger {
-            right: calc(25% - 125px);
+
+        .video-section-left.active:hover ~ .video-overlay-text.business-overlay .underline,
+        .video-section-right.active:hover ~ .video-overlay-text.event-overlay .underline {
+            width: 200px;
         }
         
         /* Responsive */
         @media screen and (max-width: 1024px) {
-            .logo-icon {
-                font-size: 60px;
-            }
-            
-            .logo-text {
-                font-size: 48px;
+            .logo-image {
+                width: 400px;
             }
             
             .nav-button h2,
@@ -378,8 +382,8 @@
                 bottom: 80px;
             }
             
-            .logo-container {
-                margin-bottom: 40px;
+            .logo-image {
+                width: 300px;
             }
             
             .center-section.slide-right {
@@ -406,8 +410,8 @@
         
         <!-- Container principal -->
         <div class="content-wrapper">
-            <!-- Section vidéo gauche (Repas d'affaires) -->
-            <div class="video-section-left">
+            <!-- Section vidéo gauche (Repas d'affaires) - maintenant cliquable -->
+            <div class="video-section-left" id="videoSectionLeft">
                 <div class="video-container">
                     <div class="video-placeholder">Chargement vidéo...</div>
                     <video id="businessVideo" loop muted playsinline>
@@ -416,8 +420,8 @@
                 </div>
             </div>
             
-            <!-- Section vidéo droite (Événement) -->
-            <div class="video-section-right">
+            <!-- Section vidéo droite (Événement) - maintenant cliquable -->
+            <div class="video-section-right" id="videoSectionRight">
                 <div class="video-container">
                     <div class="video-placeholder">Chargement vidéo...</div>
                     <video id="eventVideo" loop muted playsinline>
@@ -425,36 +429,34 @@
                     </video>
                 </div>
             </div>
-            <div class="center-section" id="centerSection">
-            <div class="logo-container">
-                <img src="{% static 'images/JLT_noir_jaune.png' %}" alt="Logo" class="logo-image" />
-            </div>
             
-            <!-- Boutons de navigation -->
-            <div class="nav-buttons-container">
-                <div class="nav-button" id="businessButton">
-                    <h2>Repas d'affaires</h2>
-                    <div class="underline"></div>
+            <div class="center-section" id="centerSection">
+                <div class="logo-container" id="logoContainer">
+                    <img src="{% static 'images/JLT_noir_jaune.png' %}" alt="Logo" class="logo-image" />
                 </div>
                 
-                <div class="nav-button" id="eventButton">
-                    <h2>Événement</h2>
-                    <div class="underline"></div>
+                <!-- Boutons de navigation -->
+                <div class="nav-buttons-container show-buttons" id="navButtons">
+                    <div class="nav-button" id="businessButton">
+                        <h2>REPAS D'AFFAIRES ET <br> COMMANDE EN LIGNE</h2>
+                        <div class="underline"></div>
+                    </div>
+                    
+                    <div class="nav-button" id="eventButton">
+                        <h2>ÉVÉNEMENTS PRIVÉS <br> ET CORPORATIFS</h2>
+                        <div class="underline"></div>
+                    </div>
                 </div>
             </div>
-        </div>
-            <!-- Zones de déclenchement invisibles (pour debug) -->
-            <div class="trigger-zone business-trigger" id="businessTrigger"></div>
-            <div class="trigger-zone event-trigger" id="eventTrigger"></div>
             
             <!-- Textes overlay sur vidéos -->
             <div class="video-overlay-text business-overlay" id="businessOverlay">
-                <h2 style="cursor: pointer;">Repas d'affaires</h2>
+                <h2>REPAS D'AFFAIRES ET <br> COMMANDE EN LIGNE</h2>
                 <div class="underline"></div>
             </div>
             
             <div class="video-overlay-text event-overlay" id="eventOverlay">
-                <h2 style="cursor: pointer;">Événement</h2>
+                <h2>ÉVÉNEMENTS PRIVÉS <br> ET CORPORATIFS</h2>
                 <div class="underline"></div>
             </div>
         </div>
@@ -465,205 +467,246 @@
         const centerSection = document.getElementById('centerSection');
         const businessButton = document.getElementById('businessButton');
         const eventButton = document.getElementById('eventButton');
-        const businessTrigger = document.getElementById('businessTrigger');
-        const eventTrigger = document.getElementById('eventTrigger');
         const businessVideo = document.getElementById('businessVideo');
         const eventVideo = document.getElementById('eventVideo');
         const businessOverlay = document.getElementById('businessOverlay');
         const eventOverlay = document.getElementById('eventOverlay');
+        const navButtons = document.getElementById('navButtons');
+        const logoContainer = document.getElementById('logoContainer');
+        const videoSectionLeft = document.getElementById('videoSectionLeft');
+        const videoSectionRight = document.getElementById('videoSectionRight');
         
         let currentState = 'center';
         let isAnimating = false;
+        let resetTimeout;
+        let mouseOverElement = null;
         
-        // Debug - Vérifier que les éléments existent
-        console.log('Elements loaded:', {
-            businessButton: !!businessButton,
-            eventButton: !!eventButton,
-            centerSection: !!centerSection,
-            businessVideo: !!businessVideo,
-            eventVideo: !!eventVideo
-        });
-        
-        // Fonction pour réinitialiser à l'état central
+        // Fonction pour réinitialiser à l'état central avec transitions smooth
         function resetToCenter() {
             if (isAnimating || currentState === 'center') return;
             
-            console.log('Resetting to center');
             isAnimating = true;
+            
+            // Fade in des éléments centraux
+            logoContainer.classList.remove('fade-out');
+            navButtons.classList.remove('hide-buttons');
+            navButtons.classList.add('show-buttons');
+            
+            // Retour smooth de la section centrale
             centerSection.classList.remove('slide-right', 'slide-left');
             
-            // Arrêter les vidéos
-            businessVideo.pause();
-            businessVideo.classList.remove('playing');
-            eventVideo.pause();
-            eventVideo.classList.remove('playing');
+            // Désactiver les sections vidéo
+            videoSectionLeft.classList.remove('active');
+            videoSectionRight.classList.remove('active');
             
-            // Cacher les overlays
-            businessOverlay.classList.remove('visible');
-            eventOverlay.classList.remove('visible');
+            // Fade out des vidéos et overlays
+            setTimeout(() => {
+                businessVideo.classList.remove('playing');
+                eventVideo.classList.remove('playing');
+                businessOverlay.classList.remove('visible');
+                eventOverlay.classList.remove('visible');
+            }, 200);
+            
+            // Pause des vidéos après le fade out
+            setTimeout(() => {
+                businessVideo.pause();
+                eventVideo.pause();
+            }, 800);
             
             currentState = 'center';
             
             setTimeout(() => {
                 isAnimating = false;
-            }, 800);
-
-            setTimeout(function() {
-                document.querySelector('.nav-buttons-container').classList.remove('hide-buttons');
-            }, 500);
+            }, 1000);
         }
         
         // Fonction pour glisser vers la droite (afficher vidéo gauche)
         function slideRight() {
             if (isAnimating || currentState === 'right') return;
             
-            console.log('Sliding right - showing business video');
             isAnimating = true;
-            document.querySelector('.nav-buttons-container').classList.add('hide-buttons');
+            
+            // Fade out des éléments centraux
+            navButtons.classList.add('hide-buttons');
+            navButtons.classList.remove('show-buttons');
+            logoContainer.classList.add('fade-out');
+            
+            // Glissement smooth
             centerSection.classList.remove('slide-left');
             centerSection.classList.add('slide-right');
             
-            // Arrêter l'autre vidéo si elle joue
-            eventVideo.pause();
-            eventVideo.classList.remove('playing');
-            eventOverlay.classList.remove('visible');
+            // Activer la section vidéo gauche
+            videoSectionLeft.classList.add('active');
+            videoSectionRight.classList.remove('active');
             
-            // Jouer la vidéo de gauche
+            // Arrêter l'autre vidéo si elle joue
+            if (eventVideo.classList.contains('playing')) {
+                eventVideo.classList.remove('playing');
+                eventOverlay.classList.remove('visible');
+                setTimeout(() => eventVideo.pause(), 600);
+            }
+            
+            // Jouer la vidéo de gauche avec délai pour smooth transition
             setTimeout(() => {
                 businessVideo.play().catch(e => console.log('Video play failed:', e));
                 businessVideo.classList.add('playing');
-                businessOverlay.classList.add('visible');
-            }, 400);
+                setTimeout(() => businessOverlay.classList.add('visible'), 100);
+            }, 300);
             
             currentState = 'right';
             
             setTimeout(() => {
                 isAnimating = false;
-            }, 800);
+            }, 1000);
         }
         
         // Fonction pour glisser vers la gauche (afficher vidéo droite)
         function slideLeft() {
             if (isAnimating || currentState === 'left') return;
             
-            console.log('Sliding left - showing event video');
             isAnimating = true;
-            document.querySelector('.nav-buttons-container').classList.add('hide-buttons');
+            
+            // Fade out des éléments centraux
+            navButtons.classList.add('hide-buttons');
+            navButtons.classList.remove('show-buttons');
+            logoContainer.classList.add('fade-out');
+            
+            // Glissement smooth
             centerSection.classList.remove('slide-right');
             centerSection.classList.add('slide-left');
             
-            // Arrêter l'autre vidéo si elle joue
-            businessVideo.pause();
-            businessVideo.classList.remove('playing');
-            businessOverlay.classList.remove('visible');
+            // Activer la section vidéo droite
+            videoSectionRight.classList.add('active');
+            videoSectionLeft.classList.remove('active');
             
-            // Jouer la vidéo de droite
+            // Arrêter l'autre vidéo si elle joue
+            if (businessVideo.classList.contains('playing')) {
+                businessVideo.classList.remove('playing');
+                businessOverlay.classList.remove('visible');
+                setTimeout(() => businessVideo.pause(), 600);
+            }
+            
+            // Jouer la vidéo de droite avec délai pour smooth transition
             setTimeout(() => {
                 eventVideo.play().catch(e => console.log('Video play failed:', e));
                 eventVideo.classList.add('playing');
-                eventOverlay.classList.add('visible');
-            }, 400);
+                setTimeout(() => eventOverlay.classList.add('visible'), 100);
+            }, 300);
             
             currentState = 'left';
             
             setTimeout(() => {
                 isAnimating = false;
-            }, 800);
+            }, 1000);
         }
         
-        // Événements hover sur les boutons
+        // Gestion des événements hover sur les boutons
         businessButton.addEventListener('mouseenter', () => {
-            console.log('Hover on business button');
+            mouseOverElement = 'business';
+            clearTimeout(resetTimeout);
             slideRight();
         });
         
         eventButton.addEventListener('mouseenter', () => {
-            console.log('Hover on event button');
+            mouseOverElement = 'event';
+            clearTimeout(resetTimeout);
             slideLeft();
         });
         
-        // Événements hover sur les zones de déclenchement (backup)
-        businessTrigger.addEventListener('mouseenter', slideRight);
-        eventTrigger.addEventListener('mouseenter', slideLeft);
+        // Gestion du hover sur les sections vidéo
+        videoSectionLeft.addEventListener('mouseenter', () => {
+            if (currentState === 'right') {
+                mouseOverElement = 'business';
+                clearTimeout(resetTimeout);
+            }
+        });
         
-        // Retour au centre quand on quitte les zones
-        let resetTimeout;
+        videoSectionRight.addEventListener('mouseenter', () => {
+            if (currentState === 'left') {
+                mouseOverElement = 'event';
+                clearTimeout(resetTimeout);
+            }
+        });
         
+        // Fonction pour gérer la sortie de souris
         function handleMouseLeave() {
+            mouseOverElement = null;
             clearTimeout(resetTimeout);
             resetTimeout = setTimeout(() => {
-                // Vérifier qu'on n'est sur aucun bouton
-                const isOverBusiness = businessButton.matches(':hover') || businessTrigger.matches(':hover');
-                const isOverEvent = eventButton.matches(':hover') || eventTrigger.matches(':hover');
-                
-                if (!isOverBusiness && !isOverEvent) {
+                if (!mouseOverElement) {
                     resetToCenter();
                 }
-            }, 300);
+            }, 400); // Délai légèrement augmenté pour plus de fluidité
         }
         
+        // Événements de sortie
         businessButton.addEventListener('mouseleave', handleMouseLeave);
         eventButton.addEventListener('mouseleave', handleMouseLeave);
-        businessTrigger.addEventListener('mouseleave', handleMouseLeave);
-        eventTrigger.addEventListener('mouseleave', handleMouseLeave);
+        videoSectionLeft.addEventListener('mouseleave', () => {
+            if (currentState === 'right') {
+                handleMouseLeave();
+            }
+        });
+        videoSectionRight.addEventListener('mouseleave', () => {
+            if (currentState === 'left') {
+                handleMouseLeave();
+            }
+        });
         
-        // Événements click pour navigation future
+        // Événements click sur les sections vidéo
+        videoSectionLeft.addEventListener('click', () => {
+            if (currentState === 'right') {
+                console.log('Navigation vers Repas d\'affaires');
+                window.location.href = '/repas';
+            }
+        });
+        
+        videoSectionRight.addEventListener('click', () => {
+            if (currentState === 'left') {
+                console.log('Navigation vers Événements');
+                window.location.href = '/événements';
+            }
+        });
+        
+        // Click sur les boutons également
         businessButton.addEventListener('click', () => {
-            console.log('Click: Navigation vers Repas d\'affaires');
-            // window.location.href = '/repas-affaires';
+            console.log('Navigation vers Repas d\'affaires');
+            window.location.href = '/repas';
         });
         
         eventButton.addEventListener('click', () => {
-            console.log('Click: Navigation vers Événements');
-            // window.location.href = '/evenements';
+            console.log('Navigation vers Événements');
+            window.location.href = '/événements';
         });
         
         // Animation d'entrée au chargement
         window.addEventListener('load', () => {
-            console.log('Page loaded - starting animations');
-            
-            const logoContainer = document.querySelector('.logo-container');
+            // Animation du logo
             logoContainer.style.opacity = '0';
             logoContainer.style.transform = 'translateY(30px)';
             
             setTimeout(() => {
-                logoContainer.style.transition = 'all 1s ease';
+                logoContainer.style.transition = 'all 1s cubic-bezier(0.4, 0, 0.2, 1)';
                 logoContainer.style.opacity = '1';
                 logoContainer.style.transform = 'translateY(0)';
             }, 100);
             
+            // Animation des boutons
             const buttons = document.querySelectorAll('.nav-button');
             buttons.forEach((button, index) => {
                 button.style.opacity = '0';
+                button.style.transform = 'translateY(20px)';
                 setTimeout(() => {
-                    button.style.transition = 'opacity 1s ease';
+                    button.style.transition = 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
                     button.style.opacity = '1';
-                }, 500 + (index * 200));
+                    button.style.transform = 'translateY(0)';
+                }, 400 + (index * 150));
             });
         });
-        // Sélectionne les zones de déclenchement
-
-        businessTrigger.addEventListener('click', () => {
-            window.location.href = '/repas'; // change la URL ici si nécessaire
-        });
-
-        eventTrigger.addEventListener('click', () => {
-            window.location.href = '/événements'; // change la URL ici si nécessaire
-        });
-
-        // Test direct - décommenter pour tester
-        // setTimeout(() => {
-        //     console.log('Test: sliding right');
-        //     slideRight();
-        //     setTimeout(() => {
-        //         console.log('Test: sliding left');
-        //         slideLeft();
-        //         setTimeout(() => {
-        //             console.log('Test: reset to center');
-        //             resetToCenter();
-        //         }, 2000);
-        //     }, 2000);
-        // }, 2000);
+        
+        // Préchargement des vidéos pour des transitions plus smooth
+        businessVideo.load();
+        eventVideo.load();
     </script>
 </body>
 </html>

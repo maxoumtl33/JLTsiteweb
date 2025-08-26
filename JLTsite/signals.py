@@ -1,266 +1,208 @@
-# signals.py - Signaux Django
+# signals.py - À créer dans votre app JLTsite
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
-from .models import Order, Review, User
-from .services import EmailService
+from django.utils import timezone
+from datetime import timedelta
+import uuid, datetime
+
+from .models import Order, Delivery, DeliveryNotification, User
 
 @receiver(pre_save, sender=Order)
 def track_order_status_change(sender, instance, **kwargs):
-    """Suivre les changements de statut"""
-    if instance.pk:
+    """Détecte quand une commande passe au statut confirmé"""
+    if instance.pk:  # Si l'ordre existe déjà
         try:
             old_order = Order.objects.get(pk=instance.pk)
-            if old_order.status != instance.status:
-                instance._old_status = old_order.status
+            # Stocker l'ancien statut dans une variable temporaire
+            instance._old_status = old_order.status
         except Order.DoesNotExist:
-            pass
+            instance._old_status = None
+    else:
+        instance._old_status = None
 
 @receiver(post_save, sender=Order)
-def handle_order_save(sender, instance, created, **kwargs):
-    """Gérer la sauvegarde d'une commande"""
-    if created:
-        # Nouvelle commande
-        EmailService.send_order_confirmation(instance)
+def create_delivery_on_order_confirmation(sender, instance, created, **kwargs):
+    """
+    Crée automatiquement une livraison quand une commande est confirmée
+    """
+    # Vérifier si le statut vient de passer à 'confirmed'
+    old_status = getattr(instance, '_old_status', None)
+    
+    if instance.status == 'confirmed' and old_status != 'confirmed':
+        # Vérifier qu'il n'y a pas déjà une livraison pour cette commande
+        existing_delivery = Delivery.objects.filter(
+            order=instance,
+            delivery_type='delivery'
+        ).first()
+        
+        if not existing_delivery:
+            # Créer automatiquement la livraison
+            delivery = create_automatic_delivery(instance)
+            
+            # Envoyer une notification au responsable livraison
+            notify_delivery_managers(delivery)
+            
+            # Logger la création
+            print(f"Livraison {delivery.delivery_number} créée automatiquement pour la commande {instance.order_number}")
+
+def create_automatic_delivery(order):
+    """
+    Crée une livraison à partir d'une commande confirmée
+    """
+    from .delivery_views import get_order_items_description, geocode_delivery_address
+    
+    # Créer la livraison
+    delivery = Delivery.objects.create(
+        order=order,
+        delivery_type='delivery',
+        customer_name=f"{order.first_name} {order.last_name}",
+        customer_phone=order.phone,
+        customer_email=order.email,
+        company=order.company or '',
+        delivery_address=order.delivery_address,
+        delivery_postal_code=order.delivery_postal_code,
+        delivery_city=order.delivery_city,
+        scheduled_date=order.delivery_date,
+        scheduled_time_start=order.delivery_time,
+        scheduled_time_end=calculate_end_time(order.delivery_time),
+        delivery_instructions=order.delivery_notes,
+        items_description=get_order_items_description(order),
+        total_packages=estimate_packages_count(order),
+        priority=determine_priority(order),
+        has_checklist=hasattr(order, 'checklist'),
+        checklist_completed=order.checklist.status == 'completed' if hasattr(order, 'checklist') else False,
+        created_by=None  # Système automatique
+    )
+    
+    # Géocoder l'adresse
+    geocode_delivery_address(delivery)
+    
+    return delivery
+
+def calculate_end_time(start_time):
+    """
+    Calcule l'heure de fin estimée (30 minutes après le début)
+    """
+    from datetime import datetime, timedelta
+    
+    # Convertir l'heure en datetime pour le calcul
+    dummy_date = datetime(2000, 1, 1)
+    start_datetime = datetime.combine(dummy_date, start_time)
+    end_datetime = start_datetime + timedelta(minutes=30)
+    
+    return end_datetime.time()
+
+def estimate_packages_count(order):
+    """
+    Estime le nombre de colis basé sur les items de la commande
+    """
+    total_items = sum(item.quantity for item in order.items.all())
+    
+    # Logique d'estimation (à adapter selon vos besoins)
+    if total_items <= 5:
+        return 1
+    elif total_items <= 15:
+        return 2
+    elif total_items <= 30:
+        return 3
     else:
-        # Mise à jour de commande
-        if hasattr(instance, '_old_status'):
-            EmailService.send_order_status_update(instance, instance._old_status)
+        return (total_items // 10) + 1
 
-@receiver(post_save, sender=Review)
-def update_product_rating(sender, instance, created, **kwargs):
-    """Mettre à jour la note du produit"""
-    if instance.is_approved:
-        # Recalculer la moyenne des avis
-        lunch_box = instance.lunch_box
-        reviews = Review.objects.filter(lunch_box=lunch_box, is_approved=True)
-        avg_rating = reviews.aggregate(models.Avg('rating'))['rating__avg']
-        # Vous pouvez stocker cette moyenne dans un champ dédié si nécessaire
+def determine_priority(order):
+    """
+    Détermine la priorité de la livraison
+    """
+    from datetime import datetime, timedelta
+    
+    # Si la livraison est pour aujourd'hui ou demain = priorité haute
+    days_until_delivery = (order.delivery_date - timezone.now().date()).days
+    
+    if days_until_delivery <= 0:
+        return 'urgent'
+    elif days_until_delivery == 1:
+        return 'high'
+    elif order.total > 500:  # Commandes importantes
+        return 'high'
+    else:
+        return 'normal'
 
-@receiver(post_save, sender=User)
-def create_welcome_promo(sender, instance, created, **kwargs):
-    """Créer un code promo de bienvenue"""
-    if created:
-        import random
-        import string
-        from datetime import timedelta
-        
-        code = 'WELCOME' + ''.join(random.choices(string.digits, k=4))
-        
-        PromoCode.objects.create(
-            code=code,
-            description='Code de bienvenue',
-            discount_type='percentage',
-            discount_value=10,
-            minimum_order=30,
-            user_limit=1,
-            valid_from=timezone.now(),
-            valid_until=timezone.now() + timedelta(days=30),
-            is_active=True
-        )
-        
-        # Envoyer le code par email
-        EmailService.send_promo_code(instance, PromoCode.objects.get(code=code))
-
-# tasks.py - Tâches Celery
-from celery import shared_task
-from django.utils import timezone
-from datetime import datetime, timedelta
-from .models import Order, Analytics, User, PromoCode, LunchBox
-from .services import EmailService, InventoryService
-
-@shared_task
-def process_daily_analytics():
-    """Traiter les analytics quotidiennes"""
-    from .views import update_daily_analytics
-    update_daily_analytics()
-    return "Analytics processed successfully"
-
-@shared_task
-def send_order_reminders():
-    """Envoyer des rappels pour les commandes à venir"""
-    tomorrow = timezone.now().date() + timedelta(days=1)
-    
-    orders = Order.objects.filter(
-        delivery_date=tomorrow,
-        status__in=['confirmed', 'preparing']
-    )
-    
-    for order in orders:
-        subject = f"Rappel: Votre commande #{order.order_number} pour demain"
-        context = {
-            'order': order,
-            'delivery_time': order.delivery_time
-        }
-        
-        html_content = render_to_string('emails/order_reminder.html', context)
-        text_content = strip_tags(html_content)
-        
-        send_mail(
-            subject,
-            text_content,
-            settings.DEFAULT_FROM_EMAIL,
-            [order.user.email],
-            html_message=html_content
-        )
-    
-    return f"Sent {orders.count()} reminders"
-
-@shared_task
-def cleanup_abandoned_carts():
-    """Nettoyer les paniers abandonnés"""
-    threshold = timezone.now() - timedelta(days=7)
-    
-    # Paniers non connectés de plus de 7 jours
-    abandoned_carts = Cart.objects.filter(
-        user__isnull=True,
-        updated_at__lt=threshold
-    )
-    
-    count = abandoned_carts.count()
-    abandoned_carts.delete()
-    
-    # Envoyer un email de rappel pour les paniers connectés
-    user_carts = Cart.objects.filter(
-        user__isnull=False,
-        updated_at__lt=timezone.now() - timedelta(days=2),
-        updated_at__gt=timezone.now() - timedelta(days=3),
-        items__isnull=False
-    ).distinct()
-    
-    for cart in user_carts:
-        subject = "Votre panier vous attend!"
-        context = {
-            'user': cart.user,
-            'items': cart.items.all()[:3],
-            'cart_url': f"{settings.SITE_URL}/cart"
-        }
-        
-        html_content = render_to_string('emails/abandoned_cart.html', context)
-        text_content = strip_tags(html_content)
-        
-        send_mail(
-            subject,
-            text_content,
-            settings.DEFAULT_FROM_EMAIL,
-            [cart.user.email],
-            html_message=html_content
-        )
-    
-    return f"Cleaned {count} abandoned carts, sent {user_carts.count()} reminders"
-
-@shared_task
-def check_promo_codes_expiry():
-    """Désactiver les codes promo expirés"""
-    expired_codes = PromoCode.objects.filter(
-        valid_until__lt=timezone.now(),
+def notify_delivery_managers(delivery):
+    """
+    Notifie les responsables livraison de la nouvelle livraison
+    """
+    # Récupérer tous les responsables livraison
+    managers = User.objects.filter(
+        role__in=['delivery_manager', 'admin'],
         is_active=True
     )
     
-    count = expired_codes.count()
-    expired_codes.update(is_active=False)
-    
-    return f"Deactivated {count} expired promo codes"
-
-@shared_task
-def generate_weekly_report():
-    """Générer un rapport hebdomadaire"""
-    end_date = timezone.now().date()
-    start_date = end_date - timedelta(days=7)
-    
-    # Collecter les statistiques
-    stats = {
-        'period': f"{start_date} - {end_date}",
-        'total_orders': Order.objects.filter(
-            created_at__date__range=[start_date, end_date]
-        ).count(),
-        'total_revenue': Order.objects.filter(
-            created_at__date__range=[start_date, end_date]
-        ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0,
-        'new_customers': User.objects.filter(
-            date_joined__date__range=[start_date, end_date]
-        ).count(),
-        'top_products': list(OrderItem.objects.filter(
-            order__created_at__date__range=[start_date, end_date]
-        ).values('lunch_box__name').annotate(
-            total=Sum('quantity')
-        ).order_by('-total')[:5]),
-        'average_order_value': Order.objects.filter(
-            created_at__date__range=[start_date, end_date]
-        ).aggregate(Avg('total_amount'))['total_amount__avg'] or 0
-    }
-    
-    # Envoyer aux administrateurs
-    admins = User.objects.filter(is_staff=True, is_active=True)
-    
-    for admin in admins:
-        subject = f"Rapport hebdomadaire - {stats['period']}"
-        context = {'stats': stats, 'admin': admin}
-        
-        html_content = render_to_string('emails/weekly_report.html', context)
-        text_content = strip_tags(html_content)
-        
-        send_mail(
-            subject,
-            text_content,
-            settings.DEFAULT_FROM_EMAIL,
-            [admin.email],
-            html_message=html_content
+    for manager in managers:
+        DeliveryNotification.objects.create(
+            type='new_delivery',
+            recipient_type='manager',
+            recipient=manager,
+            delivery=delivery,
+            title='Nouvelle livraison à planifier',
+            message=f'La commande {delivery.order.order_number} a été confirmée. '
+                   f'Livraison {delivery.delivery_number} créée automatiquement '
+                   f'pour le {delivery.scheduled_date.strftime("%d/%m/%Y")}',
+            is_urgent=delivery.priority in ['urgent', 'high']
         )
-    
-    return f"Weekly report sent to {admins.count()} administrators"
 
-@shared_task
-def update_trending_items():
-    """Mettre à jour les articles tendance"""
-    # Articles tendance des 7 derniers jours
-    seven_days_ago = timezone.now() - timedelta(days=7)
-    
-    trending = OrderItem.objects.filter(
-        order__created_at__gte=seven_days_ago
-    ).values('lunch_box').annotate(
-        recent_sales=Sum('quantity')
-    ).order_by('-recent_sales')[:10]
-    
-    # Marquer les articles tendance (vous pouvez ajouter un champ is_trending au modèle)
-    trending_ids = [item['lunch_box'] for item in trending]
-    
-    # Reset all trending
-    LunchBox.objects.update(is_trending=False)
-    # Set new trending
-    LunchBox.objects.filter(id__in=trending_ids).update(is_trending=True)
-    
-    return f"Updated {len(trending_ids)} trending items"
+# ========================================
+# SIGNAL POUR RÉCUPÉRATION AUTOMATIQUE
+# ========================================
 
-@shared_task
-def send_birthday_promotions():
-    """Envoyer des promotions d'anniversaire"""
-    today = timezone.now().date()
+@receiver(post_save, sender=Delivery)
+def create_pickup_reminder(sender, instance, created, **kwargs):
+    """
+    Crée un rappel pour planifier une récupération après une livraison
+    """
+    if created and instance.delivery_type == 'delivery':
+        # Si c'est une commande qui nécessite une récupération
+        # (ex: location de matériel, événement avec retour)
+        if should_create_pickup(instance):
+            # Créer une notification pour planifier la récupération
+            schedule_pickup_notification(instance)
+
+def should_create_pickup(delivery):
+    """
+    Détermine si une récupération doit être planifiée
+    """
+    # Logique pour déterminer si une récupération est nécessaire
+    # Par exemple, vérifier si la commande contient des items en location
     
-    # Utilisateurs dont c'est l'anniversaire (nécessite un champ birthday dans User)
-    birthday_users = User.objects.filter(
-        birthday__month=today.month,
-        birthday__day=today.day
-    )
+    # Pour l'instant, on peut vérifier les notes ou un champ spécifique
+    keywords = ['location', 'récupération', 'retour', 'rental']
     
-    for user in birthday_users:
-        # Créer un code promo personnalisé
-        code = f'BIRTHDAY{user.id}{today.strftime("%m%d")}'
-        
-        promo, created = PromoCode.objects.get_or_create(
-            code=code,
-            defaults={
-                'description': f'Code anniversaire pour {user.get_full_name()}',
-                'discount_type': 'percentage',
-                'discount_value': 20,
-                'minimum_order': 25,
-                'user_limit': 1,
-                'valid_from': timezone.now(),
-                'valid_until': timezone.now() + timedelta(days=30),
-                'is_active': True
-            }
+    if delivery.order.delivery_notes:
+        notes_lower = delivery.order.delivery_notes.lower()
+        return any(keyword in notes_lower for keyword in keywords)
+    
+    return False
+
+def schedule_pickup_notification(delivery):
+    """
+    Programme une notification pour créer une récupération
+    """
+    # Notification pour le lendemain de la livraison
+    scheduled_date = delivery.scheduled_date + timedelta(days=1)
+    
+    managers = User.objects.filter(
+        role__in=['delivery_manager', 'admin'],
+        is_active=True
+    ).first()
+    
+    if managers:
+        DeliveryNotification.objects.create(
+            type='reminder',
+            recipient_type='manager',
+            recipient=managers,
+            delivery=delivery,
+            title='Récupération à planifier',
+            message=f'Pensez à planifier la récupération pour la livraison {delivery.delivery_number}',
+            is_urgent=False,
+            scheduled_for=timezone.make_aware(
+                datetime.combine(scheduled_date, datetime.min.time())
+            )
         )
-        
-        if created:
-            EmailService.send_promo_code(user, promo)
-    
-    return f"Sent birthday promotions to {birthday_users.count()} users"

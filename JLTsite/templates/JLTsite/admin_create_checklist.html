@@ -1,0 +1,553 @@
+{% extends 'JLTsite/base.html' %}
+{% load static %}
+
+{% block title %}Créer Checklist - Commande #{{ order.order_number }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Utiliser le style admin existant avec quelques ajustements */
+    :root {
+        --jlt-yellow: #F4C843;
+        --jlt-yellow-hover: #e6b835;
+        --jlt-black: #1a1a1a;
+        --jlt-gray: #6c757d;
+        --jlt-gray-light: #e9ecef;
+    }
+    
+    .create-checklist-header {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        padding: 2rem 0;
+        color: white;
+    }
+    
+    .header-title {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .order-info-bar {
+        background: rgba(244, 200, 67, 0.1);
+        padding: 1rem;
+        border-radius: 10px;
+        margin-top: 1rem;
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .order-info-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: rgba(255,255,255,0.9);
+    }
+    
+    .form-container {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin: 2rem 0;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid var(--jlt-gray-light);
+    }
+    
+    .form-section:last-child {
+        border-bottom: none;
+    }
+    
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--jlt-black);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .section-title i {
+        color: var(--jlt-yellow);
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--jlt-black);
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid var(--jlt-gray-light);
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: var(--jlt-yellow);
+        box-shadow: 0 0 0 3px rgba(244, 200, 67, 0.1);
+    }
+    
+    /* Templates de checklist */
+    .templates-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .template-card {
+        border: 2px solid var(--jlt-gray-light);
+        border-radius: 10px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .template-card:hover {
+        border-color: var(--jlt-yellow);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .template-card.selected {
+        background: #fff9e6;
+        border-color: var(--jlt-yellow);
+    }
+    
+    .template-name {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .template-description {
+        font-size: 0.9rem;
+        color: var(--jlt-gray);
+    }
+    
+    /* Sélection des articles d'inventaire */
+    .inventory-selector {
+        border: 2px solid var(--jlt-gray-light);
+        border-radius: 10px;
+        padding: 1rem;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .category-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .category-header {
+        background: var(--jlt-gray-light);
+        padding: 0.75rem;
+        border-radius: 5px;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .category-header:hover {
+        background: #dee2e6;
+    }
+    
+    .inventory-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        border-bottom: 1px solid #f8f9fa;
+        transition: background 0.3s ease;
+    }
+    
+    .inventory-item:hover {
+        background: #f8f9fa;
+    }
+    
+    .item-checkbox {
+        width: 20px;
+        height: 20px;
+        margin-right: 1rem;
+        cursor: pointer;
+    }
+    
+    .item-info {
+        flex: 1;
+    }
+    
+    .item-name {
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+    }
+    
+    .item-stock {
+        font-size: 0.85rem;
+        color: var(--jlt-gray);
+    }
+    
+    .item-quantity {
+        width: 80px;
+        padding: 0.5rem;
+        border: 1px solid var(--jlt-gray-light);
+        border-radius: 5px;
+        text-align: center;
+    }
+    
+    /* Priorité */
+    .priority-selector {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .priority-option {
+        flex: 1;
+        padding: 1rem;
+        border: 2px solid var(--jlt-gray-light);
+        border-radius: 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .priority-option:hover {
+        border-color: var(--jlt-yellow);
+        transform: translateY(-2px);
+    }
+    
+    .priority-option.selected {
+        background: var(--jlt-yellow);
+        border-color: var(--jlt-yellow);
+        color: var(--jlt-black);
+    }
+    
+    .priority-option input[type="radio"] {
+        display: none;
+    }
+    
+    .priority-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Boutons d'action */
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 2px solid var(--jlt-gray-light);
+    }
+    
+    .btn {
+        padding: 12px 30px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-primary {
+        background: var(--jlt-yellow);
+        color: var(--jlt-black);
+    }
+    
+    .btn-primary:hover {
+        background: var(--jlt-yellow-hover);
+        transform: translateY(-2px);
+    }
+    
+    .btn-secondary {
+        background: var(--jlt-gray-light);
+        color: var(--jlt-black);
+    }
+    
+    .btn-secondary:hover {
+        background: #dee2e6;
+    }
+    
+    /* Alertes */
+    .alert {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .alert-info {
+        background: #cce5ff;
+        color: #004085;
+        border: 1px solid #b8daff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<section class="create-checklist-header">
+    <div class="container">
+        <h1 class="header-title">
+            <i class="fas fa-clipboard-list"></i> 
+            Créer une Checklist
+        </h1>
+        <div class="order-info-bar">
+            <div class="order-info-item">
+                <i class="fas fa-hashtag"></i>
+                <strong>Commande:</strong> {{ order.order_number }}
+            </div>
+            <div class="order-info-item">
+                <i class="fas fa-user"></i>
+                <strong>Client:</strong> {{ order.first_name }} {{ order.last_name }}
+            </div>
+            <div class="order-info-item">
+                <i class="fas fa-calendar"></i>
+                <strong>Livraison:</strong> {{ order.delivery_date|date:"d/m/Y" }}
+            </div>
+            <div class="order-info-item">
+                <i class="fas fa-clock"></i>
+                <strong>Heure:</strong> {{ order.delivery_time|time:"H:i" }}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Formulaire -->
+<div class="container">
+    <form method="POST" class="form-container">
+        {% csrf_token %}
+        
+        <!-- Informations générales -->
+        <div class="form-section">
+            <h2 class="section-title">
+                <i class="fas fa-info-circle"></i>
+                Informations générales
+            </h2>
+            
+            <div class="form-group">
+                <label class="form-label" for="title">Titre de la checklist</label>
+                <input type="text" 
+                       class="form-control" 
+                       id="title" 
+                       name="title" 
+                       value="Checklist - Commande #{{ order.order_number }}"
+                       required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="assigned_to">Assigner à</label>
+                <select class="form-control" id="assigned_to" name="assigned_to" required>
+                    <option value="">-- Sélectionner un responsable --</option>
+                    {% for manager in checklist_managers %}
+                    <option value="{{ manager.id }}">
+                        {{ manager.get_full_name }} ({{ manager.get_role_display }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Priorité</label>
+                <div class="priority-selector">
+                    <label class="priority-option">
+                        <input type="radio" name="priority" value="0" checked>
+                        <div class="priority-icon">😊</div>
+                        <div>Normale</div>
+                    </label>
+                    <label class="priority-option">
+                        <input type="radio" name="priority" value="1">
+                        <div class="priority-icon">🔥</div>
+                        <div>Urgente</div>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="notes">Notes (optionnel)</label>
+                <textarea class="form-control" 
+                          id="notes" 
+                          name="notes" 
+                          rows="3"
+                          placeholder="Instructions spéciales ou remarques..."></textarea>
+            </div>
+        </div>
+        
+        <!-- Modèles de checklist -->
+        <div class="form-section">
+            <h2 class="section-title">
+                <i class="fas fa-copy"></i>
+                Utiliser un modèle (optionnel)
+            </h2>
+            
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                Sélectionnez un modèle pour pré-remplir la checklist avec des articles prédéfinis
+            </div>
+            
+            <div class="templates-grid">
+                {% for template in templates %}
+                <div class="template-card" onclick="selectTemplate({{ template.id }})">
+                    <input type="radio" name="template_id" value="{{ template.id }}" style="display: none;">
+                    <div class="template-name">{{ template.name }}</div>
+                    <div class="template-description">
+                        {{ template.description|default:"" }}
+                        <br>
+                        <small>{{ template.items.count }} articles</small>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Sélection manuelle des articles -->
+        <div class="form-section">
+            <h2 class="section-title">
+                <i class="fas fa-boxes"></i>
+                Sélectionner les articles
+            </h2>
+            
+            <div class="inventory-selector">
+                {% regroup inventory_items by get_category_display as category_list %}
+                {% for category in category_list %}
+                <div class="category-group">
+                    <div class="category-header" onclick="toggleCategory(this)">
+                        <span>
+                            <i class="fas fa-chevron-down"></i>
+                            {{ category.grouper }} ({{ category.list|length }} articles)
+                        </span>
+                        <span class="badge">0 sélectionnés</span>
+                    </div>
+                    <div class="category-items">
+                        {% for item in category.list %}
+                        <div class="inventory-item">
+                            <input type="checkbox" 
+                                   class="item-checkbox" 
+                                   name="inventory_items" 
+                                   value="{{ item.id }}"
+                                   onchange="updateCategoryCount(this)">
+                            <div class="item-info">
+                                <div class="item-name">{{ item.name }}</div>
+                                <div class="item-stock">
+                                    Stock: {{ item.stock_quantity }} {{ item.unit }}
+                                    {% if item.is_low_stock %}
+                                    <span style="color: #e74c3c;">(Stock faible)</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <input type="number" 
+                                   class="item-quantity" 
+                                   name="quantity_{{ item.id }}" 
+                                   value="1" 
+                                   min="1"
+                                   placeholder="Qté">
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="form-actions">
+            <a href="{% url 'admin_order_detail' order.order_number %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Annuler
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Créer la checklist
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Sélection de template
+    function selectTemplate(templateId) {
+        // Désélectionner tous les templates
+        document.querySelectorAll('.template-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        
+        // Sélectionner le template cliqué
+        event.currentTarget.classList.add('selected');
+        event.currentTarget.querySelector('input[type="radio"]').checked = true;
+        
+        // Optionnel: charger les items du template via AJAX
+        // loadTemplateItems(templateId);
+    }
+    
+    // Toggle catégorie
+    function toggleCategory(header) {
+        const items = header.nextElementSibling;
+        const icon = header.querySelector('i');
+        
+        if (items.style.display === 'none') {
+            items.style.display = 'block';
+            icon.className = 'fas fa-chevron-down';
+        } else {
+            items.style.display = 'none';
+            icon.className = 'fas fa-chevron-right';
+        }
+    }
+    
+    // Mettre à jour le compteur de catégorie
+    function updateCategoryCount(checkbox) {
+        const categoryGroup = checkbox.closest('.category-group');
+        const checkedCount = categoryGroup.querySelectorAll('.item-checkbox:checked').length;
+        const badge = categoryGroup.querySelector('.badge');
+        badge.textContent = checkedCount + ' sélectionnés';
+        
+        if (checkedCount > 0) {
+            badge.style.background = 'var(--jlt-yellow)';
+            badge.style.color = 'var(--jlt-black)';
+        } else {
+            badge.style.background = '';
+            badge.style.color = '';
+        }
+    }
+    
+    // Sélection de priorité
+    document.querySelectorAll('.priority-option').forEach(option => {
+        option.addEventListener('click', function() {
+            document.querySelectorAll('.priority-option').forEach(o => {
+                o.classList.remove('selected');
+            });
+            this.classList.add('selected');
+        });
+    });
+    
+    // Validation du formulaire
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const checkedItems = document.querySelectorAll('.item-checkbox:checked');
+        const templateSelected = document.querySelector('input[name="template_id"]:checked');
+        
+        if (!templateSelected && checkedItems.length === 0) {
+            e.preventDefault();
+            alert('Veuillez sélectionner un modèle ou au moins un article d\'inventaire.');
+        }
+    });
+</script>
+{% endblock %}

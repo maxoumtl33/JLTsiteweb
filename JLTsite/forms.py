@@ -150,6 +150,8 @@ class LoginForm(forms.Form):
         label='Se souvenir de moi'
     )
 
+from JLTsite.models import User
+
 class ProfileForm(forms.ModelForm):
     """Formulaire de profil utilisateur"""
     class Meta:
@@ -392,3 +394,307 @@ class CouponForm(forms.Form):
             raise ValidationError('Le message doit contenir au moins 20 caractères.')
         
         return message
+    
+# JLTsite/forms.py - Formulaires pour le système chef de cuisine
+
+from django import forms
+from django.core.exceptions import ValidationError
+from .models import (
+    KitchenProduct, Supplier, ProductOrder, ProductOrderItem,
+    KitchenProduction, ProductionItem, QualityCheck
+)
+import datetime
+
+class ProductForm(forms.ModelForm):
+    """Formulaire pour créer/modifier un produit cuisine"""
+    
+    class Meta:
+        model = KitchenProduct
+        fields = [
+            'name', 'category', 'unit', 'current_stock', 'min_stock',
+            'max_stock', 'unit_price', 'supplier', 'departments',
+            'shelf_life_days', 'is_active'
+        ]
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nom du produit'}),
+            'category': forms.Select(attrs={'class': 'form-control'}),
+            'unit': forms.Select(attrs={'class': 'form-control'}),
+            'current_stock': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'min_stock': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'max_stock': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'unit_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'supplier': forms.Select(attrs={'class': 'form-control'}),
+            'shelf_life_days': forms.NumberInput(attrs={'class': 'form-control'}),
+            'departments': forms.CheckboxSelectMultiple(),
+        }
+        labels = {
+            'name': 'Nom du produit',
+            'category': 'Catégorie',
+            'unit': 'Unité de mesure',
+            'current_stock': 'Stock actuel',
+            'min_stock': 'Stock minimum',
+            'max_stock': 'Stock maximum',
+            'unit_price': 'Prix unitaire ($)',
+            'supplier': 'Fournisseur principal',
+            'departments': 'Départements utilisateurs',
+            'shelf_life_days': 'Durée de conservation (jours)',
+            'is_active': 'Produit actif'
+        }
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        min_stock = cleaned_data.get('min_stock')
+        max_stock = cleaned_data.get('max_stock')
+        current_stock = cleaned_data.get('current_stock')
+        
+        if min_stock and max_stock:
+            if min_stock > max_stock:
+                raise ValidationError('Le stock minimum ne peut pas être supérieur au stock maximum.')
+        
+        if current_stock and current_stock < 0:
+            raise ValidationError('Le stock actuel ne peut pas être négatif.')
+        
+        return cleaned_data
+
+class SupplierForm(forms.ModelForm):
+    """Formulaire pour créer/modifier un fournisseur"""
+    
+    class Meta:
+        model = Supplier
+        fields = [
+            'name', 'contact_name', 'email', 'phone', 'address',
+            'specialties', 'min_order_amount', 'delivery_days', 'is_active'
+        ]
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nom du fournisseur'}),
+            'contact_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nom du contact'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'email@exemple.com'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '(514) 123-4567'}),
+            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'min_order_amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'delivery_days': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Lundi, Mercredi, Vendredi'}),
+        }
+        labels = {
+            'name': 'Nom du fournisseur',
+            'contact_name': 'Personne contact',
+            'email': 'Courriel',
+            'phone': 'Téléphone',
+            'address': 'Adresse',
+            'specialties': 'Spécialités',
+            'min_order_amount': 'Montant minimum de commande ($)',
+            'delivery_days': 'Jours de livraison',
+            'is_active': 'Fournisseur actif'
+        }
+
+class ProductOrderForm(forms.ModelForm):
+    """Formulaire pour créer une commande de produits"""
+    
+    class Meta:
+        model = ProductOrder
+        fields = [
+            'department', 'supplier', 'priority', 'needed_date', 'notes'
+        ]
+        widgets = {
+            'department': forms.Select(attrs={'class': 'form-control'}),
+            'supplier': forms.Select(attrs={'class': 'form-control'}),
+            'priority': forms.Select(attrs={'class': 'form-control'}),
+            'needed_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+        labels = {
+            'department': 'Département',
+            'supplier': 'Fournisseur',
+            'priority': 'Priorité',
+            'needed_date': 'Date souhaitée',
+            'notes': 'Notes de commande'
+        }
+    
+    def clean_needed_date(self):
+        needed_date = self.cleaned_data['needed_date']
+        if needed_date < datetime.date.today():
+            raise ValidationError('La date souhaitée ne peut pas être dans le passé.')
+        return needed_date
+
+class ProductOrderItemForm(forms.ModelForm):
+    """Formulaire pour ajouter un article à une commande de produits"""
+    
+    class Meta:
+        model = ProductOrderItem
+        fields = ['product', 'quantity', 'notes']
+        widgets = {
+            'product': forms.Select(attrs={'class': 'form-control'}),
+            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0.01'}),
+            'notes': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Notes optionnelles'}),
+        }
+        labels = {
+            'product': 'Produit',
+            'quantity': 'Quantité',
+            'notes': 'Notes'
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filtrer pour n'afficher que les produits actifs
+        self.fields['product'].queryset = KitchenProduct.objects.filter(is_active=True)
+
+class ProductionReportForm(forms.Form):
+    """Formulaire pour générer des rapports de production"""
+    
+    REPORT_TYPE_CHOICES = [
+        ('daily', 'Rapport journalier'),
+        ('weekly', 'Rapport hebdomadaire'),
+        ('monthly', 'Rapport mensuel'),
+        ('custom', 'Période personnalisée'),
+    ]
+    
+    report_type = forms.ChoiceField(
+        choices=REPORT_TYPE_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label='Type de rapport'
+    )
+    
+    department = forms.ChoiceField(
+        choices=[('all', 'Tous les départements')] + list(KitchenProduction._meta.get_field('department').choices),
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        required=False,
+        label='Département'
+    )
+    
+    start_date = forms.DateField(
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        required=False,
+        label='Date de début'
+    )
+    
+    end_date = forms.DateField(
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        required=False,
+        label='Date de fin'
+    )
+    
+    include_quality = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        label='Inclure les contrôles qualité'
+    )
+    
+    include_issues = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        label='Inclure les problèmes signalés'
+    )
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        report_type = cleaned_data.get('report_type')
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
+        
+        if report_type == 'custom':
+            if not start_date or not end_date:
+                raise ValidationError('Les dates de début et fin sont requises pour une période personnalisée.')
+            if start_date > end_date:
+                raise ValidationError('La date de début doit être antérieure à la date de fin.')
+        
+        return cleaned_data
+
+class QualityCheckForm(forms.ModelForm):
+    """Formulaire pour les contrôles qualité"""
+    
+    class Meta:
+        model = QualityCheck
+        fields = [
+            'appearance_rating', 'taste_rating', 'texture_rating', 
+            'overall_rating', 'meets_standards', 'approved_for_service',
+            'comments', 'improvement_notes'
+        ]
+        widgets = {
+            'appearance_rating': forms.Select(attrs={'class': 'form-control'}),
+            'taste_rating': forms.Select(attrs={'class': 'form-control'}),
+            'texture_rating': forms.Select(attrs={'class': 'form-control'}),
+            'overall_rating': forms.Select(attrs={'class': 'form-control'}),
+            'meets_standards': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'approved_for_service': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'comments': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'improvement_notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+        labels = {
+            'appearance_rating': 'Apparence',
+            'taste_rating': 'Goût',
+            'texture_rating': 'Texture',
+            'overall_rating': 'Note globale',
+            'meets_standards': 'Conforme aux standards',
+            'approved_for_service': 'Approuvé pour le service',
+            'comments': 'Commentaires',
+            'improvement_notes': 'Points d\'amélioration'
+        }
+
+class BulkProductUpdateForm(forms.Form):
+    """Formulaire pour mise à jour en masse des stocks"""
+    
+    products = forms.ModelMultipleChoiceField(
+        queryset=KitchenProduct.objects.filter(is_active=True),
+        widget=forms.CheckboxSelectMultiple(),
+        label='Produits à mettre à jour'
+    )
+    
+    action = forms.ChoiceField(
+        choices=[
+            ('add', 'Ajouter au stock'),
+            ('subtract', 'Retirer du stock'),
+            ('set', 'Définir le stock à'),
+        ],
+        widget=forms.RadioSelect(),
+        label='Action'
+    )
+    
+    quantity = forms.DecimalField(
+        min_value=0,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+        label='Quantité'
+    )
+    
+    reason = forms.CharField(
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+        label='Raison de la modification',
+        required=False
+    )
+
+class ProductionPlanningForm(forms.Form):
+    """Formulaire pour planifier la production"""
+    
+    date = forms.DateField(
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        label='Date de production'
+    )
+    
+    departments = forms.MultipleChoiceField(
+        choices=KitchenProduction._meta.get_field('department').choices,
+        widget=forms.CheckboxSelectMultiple(),
+        label='Départements à planifier'
+    )
+    
+    auto_assign = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        label='Assigner automatiquement aux chefs de département'
+    )
+    
+    priority_before = forms.TimeField(
+        widget=forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
+        label='Marquer comme prioritaire si livraison avant',
+        initial='12:00'
+    )
+    
+    notes = forms.CharField(
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        label='Notes générales',
+        required=False
+    )
+    
+    def clean_date(self):
+        date = self.cleaned_data['date']
+        if date < datetime.date.today():
+            raise ValidationError('La date de production ne peut pas être dans le passé.')
+        return date
