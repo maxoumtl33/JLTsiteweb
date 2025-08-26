@@ -10,33 +10,35 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 import pymysql
+
+from pathlib import Path
+from decouple import config, Csv
+import os
+
 pymysql.install_as_MySQLdb()
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 # Remplacez votre configuration DATABASES par:
+
+# Security
+SECRET_KEY = config('SECRET_KEY')
+DEBUG = config('DEBUG', default=False, cast=bool)
+ALLOWED_HOSTS = config('ALLOWED_HOST', default='', cast=Csv()) + ['127.0.0.1', 'localhost']
+# Configuration optionnelle pour de meilleures performances
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# Database
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'jlt_database',
-        'USER': 'jlt_user',
-        'PASSWORD': 'JLT2024!Secure',
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST'),
+        'PORT': config('DB_PORT'),
         'OPTIONS': {
             'charset': 'utf8mb4',
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            'isolation_level': 'read committed',
         },
-        'TEST': {
-            'CHARSET': 'utf8mb4',
-            'COLLATION': 'utf8mb4_unicode_ci',
-        }
     }
 }
-
-# Configuration optionnelle pour de meilleures performances
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
 # Si vous voulez voir les requêtes SQL dans la console (développement uniquement)
 if DEBUG:
     LOGGING = {
@@ -64,11 +66,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-ka&&n)#g!hy9z8zigm(p0m3ozk^%r@$6!qc$3-(@0v4@&oue7&'
+
+from decouple import config
 
 
 
-ALLOWED_HOSTS = ['maxoufaya33.pythonanywhere.com', '127.0.0.1']
 
 
 # Application definition
@@ -178,7 +180,6 @@ STATICFILES_DIRS = [
 
 SITE_URL = 'http://127.0.0.1:8000/'
 
-GOOGLE_API_KEY = 'AIzaSyC2GqoZLMIMuAihXl8271sJN3kJ_57smdM'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
@@ -189,17 +190,22 @@ SESSION_SAVE_EVERY_REQUEST = True
 
 LOGOUT_REDIRECT_URL = 'login'  # Redirect to login page after logout
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'testjltemail@gmail.com'
-EMAIL_HOST_PASSWORD = 'hyxf cbos dmdd oxsk'  # Use environment variables for security
 
-# Stripe configuration
-STRIPE_PUBLIC_KEY = 'pk_test_...'
-STRIPE_SECRET_KEY = 'sk_test_...'
-STRIPE_WEBHOOK_SECRET = 'whsec_...'
+# Email
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = config('EMAIL_HOST')
+EMAIL_PORT = config('EMAIL_PORT', cast=int)
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = config('EMAIL_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_PASSWORD')
+
+# APIs
+GOOGLE_API_KEY = config('GOOGLE_API_KEY', default='')
+
+# Stripe
+STRIPE_PUBLIC_KEY = config('STRIPE_PUBLIC_KEY', default='')
+STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY', default='')
+STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET', default='')
 
 # Configuration REST Framework
 REST_FRAMEWORK = {
