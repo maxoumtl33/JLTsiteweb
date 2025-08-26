@@ -1,0 +1,80 @@
+# Variables d'environnement et secrets
+.env
+.env.*
+local_settings.py
+secrets.json
+
+# Python
+*.py[cod]
+__pycache__/
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Django
+*.log
+*.pot
+*.pyc
+__pycache__/
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+static_root/
+
+# Si vous utilisez pipenv
+Pipfile.lock
+
+# Tests et coverage
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.pytest_cache/
+.hypothesis/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IDEs et éditeurs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings
+.DS_Store
+Thumbs.db
+
+# Documentation
+docs/_build/
+site/
+
+# Backups
+*.bak
+*.backup
+*.old
+
+# Temporaires
+tmp/
+temp/
+*.tmp
